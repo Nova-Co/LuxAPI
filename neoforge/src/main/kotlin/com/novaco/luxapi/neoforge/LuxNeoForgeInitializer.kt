@@ -25,6 +25,9 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
 
     init {
         logger.info("Initializing LuxAPI for NeoForge 1.21.1...")
+        // Uncomment this once NeoForgeLuxGuiBuilder is created
+        // LuxAPI.guiProvider = { NeoForgeLuxGuiBuilder() }
+
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands)
         NeoForge.EVENT_BUS.addListener(this::onServerStarting)
     }

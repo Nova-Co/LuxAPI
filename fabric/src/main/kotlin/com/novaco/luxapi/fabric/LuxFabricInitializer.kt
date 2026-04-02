@@ -1,7 +1,10 @@
 package com.novaco.luxapi.fabric
 
+import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import com.novaco.luxapi.fabric.command.FabricCommandManager
+import com.novaco.luxapi.fabric.gui.FabricGuiBuilder
+import com.novaco.luxapi.fabric.gui.FabricPaginatedGuiBuilder
 import com.novaco.luxapi.fabric.player.FabricPlayerManager
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
@@ -19,6 +22,8 @@ class LuxFabricInitializer : ModInitializer {
 
     override fun onInitialize() {
         logger.info("Initializing LuxAPI for Fabric 1.21.1...")
+        LuxAPI.guiProvider = { FabricGuiBuilder() }
+        LuxAPI.paginatedGuiProvider = { FabricPaginatedGuiBuilder() }
 
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
             commandManager.setDispatcher(dispatcher)
