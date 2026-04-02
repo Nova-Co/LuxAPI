@@ -1,0 +1,27 @@
+modLoader = "javafml"
+loaderVersion = "[2,)"
+license = "MIT"
+
+[[mods]]
+modId = "luxapi"
+version = "${file.jarVersion}"
+displayName = "LuxAPI"
+authors = "Nova Co."
+description = '''
+A robust cross-platform API for Minecraft 1.21.1,
+providing unified command and configuration systems.
+'''
+
+[[dependencies.luxapi]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.luxapi]]
+modId = "kotlinforforge"
+type = "required"
+versionRange = "[5,)"
+ordering = "NONE"
+side = "BOTH"
