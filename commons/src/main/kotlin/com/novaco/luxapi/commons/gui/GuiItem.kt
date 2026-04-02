@@ -9,7 +9,7 @@ class GuiItem(
     val lore: List<String> = emptyList(),
     val customModelData: Int = 0
 ) {
-    internal var clickHandler: ((GuiClickEvent) -> Unit)? = null
+    var clickHandler: ((GuiClickEvent) -> Unit)? = null
 
     /**
      * Assigns a click execution block to this specific GUI item.

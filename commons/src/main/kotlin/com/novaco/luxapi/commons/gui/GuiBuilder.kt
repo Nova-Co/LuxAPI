@@ -2,6 +2,7 @@ package com.novaco.luxapi.commons.gui
 
 /**
  * A builder pattern for constructing instances of LuxGui efficiently.
+ * Supports automated filling and complex layout configurations.
  */
 abstract class GuiBuilder {
 
@@ -30,8 +31,43 @@ abstract class GuiBuilder {
      * Places a specific GUI item into the specified slot.
      */
     fun setItem(slot: Int, item: GuiItem): GuiBuilder {
-        require(slot in 0 until (rows * 9)) { "Slot $slot is out of bounds for $rows rows." }
-        this.items[slot] = item
+        val maxSlot = rows * 9
+        if (slot in 0 until maxSlot) {
+            this.items[slot] = item
+        }
+        return this
+    }
+
+    /**
+     * Fills the entire border of the GUI with a background item.
+     * Calculated based on the current number of rows.
+     */
+    fun fillBorder(item: GuiItem): GuiBuilder {
+        val totalSlots = rows * 9
+        for (i in 0 until totalSlots) {
+            val isTopRow = i < 9
+            val isBottomRow = i >= totalSlots - 9
+            val isLeftColumn = i % 9 == 0
+            val isRightColumn = i % 9 == 8
+
+            if (isTopRow || isBottomRow || isLeftColumn || isRightColumn) {
+                if (!items.containsKey(i)) {
+                    setItem(i, item)
+                }
+            }
+        }
+        return this
+    }
+
+    /**
+     * Fills all empty slots in the current GUI layout with a specific item.
+     */
+    fun fillEmpty(item: GuiItem): GuiBuilder {
+        for (i in 0 until (rows * 9)) {
+            if (!items.containsKey(i)) {
+                setItem(i, item)
+            }
+        }
         return this
     }
 

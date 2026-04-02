@@ -26,4 +26,10 @@ interface Gui {
      * Retrieves the item currently set at the specified slot.
      */
     fun getItem(slot: Int): GuiItem?
+
+    /**
+     * Refreshes the items currently displayed in the GUI without closing the container.
+     * Useful for real-time data updates or animations.
+     */
+    fun refresh(player: LuxPlayer)
 }
