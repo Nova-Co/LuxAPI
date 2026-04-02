@@ -39,8 +39,7 @@ class LuxMenu(
             if (guiItem != null) {
                 val luxPlayer = FabricLuxPlayer(player as net.minecraft.server.level.ServerPlayer)
                 val mappedClick = mapClickType(clickType, button)
-
-                val event = GuiClickEvent(luxPlayer, slotId, mappedClick)
+                val event = GuiClickEvent(luxPlayer, slotId, mappedClick, gui)
                 guiItem.clickHandler?.invoke(event)
 
                 if (event.isCancelled) {

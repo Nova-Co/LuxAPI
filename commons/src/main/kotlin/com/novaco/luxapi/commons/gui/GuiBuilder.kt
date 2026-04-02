@@ -13,7 +13,7 @@ abstract class GuiBuilder {
     /**
      * Sets the display title of the graphical user interface.
      */
-    fun title(title: String): GuiBuilder {
+    open fun title(title: String): GuiBuilder {
         this.title = title
         return this
     }
@@ -21,7 +21,7 @@ abstract class GuiBuilder {
     /**
      * Sets the number of rows for the graphical user interface.
      */
-    fun rows(rows: Int): GuiBuilder {
+    open fun rows(rows: Int): GuiBuilder {
         require(rows in 1..6) { "Rows must be between 1 and 6" }
         this.rows = rows
         return this
@@ -30,7 +30,7 @@ abstract class GuiBuilder {
     /**
      * Places a specific GUI item into the specified slot.
      */
-    fun setItem(slot: Int, item: GuiItem): GuiBuilder {
+    open fun setItem(slot: Int, item: GuiItem): GuiBuilder {
         val maxSlot = rows * 9
         if (slot in 0 until maxSlot) {
             this.items[slot] = item
@@ -42,7 +42,7 @@ abstract class GuiBuilder {
      * Fills the entire border of the GUI with a background item.
      * Calculated based on the current number of rows.
      */
-    fun fillBorder(item: GuiItem): GuiBuilder {
+    open fun fillBorder(item: GuiItem): GuiBuilder {
         val totalSlots = rows * 9
         for (i in 0 until totalSlots) {
             val isTopRow = i < 9
@@ -62,7 +62,7 @@ abstract class GuiBuilder {
     /**
      * Fills all empty slots in the current GUI layout with a specific item.
      */
-    fun fillEmpty(item: GuiItem): GuiBuilder {
+    open fun fillEmpty(item: GuiItem): GuiBuilder {
         for (i in 0 until (rows * 9)) {
             if (!items.containsKey(i)) {
                 setItem(i, item)

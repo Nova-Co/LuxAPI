@@ -14,9 +14,9 @@ interface PaginatedGui : Gui {
     fun setPage(player: LuxPlayer, page: Int)
 
     /**
-     * Retrieves the current page index being viewed.
+     * Retrieves the current page index being viewed by the specific player.
      */
-    fun getCurrentPage(): Int
+    fun getCurrentPage(player: LuxPlayer): Int
 
     /**
      * Calculates the total number of pages based on global item count.

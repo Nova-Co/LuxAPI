@@ -1,23 +1,47 @@
 package com.novaco.luxapi.commons.gui
 
-import com.novaco.luxapi.commons.player.LuxPlayer
-
 /**
  * A specialized builder for creating multi-page graphical user interfaces.
  * Automatically distributes a list of items across multiple pages.
  */
 abstract class PaginatedGuiBuilder : GuiBuilder() {
 
-    protected val globalItems = mutableListOf<GuiItem>()
-    protected val contentSlots = mutableListOf<Int>()
+    protected val globalItemList = mutableListOf<GuiItem>()
+    protected val contentSlotList = mutableListOf<Int>()
     protected var nextButtonSlot: Int = -1
     protected var previousButtonSlot: Int = -1
+
+    override fun title(title: String): PaginatedGuiBuilder {
+        super.title(title)
+        return this
+    }
+
+    override fun rows(rows: Int): PaginatedGuiBuilder {
+        super.rows(rows)
+        return this
+    }
+
+    override fun setItem(slot: Int, item: GuiItem): PaginatedGuiBuilder {
+        super.setItem(slot, item)
+        return this
+    }
+
+    override fun fillBorder(item: GuiItem): PaginatedGuiBuilder {
+        super.fillBorder(item)
+        return this
+    }
+
+    override fun fillEmpty(item: GuiItem): PaginatedGuiBuilder {
+        super.fillEmpty(item)
+        return this
+    }
+    // -----------------------------------------------------------------
 
     /**
      * Adds a list of items to be distributed across pages.
      */
-    fun items(items: List<GuiItem>): PaginatedGuiBuilder {
-        this.globalItems.addAll(items)
+    fun globalItems(items: List<GuiItem>): PaginatedGuiBuilder {
+        this.globalItemList.addAll(items)
         return this
     }
 
@@ -25,7 +49,7 @@ abstract class PaginatedGuiBuilder : GuiBuilder() {
      * Defines the specific slots where the global items should be displayed.
      */
     fun contentSlots(slots: List<Int>): PaginatedGuiBuilder {
-        this.contentSlots.addAll(slots)
+        this.contentSlotList.addAll(slots)
         return this
     }
 

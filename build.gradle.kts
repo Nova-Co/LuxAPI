@@ -8,7 +8,7 @@ plugins {
 
 allprojects {
     group = "com.novaco.luxapi"
-    version = "1.0.9"
+    version = "1.0.12"
 
     repositories {
         mavenCentral()

@@ -8,7 +8,8 @@ import com.novaco.luxapi.commons.player.LuxPlayer
 data class GuiClickEvent(
     val player: LuxPlayer,
     val slot: Int,
-    val clickType: ClickType
+    val clickType: ClickType,
+    val gui: Gui
 ) {
     /**
      * Determines whether the default item-moving behavior should be cancelled.

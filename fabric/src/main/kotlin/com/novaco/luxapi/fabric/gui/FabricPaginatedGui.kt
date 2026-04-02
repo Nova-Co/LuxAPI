@@ -31,8 +31,8 @@ class FabricPaginatedGui(
         refresh(player)
     }
 
-    override fun getCurrentPage(): Int {
-        return 0
+    override fun getCurrentPage(player: LuxPlayer): Int {
+        return playerPages[player] ?: 0
     }
 
     override fun getTotalPages(): Int {

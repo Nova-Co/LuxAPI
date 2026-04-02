@@ -1,7 +1,11 @@
 package com.novaco.luxapi.neoforge
 
+import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import com.novaco.luxapi.neoforge.command.NeoForgeCommandManager
+import com.novaco.luxapi.neoforge.event.NeoForgeEventBridge
+import com.novaco.luxapi.neoforge.gui.NeoForgeGuiBuilder
+import com.novaco.luxapi.neoforge.gui.NeoForgePaginatedGuiBuilder
 import com.novaco.luxapi.neoforge.player.NeoForgePlayerManager
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.common.Mod
@@ -25,8 +29,10 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
 
     init {
         logger.info("Initializing LuxAPI for NeoForge 1.21.1...")
-        // Uncomment this once NeoForgeLuxGuiBuilder is created
-        // LuxAPI.guiProvider = { NeoForgeLuxGuiBuilder() }
+        LuxAPI.guiProvider = { NeoForgeGuiBuilder() }
+        LuxAPI.paginatedGuiProvider = { NeoForgePaginatedGuiBuilder() }
+
+        NeoForgeEventBridge.register()
 
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands)
         NeoForge.EVENT_BUS.addListener(this::onServerStarting)
