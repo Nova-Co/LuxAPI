@@ -15,12 +15,12 @@ import java.lang.reflect.Method
  */
 class CommandProcessor(private val commandInstance: Any) {
 
-    private val subCommands = mutableMapOf<String, Method>()
+    val subCommands = mutableMapOf<String, Method>()
 
     val commandInfo: Command = commandInstance.javaClass.getAnnotation(Command::class.java)
         ?: throw IllegalArgumentException("Class ${commandInstance.javaClass.simpleName} is missing the @Command annotation.")
 
-    private val mainExecuteMethod: Method = findMainExecuteMethod()
+    private val mainExecuteMethods: List<Method> = findMainExecuteMethods()
 
     init {
         commandInstance.javaClass.declaredMethods.forEach { method ->
@@ -58,8 +58,11 @@ class CommandProcessor(private val commandInstance: Any) {
                 return
             }
 
-            val mainArgs = buildArgumentsForMethod(mainExecuteMethod, sender, args)
-            mainExecuteMethod.invoke(commandInstance, *mainArgs)
+            val targetMainMethod = mainExecuteMethods.firstOrNull { it.parameterCount - 1 == args.size }
+                ?: mainExecuteMethods.first()
+
+            val mainArgs = buildArgumentsForMethod(targetMainMethod, sender, args)
+            targetMainMethod.invoke(commandInstance, *mainArgs)
 
         } catch (e: InvocationTargetException) {
             val cause = e.cause
@@ -113,41 +116,53 @@ class CommandProcessor(private val commandInstance: Any) {
     }
 
     /**
-     * Locates the primary execution method (not annotated with @SubCommand).
+     * Locates all primary execution methods (not annotated with @SubCommand).
+     * Sorts them descending by parameter count for fallback logic.
      */
-    private fun findMainExecuteMethod(): Method {
-        return commandInstance.javaClass.declaredMethods.firstOrNull {
+    private fun findMainExecuteMethods(): List<Method> {
+        val methods = commandInstance.javaClass.declaredMethods.filter {
             it.parameterCount >= 1 &&
                     CommandSender::class.java.isAssignableFrom(it.parameterTypes[0]) &&
                     !it.isAnnotationPresent(SubCommand::class.java)
-        } ?: throw IllegalArgumentException("No valid main execute method found in ${commandInstance.javaClass.simpleName}.")
+        }
+        if (methods.isEmpty()) {
+            throw IllegalArgumentException("No valid main execute method found in ${commandInstance.javaClass.simpleName}.")
+        }
+        return methods.sortedByDescending { it.parameterCount }
     }
 
     /**
-     * Generates tab completion suggestions based on the current input.
+     * Generates tab completion suggestions based on the current input and available online players.
      */
-    fun getSuggestions(sender: CommandSender, args: Array<String>): List<String> {
+    fun getSuggestions(sender: CommandSender, args: Array<String>, onlinePlayers: List<String>): List<String> {
+        val currentInput = args.lastOrNull()?.lowercase() ?: ""
+
         if (args.size <= 1) {
-            val currentInput = args.getOrNull(0)?.lowercase() ?: ""
-            return subCommands.keys
-                .filter { it.startsWith(currentInput) }
-                .filter { name ->
-                    val method = subCommands[name]!!
-                    val subAnnotation = method.getAnnotation(SubCommand::class.java)!!
-                    subAnnotation.permission.isEmpty() || sender.hasPermission(subAnnotation.permission)
-                }
+            val suggestions = mutableListOf<String>()
+            suggestions.addAll(subCommands.keys.filter { it.startsWith(currentInput) })
+
+            mainExecuteMethods.forEach { method ->
+                suggestions.addAll(getParameterSuggestions(method, sender, args, onlinePlayers))
+            }
+
+            return suggestions.distinct()
         }
 
         if (subCommands.containsKey(args[0].lowercase())) {
             val subMethod = subCommands[args[0].lowercase()]!!
-            val remainingArgs = args.drop(1).toTypedArray()
-            return getParameterSuggestions(subMethod, sender, remainingArgs)
+            return getParameterSuggestions(subMethod, sender, args.drop(1).toTypedArray(), onlinePlayers)
         }
 
-        return getParameterSuggestions(mainExecuteMethod, sender, args)
+        val targetMainMethod = mainExecuteMethods.firstOrNull { it.parameterCount - 1 >= args.size }
+            ?: mainExecuteMethods.first()
+
+        return getParameterSuggestions(targetMainMethod, sender, args, onlinePlayers)
     }
 
-    private fun getParameterSuggestions(method: Method, sender: CommandSender, args: Array<String>): List<String> {
+    /**
+     * Returns suggestions for specific method parameters such as online players.
+     */
+    private fun getParameterSuggestions(method: Method, sender: CommandSender, args: Array<String>, onlinePlayers: List<String>): List<String> {
         val paramIndex = args.size
         val parameters = method.parameterTypes
 
@@ -157,7 +172,7 @@ class CommandProcessor(private val commandInstance: Any) {
         val currentInput = args.lastOrNull()?.lowercase() ?: ""
 
         if (targetParam == LuxPlayer::class.java) {
-            return emptyList()
+            return onlinePlayers.filter { it.lowercase().startsWith(currentInput) }
         }
 
         return emptyList()
