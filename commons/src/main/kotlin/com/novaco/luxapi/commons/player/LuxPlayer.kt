@@ -8,7 +8,6 @@ import java.util.UUID
  */
 interface LuxPlayer : CommandSender {
 
-    // บังคับว่าผู้เล่นต้องมี UUID เสมอ (ต่างจาก CommandSender ทั่วไปที่อาจเป็น Console ได้)
     override val uniqueId: UUID
 
     /**

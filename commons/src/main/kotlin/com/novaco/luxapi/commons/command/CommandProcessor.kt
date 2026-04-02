@@ -23,7 +23,6 @@ class CommandProcessor(private val commandInstance: Any) {
     private val mainExecuteMethod: Method = findMainExecuteMethod()
 
     init {
-        // Scan the class for methods annotated with @SubCommand and index them
         commandInstance.javaClass.declaredMethods.forEach { method ->
             val subAnnotation = method.getAnnotation(SubCommand::class.java)
             if (subAnnotation != null) {
@@ -41,29 +40,24 @@ class CommandProcessor(private val commandInstance: Any) {
      */
     fun process(sender: CommandSender, args: Array<String>) {
         try {
-            // 1. Validate root command permissions
             if (commandInfo.permission.isNotEmpty() && !sender.hasPermission(commandInfo.permission)) {
                 throw CommandParseException("§cYou do not have permission to execute this command.")
             }
 
-            // 2. Route to Sub-Command if the first argument matches a registered sub-command
             if (args.isNotEmpty() && subCommands.containsKey(args[0].lowercase())) {
                 val subMethod = subCommands[args[0].lowercase()]!!
                 val subAnnotation = subMethod.getAnnotation(SubCommand::class.java)!!
 
-                // Check sub-command specific permission
                 if (subAnnotation.permission.isNotEmpty() && !sender.hasPermission(subAnnotation.permission)) {
                     throw CommandParseException("§cYou do not have permission for this sub-command.")
                 }
 
-                // Drop the first argument (the sub-command name) and process remaining args
                 val remainingArgs = args.drop(1).toTypedArray()
                 val methodArgs = buildArgumentsForMethod(subMethod, sender, remainingArgs)
                 subMethod.invoke(commandInstance, *methodArgs)
                 return
             }
 
-            // 3. If no sub-command matched, execute the main command logic
             val mainArgs = buildArgumentsForMethod(mainExecuteMethod, sender, args)
             mainExecuteMethod.invoke(commandInstance, *mainArgs)
 
@@ -95,7 +89,6 @@ class CommandProcessor(private val commandInstance: Any) {
             throw IllegalStateException("Method ${method.name} must have at least one parameter (CommandSender or LuxPlayer).")
         }
 
-        // The first parameter must always be the sender
         val senderParamType = parameters[0]
         if (senderParamType == LuxPlayer::class.java && sender !is LuxPlayer) {
             throw CommandParseException("§cThis command can only be executed by a player.")
@@ -105,7 +98,6 @@ class CommandProcessor(private val commandInstance: Any) {
         }
         result[0] = sender
 
-        // Process following parameters using injectors
         var argIndex = 0
         for (i in 1 until parameters.size) {
             val paramType = wrapPrimitive(parameters[i])
@@ -135,44 +127,36 @@ class CommandProcessor(private val commandInstance: Any) {
      * Generates tab completion suggestions based on the current input.
      */
     fun getSuggestions(sender: CommandSender, args: Array<String>): List<String> {
-        // 1. Suggest Sub-commands if we are at the first argument
         if (args.size <= 1) {
             val currentInput = args.getOrNull(0)?.lowercase() ?: ""
             return subCommands.keys
-                .filter { it.startsWith(currentInput) } // Suggest only matches
+                .filter { it.startsWith(currentInput) }
                 .filter { name ->
-                    // Check sub-command permission before suggesting
                     val method = subCommands[name]!!
                     val subAnnotation = method.getAnnotation(SubCommand::class.java)!!
                     subAnnotation.permission.isEmpty() || sender.hasPermission(subAnnotation.permission)
                 }
         }
 
-        // 2. If the first argument is a Sub-command, suggest for its parameters
         if (subCommands.containsKey(args[0].lowercase())) {
             val subMethod = subCommands[args[0].lowercase()]!!
             val remainingArgs = args.drop(1).toTypedArray()
             return getParameterSuggestions(subMethod, sender, remainingArgs)
         }
 
-        // 3. Otherwise, suggest for the Main Command parameters
         return getParameterSuggestions(mainExecuteMethod, sender, args)
     }
 
     private fun getParameterSuggestions(method: Method, sender: CommandSender, args: Array<String>): List<String> {
-        val paramIndex = args.size // Current index we are suggesting for
+        val paramIndex = args.size
         val parameters = method.parameterTypes
 
-        // Ensure the index is within the bounds of the method parameters (skipping the first sender parameter)
         if (paramIndex >= parameters.size) return emptyList()
 
         val targetParam = wrapPrimitive(parameters[paramIndex])
         val currentInput = args.lastOrNull()?.lowercase() ?: ""
 
-        // In a full implementation, you could fetch specific TabHandlers from a registry here.
-        // For now, we can provide basic suggestions for Players if the type is LuxPlayer.
         if (targetParam == LuxPlayer::class.java) {
-            // This is a placeholder; in the platform module, you'll provide the actual player list.
             return emptyList()
         }
 
