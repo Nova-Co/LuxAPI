@@ -10,6 +10,9 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent
 import net.neoforged.neoforge.event.server.ServerStartingEvent
 import org.slf4j.LoggerFactory
 
+/**
+ * The main entry point and initializer for the NeoForge platform.
+ */
 @Mod(LuxNeoForgeInitializer.MOD_ID)
 class LuxNeoForgeInitializer(modEventBus: IEventBus) {
 
@@ -27,7 +30,7 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
     }
 
     /**
-     * ทำหน้าที่เหมือน CommandRegistrationCallback ใน Fabric
+     * Handles the command registration event when the server dispatcher is ready.
      */
     private fun onRegisterCommands(event: RegisterCommandsEvent) {
         commandManager.setDispatcher(event.dispatcher)
@@ -35,7 +38,7 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
     }
 
     /**
-     * ทำหน้าที่เหมือน ServerLifecycleEvents.SERVER_STARTING ใน Fabric
+     * Handles the server starting event to initialize the player manager and injectors.
      */
     private fun onServerStarting(event: ServerStartingEvent) {
         val server = event.server

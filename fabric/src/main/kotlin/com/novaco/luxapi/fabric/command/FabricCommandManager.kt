@@ -3,18 +3,16 @@ package com.novaco.luxapi.fabric.command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
-import com.mojang.brigadier.suggestion.Suggestions
-import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import com.novaco.luxapi.commons.command.AbstractCommandManager
 import com.novaco.luxapi.commons.command.CommandProcessor
 import com.novaco.luxapi.fabric.player.FabricLuxPlayer
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
-import net.minecraft.commands.SharedSuggestionProvider
-import java.util.concurrent.CompletableFuture
 
 /**
  * Manages Fabric-specific command registration and bridges Brigadier with LuxAPI logic.
+ * This class uses a caching mechanism to ensure commands are safely registered
+ * even if the server dispatcher is reloaded or initialized late.
  */
 class FabricCommandManager : AbstractCommandManager() {
 
@@ -23,6 +21,7 @@ class FabricCommandManager : AbstractCommandManager() {
 
     /**
      * Initializes the command dispatcher and registers all cached commands.
+     * This should be called during the Fabric command registration callback.
      */
     fun setDispatcher(dispatcher: CommandDispatcher<CommandSourceStack>) {
         this.dispatcher = dispatcher
@@ -30,7 +29,8 @@ class FabricCommandManager : AbstractCommandManager() {
     }
 
     /**
-     * Stores the command processor and registers it to the platform if the dispatcher is ready.
+     * Stores the command processor in the cache and registers it to the platform
+     * immediately if the dispatcher is already available.
      */
     override fun registerToPlatform(processor: CommandProcessor) {
         commandCache.add(processor)
@@ -38,7 +38,9 @@ class FabricCommandManager : AbstractCommandManager() {
     }
 
     /**
-     * Registers the command as a root literal followed by a dynamic argument to handle all inputs.
+     * Registers the command as a root literal followed by a dynamic argument node.
+     * This structure delegates all string parsing and tab completion logic to the
+     * core CommandProcessor for method overloading support.
      */
     private fun registerNode(processor: CommandProcessor, targetDispatcher: CommandDispatcher<CommandSourceStack>) {
         val commandName = processor.commandInfo.name.lowercase()
@@ -72,18 +74,8 @@ class FabricCommandManager : AbstractCommandManager() {
     }
 
     /**
-     * Provides tab suggestions for player names from the current server instance.
-     */
-    private fun suggestArguments(
-        context: CommandContext<CommandSourceStack>,
-        builder: SuggestionsBuilder
-    ): CompletableFuture<Suggestions> {
-        val players = context.source.server.playerList.players.map { it.scoreboardName }
-        return SharedSuggestionProvider.suggest(players, builder)
-    }
-
-    /**
      * Executes the command logic by wrapping the Minecraft source as a LuxPlayer.
+     * The execution is safely ignored if the sender is not a player.
      */
     private fun executeCommand(
         context: CommandContext<CommandSourceStack>,

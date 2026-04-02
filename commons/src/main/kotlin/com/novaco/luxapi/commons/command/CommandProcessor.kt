@@ -15,8 +15,14 @@ import java.lang.reflect.Method
  */
 class CommandProcessor(private val commandInstance: Any) {
 
+    /**
+     * A map containing all registered sub-commands linked to their respective methods.
+     */
     val subCommands = mutableMapOf<String, Method>()
 
+    /**
+     * The command metadata extracted from the @Command annotation.
+     */
     val commandInfo: Command = commandInstance.javaClass.getAnnotation(Command::class.java)
         ?: throw IllegalArgumentException("Class ${commandInstance.javaClass.simpleName} is missing the @Command annotation.")
 
@@ -116,7 +122,7 @@ class CommandProcessor(private val commandInstance: Any) {
     }
 
     /**
-     * Locates all primary execution methods (not annotated with @SubCommand).
+     * Locates all primary execution methods not annotated with @SubCommand.
      * Sorts them descending by parameter count for fallback logic.
      */
     private fun findMainExecuteMethods(): List<Method> {
