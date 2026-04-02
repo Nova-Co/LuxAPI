@@ -35,7 +35,7 @@ abstract class AbstractCommandManager : CommandManager {
      *
      * @param processor The prepared CommandProcessor containing all logic.
      */
-    protected abstract fun registerToPlatform(processor: CommandProcessor)
+    abstract fun registerToPlatform(processor: CommandProcessor)
 
     /**
      * Retrieves a processor for a specific command name.
