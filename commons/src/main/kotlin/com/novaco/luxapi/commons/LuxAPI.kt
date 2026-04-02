@@ -2,9 +2,12 @@ package com.novaco.luxapi.commons
 
 import com.novaco.luxapi.commons.chat.placeholder.DefaultPlayerProvider
 import com.novaco.luxapi.commons.chat.placeholder.PlaceholderManager
+import com.novaco.luxapi.commons.event.EventBus
 import com.novaco.luxapi.commons.gui.GuiBuilder
 import com.novaco.luxapi.commons.gui.PaginatedGuiBuilder
+import com.novaco.luxapi.commons.metadata.PlayerMetadataManager
 import com.novaco.luxapi.commons.scheduler.LuxScheduler
+import com.novaco.luxapi.commons.service.ServiceManager
 
 /**
  * The primary entry point for developers utilizing the LuxAPI framework.
@@ -51,5 +54,41 @@ object LuxAPI {
      */
     fun getScheduler(): LuxScheduler {
         return schedulerProvider()
+    }
+
+    /**
+     * Access point for the ServiceManager.
+     */
+    val serviceManager = ServiceManager
+
+    /**
+     * Registers a service using Kotlin's reified type parameters for a cleaner syntax.
+     */
+    inline fun <reified T : Any> registerService(provider: T) {
+        serviceManager.register(T::class.java, provider)
+    }
+
+    /**
+     * Retrieves a service using Kotlin's reified type parameters.
+     * Returns null if the service is not currently registered.
+     */
+    inline fun <reified T : Any> getService(): T? {
+        return serviceManager.get(T::class.java)
+    }
+
+    /**
+     * Checks if a specific service is available.
+     */
+    inline fun <reified T : Any> hasService(): Boolean {
+        return serviceManager.has(T::class.java)
+    }
+
+    /**
+     * Initializes core LuxAPI services.
+     * Must be called during server startup by the platform implementation.
+     */
+    fun init() {
+        EventBus.register(PlayerMetadataManager)
+        PlaceholderManager.register(DefaultPlayerProvider())
     }
 }

@@ -1,6 +1,7 @@
 package com.novaco.luxapi.commons.player
 
 import com.novaco.luxapi.commons.command.sender.CommandSender
+import com.novaco.luxapi.commons.metadata.PlayerMetadataManager
 import java.util.UUID
 
 /**
@@ -25,4 +26,41 @@ interface LuxPlayer : CommandSender {
      * Disconnects the player from the server with a specific reason.
      */
     fun kick(reason: String)
+
+    /**
+     * Attaches temporary metadata to this player.
+     * The data is automatically garbage collected upon logout.
+     */
+    fun setMetadata(key: String, value: Any) {
+        PlayerMetadataManager.getContainer(this.uniqueId).set(key, value)
+    }
+
+    /**
+     * Checks if this player has specific metadata.
+     */
+    fun hasMetadata(key: String): Boolean {
+        return PlayerMetadataManager.getContainer(this.uniqueId).has(key)
+    }
+
+    /**
+     * Removes specific metadata from this player.
+     */
+    fun removeMetadata(key: String) {
+        PlayerMetadataManager.getContainer(this.uniqueId).remove(key)
+    }
+
+    /**
+     * Retrieves metadata for this player, cast to a specific class.
+     */
+    fun <T> getMetadata(key: String, clazz: Class<T>): T? {
+        return PlayerMetadataManager.getContainer(this.uniqueId).get(key, clazz)
+    }
+}
+
+/**
+ * Reified extension for cleaner metadata retrieval.
+ * Usage: val status = player.getMeta<String>("status")
+ */
+inline fun <reified T : Any> LuxPlayer.getMeta(key: String): T? {
+    return getMetadata(key, T::class.java)
 }
