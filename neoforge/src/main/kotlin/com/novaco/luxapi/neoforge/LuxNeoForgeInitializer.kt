@@ -7,6 +7,7 @@ import com.novaco.luxapi.neoforge.event.NeoForgeEventBridge
 import com.novaco.luxapi.neoforge.gui.NeoForgeGuiBuilder
 import com.novaco.luxapi.neoforge.gui.NeoForgePaginatedGuiBuilder
 import com.novaco.luxapi.neoforge.player.NeoForgePlayerManager
+import com.novaco.luxapi.neoforge.scheduler.NeoForgeLuxScheduler
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.common.Mod
 import net.neoforged.neoforge.common.NeoForge
@@ -31,6 +32,10 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
         logger.info("Initializing LuxAPI for NeoForge 1.21.1...")
         LuxAPI.guiProvider = { NeoForgeGuiBuilder() }
         LuxAPI.paginatedGuiProvider = { NeoForgePaginatedGuiBuilder() }
+
+        val neoForgeScheduler = NeoForgeLuxScheduler()
+        LuxAPI.schedulerProvider = { neoForgeScheduler }
+        neoForgeScheduler.register()
 
         NeoForgeEventBridge.register()
 

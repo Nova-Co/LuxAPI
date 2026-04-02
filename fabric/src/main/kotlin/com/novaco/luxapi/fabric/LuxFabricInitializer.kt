@@ -7,6 +7,7 @@ import com.novaco.luxapi.fabric.event.FabricEventBridge
 import com.novaco.luxapi.fabric.gui.FabricGuiBuilder
 import com.novaco.luxapi.fabric.gui.FabricPaginatedGuiBuilder
 import com.novaco.luxapi.fabric.player.FabricPlayerManager
+import com.novaco.luxapi.fabric.scheduler.FabricLuxScheduler
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
@@ -25,6 +26,10 @@ class LuxFabricInitializer : ModInitializer {
         logger.info("Initializing LuxAPI for Fabric 1.21.1...")
         LuxAPI.guiProvider = { FabricGuiBuilder() }
         LuxAPI.paginatedGuiProvider = { FabricPaginatedGuiBuilder() }
+
+        val fabricScheduler = FabricLuxScheduler()
+        LuxAPI.schedulerProvider = { fabricScheduler }
+        fabricScheduler.registerTickListener()
 
         FabricEventBridge.register()
 
