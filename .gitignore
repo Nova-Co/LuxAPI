@@ -1,5 +1,7 @@
 ### IntelliJ IDEA ###
 .idea/
+.gradle/
+build
 *.iml
 *.iws
 *.ipr
