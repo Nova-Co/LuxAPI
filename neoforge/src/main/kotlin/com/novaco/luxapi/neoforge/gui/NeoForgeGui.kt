@@ -54,7 +54,7 @@ open class NeoForgeGui(
         return itemsMap[slot]
     }
 
-    open fun refresh(player: LuxPlayer) {
+    override fun refresh(player: LuxPlayer) {
         val serverPlayer = player.parent as? ServerPlayer ?: return
 
         itemsMap.forEach { (slot, guiItem) ->
