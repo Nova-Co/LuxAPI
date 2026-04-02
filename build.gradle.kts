@@ -2,32 +2,67 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.9.22"
-    id("com.github.johnrengelman.shadow") version "8.1.1" apply false
+    id("com.gradleup.shadow") version "8.3.6" apply false
+    id("maven-publish")
 }
 
 allprojects {
-    group = "com.lux.api"
+    group = "com.novaco.luxapi"
     version = "1.0.0-SNAPSHOT"
 
     repositories {
         mavenCentral()
         maven("https://oss.sonatype.org/content/repositories/snapshots/")
+        maven("https://jitpack.io")
+        maven("https://maven.neoforged.net/releases")
+        maven("https://repo.spongepowered.org/maven")
     }
 }
 
 subprojects {
-    pluginManager.apply("org.jetbrains.kotlin.jvm")
-    pluginManager.apply("maven-publish")
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "maven-publish")
+    apply(plugin = "com.gradleup.shadow")
 
-    dependencies {
-        add("implementation", "org.jetbrains.kotlin:kotlin-stdlib:1.9.22")
-        add("implementation", "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+    }
+
+    tasks.withType<JavaCompile> {
+        options.encoding = "UTF-8"
+    }
+
+    java {
+        withSourcesJar()
+        withJavadocJar()
     }
 
     tasks.withType<KotlinCompile>().configureEach {
         kotlinOptions {
-            jvmTarget = "17"
             freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+        }
+    }
+
+    afterEvaluate {
+        publishing {
+            publications {
+                create<MavenPublication>("maven") {
+                    groupId = project.group.toString()
+                    artifactId = project.name
+                    version = project.version.toString()
+
+                    from(components["java"])
+                }
+            }
+
+            repositories {
+                maven {
+                    name = "LocalMaven"
+                    url = uri(rootProject.layout.buildDirectory.dir("repo"))
+                }
+            }
         }
     }
 }
