@@ -2,6 +2,7 @@ package com.novaco.luxapi.commons
 
 import com.novaco.luxapi.commons.chat.placeholder.DefaultPlayerProvider
 import com.novaco.luxapi.commons.chat.placeholder.PlaceholderManager
+import com.novaco.luxapi.commons.economy.EconomyService
 import com.novaco.luxapi.commons.event.EventBus
 import com.novaco.luxapi.commons.gui.GuiBuilder
 import com.novaco.luxapi.commons.gui.PaginatedGuiBuilder
@@ -81,6 +82,15 @@ object LuxAPI {
      */
     inline fun <reified T : Any> hasService(): Boolean {
         return serviceManager.has(T::class.java)
+    }
+
+    /**
+     * Retrieves the registered EconomyService.
+     * Ensures fail-fast behavior if the server has not provided an economy implementation.
+     */
+    fun getEconomyService(): EconomyService {
+        return getService<EconomyService>()
+            ?: throw IllegalStateException("LuxAPI EconomyService has not been registered by any plugin/mod!")
     }
 
     /**
