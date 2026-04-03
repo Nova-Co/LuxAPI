@@ -19,3 +19,6 @@ include("discord")
 // Platforms (Cobblemon Focus)
 include("fabric")
 include("neoforge")
+
+// Cobblemon
+include("cobblemon")
