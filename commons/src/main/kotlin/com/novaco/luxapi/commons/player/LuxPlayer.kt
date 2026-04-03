@@ -1,6 +1,7 @@
 package com.novaco.luxapi.commons.player
 
 import com.novaco.luxapi.commons.command.sender.CommandSender
+import com.novaco.luxapi.commons.i18n.LanguageManager
 import com.novaco.luxapi.commons.metadata.PlayerMetadataManager
 import java.util.UUID
 
@@ -16,6 +17,12 @@ interface LuxPlayer : CommandSender {
      * We use [Any] here because the commons module doesn't know about Minecraft classes.
      */
     val parent: Any
+
+    /**
+     * The client language code of the player (e.g., "en_us", "th_th").
+     * Supplied by the platform-specific implementation.
+     */
+    val locale: String
 
     /**
      * Sends a title and subtitle to the player's screen.
@@ -63,4 +70,14 @@ interface LuxPlayer : CommandSender {
  */
 inline fun <reified T : Any> LuxPlayer.getMeta(key: String): T? {
     return getMetadata(key, T::class.java)
+}
+
+/**
+ * Extension function to send a localized message directly to the player.
+ * * @param key The message key from the language JSON file.
+ * @param params Optional local variables to inject into the message.
+ */
+fun LuxPlayer.sendTranslated(key: String, params: Map<String, String> = emptyMap()) {
+    val translatedText = LanguageManager.getTranslation(this, key, params)
+    this.sendMessage(translatedText)
 }

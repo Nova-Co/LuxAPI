@@ -20,6 +20,9 @@ class FabricLuxPlayer(private val serverPlayer: ServerPlayer) : LuxPlayer {
     override val parent: Any
         get() = serverPlayer
 
+    override val locale: String
+        get() = serverPlayer.clientInformation().language()
+
     override fun sendMessage(message: String) {
         serverPlayer.sendSystemMessage(Component.literal(message))
     }

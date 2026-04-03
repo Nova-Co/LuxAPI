@@ -14,6 +14,8 @@ class NeoForgeLuxPlayer(private val serverPlayer: ServerPlayer) : LuxPlayer {
     override val name: String get() = serverPlayer.scoreboardName
     override val uniqueId: UUID get() = serverPlayer.uuid
     override val parent: Any get() = serverPlayer
+    override val locale: String
+        get() = serverPlayer.clientInformation().language()
 
     override fun sendMessage(message: String) {
         serverPlayer.sendSystemMessage(Component.literal(message))
