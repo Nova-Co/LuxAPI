@@ -1,35 +1,44 @@
 package com.novaco.luxapi.commons.config
 
-import com.novaco.luxapi.commons.config.annotation.Config
+import com.novaco.luxapi.commons.LuxAPI
 import java.io.File
 
 /**
- * Base class for all configuration objects in LuxAPI.
+ * The base blueprint for all configuration objects within the LuxAPI framework.
+ * Provides essential lifecycle methods such as saving and reloading.
+ * * @author Gemini / Novaco
  */
 abstract class LuxConfig {
 
+    /**
+     * Stores the reference to the physical file on the disk.
+     * Marked as @Transient to prevent it from being serialized into the config itself.
+     */
     @Transient
     private var configFile: File? = null
 
     /**
-     * Internal method to set the physical file location.
+     * Initializes the configuration with a specific file reference.
+     * * @param file The file location where this configuration is stored.
      */
     fun init(file: File) {
         this.configFile = file
     }
 
     /**
-     * Saves the current state of this config object back to the file.
+     * Commits the current state of the object variables to the physical file.
+     * This method triggers the ConfigService to perform a write operation.
      */
     fun save() {
         configFile?.let { ConfigService.save(this, it) }
     }
 
     /**
-     * Reloads the data from the file back into this object.
-     * Note: This usually requires a fresh load from ConfigService.
+     * Synchronizes the object state with the data currently stored in the file.
+     * * @return A fresh instance of the configuration, or null if the file is inaccessible.
      */
     fun reload(): LuxConfig? {
-        return configFile?.let { ConfigService.load(this::class.java, it.parentFile) }
+        val folder = configFile?.parentFile ?: return null
+        return ConfigService.load(this::class.java, folder)
     }
 }
