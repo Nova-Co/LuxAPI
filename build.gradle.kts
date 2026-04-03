@@ -1,7 +1,18 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.google.code.gson:gson:2.11.0")
+        classpath("org.jetbrains.kotlin:kotlin-metadata-jvm:2.2.0")
+    }
+}
+
 plugins {
-    kotlin("jvm") version "1.9.22"
+    kotlin("jvm") version "2.0.20" apply false
     id("com.gradleup.shadow") version "8.3.6" apply false
     id("maven-publish")
 }
@@ -21,27 +32,26 @@ allprojects {
 
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "java")
     apply(plugin = "maven-publish")
     apply(plugin = "com.gradleup.shadow")
 
-    java {
+    configure<JavaPluginExtension> {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(21))
         }
+        withSourcesJar()
+        withJavadocJar()
     }
 
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
     }
 
-    java {
-        withSourcesJar()
-        withJavadocJar()
-    }
-
     tasks.withType<KotlinCompile>().configureEach {
-        kotlinOptions {
-            freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
+            freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
         }
     }
 

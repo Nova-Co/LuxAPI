@@ -2,7 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     kotlin("jvm")
-    id("fabric-loom") version "1.7-SNAPSHOT"
+    id("dev.architectury.loom") version "1.9-SNAPSHOT"
 }
 
 base {
