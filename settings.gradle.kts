@@ -1,24 +1,26 @@
 pluginManagement {
     repositories {
-        maven("https://maven.fabricmc.net/") {
-            name = "Fabric"
-        }
+        maven("https://maven.minecraftforge.net/")
+        maven("https://maven.fabricmc.net/")
+        maven("https://maven.architectury.dev/")
         mavenCentral()
         gradlePluginPortal()
     }
 }
 
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven("https://maven.minecraftforge.net/")
+        maven("https://maven.fabricmc.net/")
+        maven("https://maven.architectury.dev/")
+    }
+}
+
 rootProject.name = "LuxAPI"
 
-// Core & Database
 include("commons", "database")
-
-// Integrations
 include("discord")
-
-// Platforms (Cobblemon Focus)
 include("fabric")
 include("neoforge")
-
-// Cobblemon
 include("cobblemon")
