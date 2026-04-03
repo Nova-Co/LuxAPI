@@ -11,7 +11,7 @@ pluginManagement {
 rootProject.name = "LuxAPI"
 
 // Core & Database
-include("commons", "sqlite")
+include("commons", "database")
 
 // Integrations
 include("discord")
