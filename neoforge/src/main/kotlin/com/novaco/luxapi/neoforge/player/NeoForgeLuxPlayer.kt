@@ -1,5 +1,6 @@
 package com.novaco.luxapi.neoforge.player
 
+import com.novaco.luxapi.commons.math.Vector3D
 import com.novaco.luxapi.commons.player.LuxPlayer
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
@@ -16,6 +17,8 @@ class NeoForgeLuxPlayer(private val serverPlayer: ServerPlayer) : LuxPlayer {
     override val parent: Any get() = serverPlayer
     override val locale: String
         get() = serverPlayer.clientInformation().language()
+    override val position: Vector3D
+        get() = Vector3D(serverPlayer.x, serverPlayer.y, serverPlayer.z)
 
     override fun sendMessage(message: String) {
         serverPlayer.sendSystemMessage(Component.literal(message))

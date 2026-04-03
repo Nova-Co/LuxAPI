@@ -2,6 +2,7 @@ package com.novaco.luxapi.commons.player
 
 import com.novaco.luxapi.commons.command.sender.CommandSender
 import com.novaco.luxapi.commons.i18n.LanguageManager
+import com.novaco.luxapi.commons.math.Vector3D
 import com.novaco.luxapi.commons.metadata.PlayerMetadataManager
 import java.util.UUID
 
@@ -23,6 +24,11 @@ interface LuxPlayer : CommandSender {
      * Supplied by the platform-specific implementation.
      */
     val locale: String
+
+    /**
+     * The player's current position in the world.
+     */
+    val position: Vector3D
 
     /**
      * Sends a title and subtitle to the player's screen.
