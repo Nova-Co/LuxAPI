@@ -1,5 +1,6 @@
 package com.novaco.luxapi.fabric
 
+import com.novaco.luxapi.cobblemon.LuxCobblemon
 import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import com.novaco.luxapi.fabric.command.FabricCommandManager
@@ -24,6 +25,9 @@ class LuxFabricInitializer : ModInitializer {
 
     override fun onInitialize() {
         logger.info("Initializing LuxAPI for Fabric 1.21.1...")
+        LuxAPI.init()
+        LuxCobblemon.init()
+
         LuxAPI.guiProvider = { FabricGuiBuilder() }
         LuxAPI.paginatedGuiProvider = { FabricPaginatedGuiBuilder() }
 

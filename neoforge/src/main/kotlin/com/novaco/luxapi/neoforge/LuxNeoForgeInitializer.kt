@@ -1,5 +1,6 @@
 package com.novaco.luxapi.neoforge
 
+import com.novaco.luxapi.cobblemon.LuxCobblemon
 import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import com.novaco.luxapi.neoforge.command.NeoForgeCommandManager
@@ -30,6 +31,8 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
 
     init {
         logger.info("Initializing LuxAPI for NeoForge 1.21.1...")
+        LuxAPI.init()
+        LuxCobblemon.init()
         LuxAPI.guiProvider = { NeoForgeGuiBuilder() }
         LuxAPI.paginatedGuiProvider = { NeoForgePaginatedGuiBuilder() }
 
