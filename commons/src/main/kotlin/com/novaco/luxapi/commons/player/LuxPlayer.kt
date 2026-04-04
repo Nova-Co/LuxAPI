@@ -80,10 +80,12 @@ inline fun <reified T : Any> LuxPlayer.getMeta(key: String): T? {
 
 /**
  * Extension function to send a localized message directly to the player.
- * * @param key The message key from the language JSON file.
+ *
+ * @param key The message key from the language JSON file.
+ * @param defaultText The fallback text if the translation key is missing.
  * @param params Optional local variables to inject into the message.
  */
-fun LuxPlayer.sendTranslated(key: String, params: Map<String, String> = emptyMap()) {
-    val translatedText = LanguageManager.getTranslation(this, key, params)
+fun LuxPlayer.sendTranslated(key: String, defaultText: String = key, params: Map<String, String> = emptyMap()) {
+    val translatedText = LanguageManager.getTranslation(this, key, defaultText, params)
     this.sendMessage(translatedText)
 }
