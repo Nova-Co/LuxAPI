@@ -1,12 +1,11 @@
 package com.novaco.luxapi.commons.config
 
-import com.novaco.luxapi.commons.LuxAPI
 import java.io.File
 
 /**
  * The base blueprint for all configuration objects within the LuxAPI framework.
  * Provides essential lifecycle methods such as saving and reloading.
- * * @author Gemini / Novaco
+ *
  */
 abstract class LuxConfig {
 
@@ -19,7 +18,8 @@ abstract class LuxConfig {
 
     /**
      * Initializes the configuration with a specific file reference.
-     * * @param file The file location where this configuration is stored.
+     *
+     * @param file The file location where this configuration is stored.
      */
     fun init(file: File) {
         this.configFile = file
@@ -34,11 +34,20 @@ abstract class LuxConfig {
     }
 
     /**
-     * Synchronizes the object state with the data currently stored in the file.
-     * * @return A fresh instance of the configuration, or null if the file is inaccessible.
+     * Synchronizes the current object state with the data stored in the file.
+     * It updates the fields of THIS instance automatically.
      */
-    fun reload(): LuxConfig? {
-        val folder = configFile?.parentFile ?: return null
-        return ConfigService.load(this::class.java, folder)
+    fun reload() {
+        val file = configFile ?: return
+        val folder = file.parentFile
+        val freshInstance = ConfigService.load(this::class.java, folder)
+
+        this::class.java.declaredFields.forEach { field ->
+            if (field.name != "configFile") {
+                field.isAccessible = true
+                val freshValue = field.get(freshInstance)
+                field.set(this, freshValue)
+            }
+        }
     }
 }

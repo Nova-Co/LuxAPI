@@ -13,15 +13,13 @@ import java.io.File
 object LanguageManager {
 
     private val gson = Gson()
-
-    // Structure: Map<LanguageCode, Map<MessageKey, TranslatedText>>
     private val translations = mutableMapOf<String, Map<String, String>>()
-
     private var defaultLanguage = "en_us"
 
     /**
      * Scans the target directory for .json files and loads them into memory.
-     * * @param langFolder The directory containing language files (e.g., "plugins/LuxCore/lang/")
+     *
+     * @param langFolder The directory containing language files (e.g., "plugins/LuxCore/lang/")
      * @param defaultLang The fallback language code to use when a translation is missing.
      */
     fun loadLanguages(langFolder: File, defaultLang: String = "en_us") {
@@ -50,26 +48,28 @@ object LanguageManager {
      * Retrieves a translated string based on the player's client language.
      * Automatically processes global placeholders and local parameters.
      *
-     * @param player The target player (used to determine locale and placeholders).
+     * @param player The target player (used to determine locale).
      * @param key The message key defined in the JSON file.
+     * @param defaultText The text to return if the key is not found in any language file.
      * @param params Local variables to replace (e.g., mapOf("pokemon" to "Pikachu")).
      * @return The fully formatted and translated string.
      */
-    fun getTranslation(player: LuxPlayer?, key: String, params: Map<String, String> = emptyMap()): String {
-        // 1. Determine the target locale (fallback to default if player is null)
+    fun getTranslation(
+        player: LuxPlayer?,
+        key: String,
+        defaultText: String = key,
+        params: Map<String, String> = emptyMap()
+    ): String {
         val targetLocale = player?.locale?.lowercase() ?: defaultLanguage
 
-        // 2. Attempt to fetch the translation, fallback to default language, then fallback to key
         var rawMessage = translations[targetLocale]?.get(key)
             ?: translations[defaultLanguage]?.get(key)
-            ?: key
+            ?: defaultText
 
-        // 3. Replace local temporary parameters (e.g., {pokemon})
         params.forEach { (paramKey, paramValue) ->
             rawMessage = rawMessage.replace("{$paramKey}", paramValue)
         }
 
-        // 4. Process global placeholders (e.g., %player_name%) using our existing manager
         return PlaceholderManager.replace(player, rawMessage)
     }
 }

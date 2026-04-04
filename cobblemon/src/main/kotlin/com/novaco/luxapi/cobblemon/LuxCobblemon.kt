@@ -6,7 +6,6 @@ import com.novaco.luxapi.cobblemon.listener.CobblemonEventHandler
  * The primary entry point for the LuxAPI Cobblemon module.
  * Handles the initialization of Cobblemon-specific features and listeners.
  *
- * @author NovaCo
  */
 object LuxCobblemon {
 
