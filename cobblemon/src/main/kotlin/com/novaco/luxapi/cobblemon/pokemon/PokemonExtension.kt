@@ -13,7 +13,6 @@ import net.minecraft.server.level.ServerPlayer
  * These utilities allow developers to interact with Pokémon data directly
  * through the LuxPlayer object without deep-diving into Cobblemon's storage internals.
  *
- * @author NovaCo
  */
 
 /**

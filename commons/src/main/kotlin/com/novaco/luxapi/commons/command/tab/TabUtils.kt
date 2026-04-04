@@ -19,10 +19,8 @@ object TabUtils {
             return suggestions
         }
 
-        // Grab the very last word the user is currently typing
         val lastInput = args.last().lowercase()
 
-        // Return only the suggestions that start with that specific input
         return suggestions.filter { it.lowercase().startsWith(lastInput) }
     }
 }

@@ -7,7 +7,6 @@ import com.cobblemon.mod.common.pokemon.Pokemon
  * This class provides formatted data outputs commonly required for UI displays,
  * holograms, or chat announcements.
  *
- * @author NovaCo
  */
 object PokemonInfoUtils {
 

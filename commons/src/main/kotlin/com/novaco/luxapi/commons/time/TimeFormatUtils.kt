@@ -1,5 +1,7 @@
 package com.novaco.luxapi.commons.time
 
+import com.novaco.luxapi.commons.i18n.LanguageManager
+import com.novaco.luxapi.commons.player.LuxPlayer
 import java.util.concurrent.TimeUnit
 
 /**
@@ -75,6 +77,37 @@ object TimeFormatUtils {
         } else {
             String.format("%02d:%02d", minutes, seconds)
         }
+    }
+
+    /**
+     * Converts milliseconds into a formatted string (e.g., "1h 30m" or "1 ชม. 30 นาที").
+     *
+     * @param millis The time in milliseconds.
+     * @param player The target player used to determine the correct language locale.
+     * @return A formatted string representation.
+     */
+    fun formatDuration(millis: Long, player: LuxPlayer? = null): String {
+        if (millis <= 0) {
+            return LanguageManager.getTranslation(player, "time.format.ready", "Ready")
+        }
+
+        val seconds = (millis / 1000) % 60
+        val minutes = (millis / (1000 * 60)) % 60
+        val hours = (millis / (1000 * 60 * 60)) % 24
+        val days = millis / (1000 * 60 * 60 * 24)
+
+        val strDay = LanguageManager.getTranslation(player, "time.format.day", "d")
+        val strHour = LanguageManager.getTranslation(player, "time.format.hour", "h")
+        val strMinute = LanguageManager.getTranslation(player, "time.format.minute", "m")
+        val strSecond = LanguageManager.getTranslation(player, "time.format.second", "s")
+
+        val builder = StringBuilder()
+        if (days > 0) builder.append("$days$strDay ")
+        if (hours > 0) builder.append("$hours$strHour ")
+        if (minutes > 0) builder.append("$minutes$strMinute ")
+        if (seconds > 0 || builder.isEmpty()) builder.append("$seconds$strSecond")
+
+        return builder.toString().trim()
     }
 }
 

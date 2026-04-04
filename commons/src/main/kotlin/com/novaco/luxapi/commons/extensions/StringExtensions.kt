@@ -18,7 +18,6 @@ private val HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})")
 fun String.colorize(): String {
     var text = this
 
-    // Process Hex Colors (e.g., &#FF0000 -> §x§F§F§0§0§0§0)
     val matcher = HEX_PATTERN.matcher(text)
     val buffer = StringBuffer()
     while (matcher.find()) {
@@ -32,7 +31,6 @@ fun String.colorize(): String {
     matcher.appendTail(buffer)
     text = buffer.toString()
 
-    // Process standard legacy colors
     return text.replace("&", "§")
 }
 

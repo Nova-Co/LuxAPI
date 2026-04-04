@@ -58,7 +58,6 @@ object PokedexManager {
     fun getCaughtCount(player: LuxPlayer): Int {
         val serverPlayer = player.parent as ServerPlayer
 
-        // 🌟 Fix: Iterate through all species records and count how many have the CAUGHT knowledge state.
         return serverPlayer.pokedex().speciesRecords.values.count {
             it.getKnowledge().name.equals("CAUGHT", ignoreCase = true)
         }

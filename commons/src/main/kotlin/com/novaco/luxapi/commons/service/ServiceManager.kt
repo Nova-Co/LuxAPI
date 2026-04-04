@@ -53,4 +53,12 @@ object ServiceManager {
     fun <T : Any> unregister(serviceClass: Class<T>) {
         services.remove(serviceClass)
     }
+
+    /**
+     * Clears all registered services from the manager.
+     * Highly recommended for unit testing teardowns and framework reloading.
+     */
+    fun clear() {
+        services.clear()
+    }
 }
