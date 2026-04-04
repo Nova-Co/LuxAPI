@@ -6,7 +6,6 @@ import net.minecraft.network.chat.Component
 /**
  * Extension functions providing quick and concise access to the [PokemonPlaceholderRegistry].
  *
- * @author NovaCo
  */
 
 /**

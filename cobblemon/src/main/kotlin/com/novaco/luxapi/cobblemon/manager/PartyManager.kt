@@ -8,7 +8,6 @@ import com.novaco.luxapi.commons.player.LuxPlayer
  * Extension functions providing high-level management for a player's Pokémon party
  * and PC storage. Designed for rapid development of gameplay mechanics.
  *
- * @author NovaCo
  */
 
 /**
