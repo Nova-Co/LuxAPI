@@ -36,3 +36,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+/core/logs/2026-04-05-1.log.gz
+/core/logs/2026-04-05-2.log.gz
+/core/logs/latest.log
