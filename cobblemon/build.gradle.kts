@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     compileOnly(project(":commons"))
+    compileOnly(project(":core"))
     compileOnly(project(":database"))
 
     minecraft("com.mojang:minecraft:1.21.1")

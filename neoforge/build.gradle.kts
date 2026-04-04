@@ -44,6 +44,8 @@ repositories {
 
 dependencies {
     implementation(project(":commons"))
+    implementation(project(":core"))
+    implementation(project(":cobblemon"))
     implementation("thedarkcolour:kotlinforforge-neoforge:5.0.1")
 
     shadeFiles(project(":commons")) {

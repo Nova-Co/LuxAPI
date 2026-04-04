@@ -20,6 +20,8 @@ dependencies {
     modImplementation("net.fabricmc:fabric-language-kotlin:1.12.1+kotlin.2.0.20")
 
     implementation(project(":commons"))
+    implementation(project(":core"))
+    implementation(project(":cobblemon"))
 
     shadeFiles(project(":commons")) {
         isTransitive = false
