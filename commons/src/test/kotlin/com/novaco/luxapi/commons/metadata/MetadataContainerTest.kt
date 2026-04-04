@@ -15,7 +15,6 @@ class MetadataContainerTest {
 
     @Test
     fun `test storing and retrieving multiple data types`() {
-        // Using .set() instead of .put()
         container.set("player_kills", 150)
         container.set("current_quest", "dragon_slayer")
         container.set("is_vip", true)

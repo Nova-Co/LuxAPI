@@ -31,14 +31,14 @@ class EventBusTest {
     fun `test event subscription and dispatch routing`() {
         val listener = DummyListener()
 
-        // 1. Register the listener to the bus
+        // Register the listener to the bus
         EventBus.register(listener)
 
-        // 2. Fire the event (Fixed: using fire() instead of post())
+        // Fire the event (Fixed: using fire() instead of post())
         val event = DummyEvent()
         EventBus.fire(event)
 
-        // 3. Verify the event was intercepted and modified
+        // Verify the event was intercepted and modified
         assertTrue(event.wasHandled, "The EventBus should correctly route the event to the subscribed method.")
     }
 

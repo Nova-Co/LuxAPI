@@ -26,11 +26,11 @@ class ConfigAnnotationTest {
     fun `test class level config and comment annotations`() {
         val configClass = DummyServerConfig::class.java
 
-        // 1. Verify that the class has the annotations
+        // Verify that the class has the annotations
         assertTrue(configClass.isAnnotationPresent(Config::class.java), "The config class should have the @Config annotation.")
         assertTrue(configClass.isAnnotationPresent(Comment::class.java), "The config class should have the @Comment annotation.")
 
-        // 2. Verify the values inside the annotations
+        // Verify the values inside the annotations
         val configAnno = configClass.getAnnotation(Config::class.java)
         assertEquals("server.yml", configAnno.path, "The @Config path should correctly match the defined string.")
 
