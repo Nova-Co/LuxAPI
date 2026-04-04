@@ -12,14 +12,14 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "2.0.20" apply false
+    kotlin("jvm") version "2.1.10" apply false
     id("com.gradleup.shadow") version "8.3.6" apply false
     id("maven-publish")
 }
 
 allprojects {
     group = "com.novaco.luxapi"
-    version = "1.0.13"
+    version = "1.1.0"
 
     repositories {
         mavenCentral()
