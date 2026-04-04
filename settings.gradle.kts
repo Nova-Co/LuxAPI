@@ -11,7 +11,7 @@ pluginManagement {
 
 rootProject.name = "LuxAPI"
 
-include("commons", "database")
+include("commons", "database", "core")
 include("discord")
 include("fabric")
 include("neoforge")
