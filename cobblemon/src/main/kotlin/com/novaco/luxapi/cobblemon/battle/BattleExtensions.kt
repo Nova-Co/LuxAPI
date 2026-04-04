@@ -5,13 +5,12 @@ import com.novaco.luxapi.commons.player.LuxPlayer
 
 /**
  * Extension functions to streamline battle initiations and status checks.
- * Allows developers to write clean, single-line battle commands.
  */
 
 /**
- * Instantly initiates a standard 1v1 battle against a wild Pokémon entity.
+ * Instantly initiates a standard 1v1 battle against a wild Pokemon entity.
  *
- * @param wildEntity The target wild Pokémon.
+ * @param wildEntity The target wild Pokemon.
  */
 fun LuxPlayer.forceBattleWild(wildEntity: PokemonEntity) {
     BattleBuilder(this).startAgainstWild(wildEntity)
@@ -28,7 +27,6 @@ fun LuxPlayer.forceBattlePlayer(opponent: LuxPlayer) {
 
 /**
  * Property extension to quickly check if the player is currently in a battle.
- * Usage: if (player.isBattling) { ... }
  */
 val LuxPlayer.isBattling: Boolean
     get() = BattleManager.isInBattle(this)
