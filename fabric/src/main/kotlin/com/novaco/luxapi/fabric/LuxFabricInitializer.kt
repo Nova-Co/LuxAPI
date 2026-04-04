@@ -1,7 +1,10 @@
 package com.novaco.luxapi.fabric
 
 import com.novaco.luxapi.cobblemon.LuxCobblemon
+import com.novaco.luxapi.cobblemon.evolution.EvolutionHookManager
 import com.novaco.luxapi.commons.LuxAPI
+import com.novaco.luxapi.commons.chat.placeholder.DefaultPlayerProvider
+import com.novaco.luxapi.commons.chat.placeholder.PlaceholderManager
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import com.novaco.luxapi.fabric.command.FabricCommandManager
 import com.novaco.luxapi.fabric.event.FabricEventBridge
@@ -25,8 +28,13 @@ class LuxFabricInitializer : ModInitializer {
 
     override fun onInitialize() {
         logger.info("Initializing LuxAPI for Fabric 1.21.1...")
+
         LuxAPI.init()
         LuxCobblemon.init()
+
+        PlaceholderManager.register(DefaultPlayerProvider())
+
+        EvolutionHookManager.initialize()
 
         LuxAPI.guiProvider = { FabricGuiBuilder() }
         LuxAPI.paginatedGuiProvider = { FabricPaginatedGuiBuilder() }
@@ -43,10 +51,8 @@ class LuxFabricInitializer : ModInitializer {
 
         ServerLifecycleEvents.SERVER_STARTING.register { server ->
             val playerManager = FabricPlayerManager(server)
-
             InjectorRegistry.registerPlayerInjector(playerManager)
-
-            logger.info("LuxAPI Player Injector registered successfully!")
+            logger.info("LuxAPI Player Injector (Fabric) registered successfully!")
         }
     }
 }
