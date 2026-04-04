@@ -13,9 +13,8 @@ import com.novaco.luxapi.commons.player.LuxPlayer
 import net.minecraft.server.level.ServerPlayer
 
 /**
- * A fluent builder pattern designed to configure and initiate Pokémon battles effortlessly.
- * This abstracts the complexities of the internal BattleRegistry and allows developers
- * to set rules, formats, and opponents in a highly readable chain.
+ * A fluent builder pattern designed to configure and initiate Pokemon battles effortlessly.
+ * Abstracts the complexities of the internal BattleRegistry for quick configuration.
  */
 class BattleBuilder(private val initiator: LuxPlayer) {
 
@@ -45,8 +44,8 @@ class BattleBuilder(private val initiator: LuxPlayer) {
     }
 
     /**
-     * Helper method to extract conscious Pokémon from a player's party and convert them
-     * into BattlePokemon instances required by the 1.7.3 Actor system.
+     * Extracts conscious Pokemon from a player's party and converts them
+     * into BattlePokemon instances.
      */
     private fun getBattleReadyParty(player: ServerPlayer): List<BattlePokemon> {
         val party = player.party()
@@ -61,16 +60,17 @@ class BattleBuilder(private val initiator: LuxPlayer) {
     }
 
     /**
-     * Executes the battle initialization against a wild Pokémon entity in the world.
+     * Executes the battle initialization against a wild Pokemon entity in the world.
      *
-     * @param wildEntity The target wild Pokémon entity.
-     * @return The active [PokemonBattle] instance, or null if the battle could not start.
+     * @param wildEntity The target wild Pokemon entity.
+     * @return The active PokemonBattle instance, or null if the battle could not start.
      */
     fun startAgainstWild(wildEntity: PokemonEntity): PokemonBattle? {
         val serverPlayer = initiator.parent as ServerPlayer
         val battleParty = getBattleReadyParty(serverPlayer)
 
         if (battleParty.isEmpty()) return null
+
         val format = if (isDoubleBattle) BattleFormat.GEN_9_DOUBLES else BattleFormat.GEN_9_SINGLES
         val p1Side = BattleSide(PlayerBattleActor(serverPlayer.uuid, battleParty))
         val wildBattlePokemon = BattlePokemon(wildEntity.pokemon)
@@ -80,8 +80,7 @@ class BattleBuilder(private val initiator: LuxPlayer) {
 
         Cobblemon.battleRegistry.startBattle(format, p1Side, p2Side).ifSuccessful { battle ->
             activeBattle = battle
-
-            // Apply advanced rules like disabling spectators if requested
+            // Note: Spectator settings can be injected into the activeBattle here in the future.
         }
 
         return activeBattle
@@ -91,7 +90,7 @@ class BattleBuilder(private val initiator: LuxPlayer) {
      * Executes a Player vs Player (PvP) battle initialization.
      *
      * @param opponent The targeted player to battle against.
-     * @return The active [PokemonBattle] instance, or null if the battle could not start.
+     * @return The active PokemonBattle instance, or null if the battle could not start.
      */
     fun startAgainstPlayer(opponent: LuxPlayer): PokemonBattle? {
         val p1 = initiator.parent as ServerPlayer
