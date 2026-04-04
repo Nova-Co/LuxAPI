@@ -29,6 +29,15 @@ object EventBus {
     }
 
     /**
+     * Unregisters a specific listener object from all events.
+     */
+    fun unregister(listener: Any) {
+        listeners.values.forEach { list ->
+            list.removeIf { it.first == listener }
+        }
+    }
+
+    /**
      * Dispatches an event to all registered listeners listening for this specific event type.
      */
     fun fire(event: LuxEvent) {
@@ -40,5 +49,13 @@ object EventBus {
                 e.printStackTrace()
             }
         }
+    }
+
+    /**
+     * Clears all registered listeners.
+     * Highly recommended for unit testing teardowns.
+     */
+    fun clear() {
+        listeners.clear()
     }
 }

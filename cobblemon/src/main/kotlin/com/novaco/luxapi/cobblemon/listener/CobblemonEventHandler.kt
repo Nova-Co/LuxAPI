@@ -13,7 +13,6 @@ import net.minecraft.network.chat.Component
  *
  * It must be initialized during the mod/plugin's startup phase by calling [register].
  *
- * @author NovaCo
  */
 object CobblemonEventHandler {
 

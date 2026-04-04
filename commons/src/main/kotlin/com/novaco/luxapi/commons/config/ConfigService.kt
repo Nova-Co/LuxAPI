@@ -17,7 +17,8 @@ object ConfigService {
     /**
      * Loads a configuration instance from the filesystem.
      * If the file does not exist, it will be created with default values.
-     * * @param clazz The class type extending LuxConfig to be loaded.
+     *
+     * @param clazz The class type extending LuxConfig to be loaded.
      * @param dataFolder The root directory where the config file should reside.
      * @return A fully populated instance of the specified configuration class.
      * @throws IllegalArgumentException If the class is missing the @Config annotation.
@@ -31,43 +32,35 @@ object ConfigService {
 
         val loader = createLoader(file.toPath())
         val node = loader.load()
-
-        // Map the YAML node to the class instance
         val instance = node.get(clazz) ?: clazz.getDeclaredConstructor().newInstance()
 
-        // Ensure the file exists on disk with default values if it was missing
-        if (!file.exists()) {
-            save(instance, file)
-        }
-
         instance.init(file)
+        save(instance, file)
         return instance
     }
 
     /**
      * Persists the provided configuration instance to a YAML file.
      * Automatically applies class-level and field-level comments.
-     * * @param instance The configuration object to save.
+     *
+     * @param instance The configuration object to save.
      * @param file The destination file on the disk.
      */
     fun save(instance: Any, file: File) {
         val loader = createLoader(file.toPath())
         val node = loader.createNode()
 
-        // Serialize the object into the root node
         node.set(instance::class.java, instance)
 
-        // Apply class-level documentation
         val classComment = instance::class.java.getAnnotation(Comment::class.java)
         if (classComment != null) {
             node.comment(classComment.value)
         }
 
-        // Apply field-level documentation by iterating through the object structure
         instance::class.java.declaredFields.forEach { field ->
             val commentAnnotation = field.getAnnotation(Comment::class.java)
             if (commentAnnotation != null) {
-                // Navigate to the specific node representing the field and attach the comment
+                field.isAccessible = true
                 node.node(field.name).comment(commentAnnotation.value)
             }
         }
@@ -77,7 +70,8 @@ object ConfigService {
 
     /**
      * Configures and builds a YAML loader with standardized settings.
-     * * @param path The NIO Path to the target file.
+     *
+     * @param path The NIO Path to the target file.
      * @return A configured YamlConfigurationLoader.
      */
     private fun createLoader(path: Path): YamlConfigurationLoader {
@@ -85,6 +79,9 @@ object ConfigService {
             .path(path)
             .nodeStyle(NodeStyle.BLOCK)
             .indent(2)
+            .defaultOptions { options ->
+                options.shouldCopyDefaults(true)
+            }
             .build()
     }
 }
