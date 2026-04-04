@@ -15,7 +15,7 @@ object BattleManager {
      * Retrieves the current active battle that the specified player is participating in.
      *
      * @param player The target player.
-     * @return The [PokemonBattle] instance, or null if the player is not currently in a battle.
+     * @return The PokemonBattle instance, or null if the player is not currently in a battle.
      */
     fun getActiveBattle(player: LuxPlayer): PokemonBattle? {
         val serverPlayer = player.parent as ServerPlayer
@@ -23,7 +23,7 @@ object BattleManager {
     }
 
     /**
-     * Evaluates whether the specified player is currently engaged in a Pokémon battle.
+     * Evaluates whether the specified player is currently engaged in a Pokemon battle.
      *
      * @param player The target player.
      * @return True if the player is battling, false otherwise.
@@ -34,7 +34,6 @@ object BattleManager {
 
     /**
      * Forces a player to spectate another player's ongoing battle.
-     * Highly useful for e-sports features, server tournaments, or admin moderation.
      *
      * @param spectator The player who will watch the battle.
      * @param target The player who is currently battling.
@@ -45,11 +44,6 @@ object BattleManager {
         val spectatorPlayer = spectator.parent as ServerPlayer
 
         targetBattle.spectators.add(spectatorPlayer.uuid)
-
-        // Note: To fully open the battle UI on the client side, you may eventually
-        // need to send an initial BattleState/Sync packet to this spectatorPlayer
-        // depending on how Cobblemon handles mid-match spectator joins in this version.
-
         return true
     }
 }
