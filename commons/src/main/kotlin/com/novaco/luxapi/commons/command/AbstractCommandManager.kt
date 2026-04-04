@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap
  */
 abstract class AbstractCommandManager : CommandManager {
 
-    // Use a map to store root command names and their corresponding processors
     protected val registeredCommands = ConcurrentHashMap<String, CommandProcessor>()
 
     /**
@@ -22,10 +21,8 @@ abstract class AbstractCommandManager : CommandManager {
         val processor = CommandProcessor(commandInstance)
         val annotation = processor.commandInfo
 
-        // Store the command using its primary name
         registeredCommands[annotation.name.lowercase()] = processor
 
-        // Register the command to the actual Minecraft server (Platform dependent)
         registerToPlatform(processor)
     }
 
