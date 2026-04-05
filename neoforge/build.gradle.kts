@@ -32,6 +32,7 @@ neoForge {
     mods {
         create("luxapi") {
             sourceSet(project.sourceSets.main.get())
+            sourceSet(project.sourceSets.test.get())
         }
     }
 }
@@ -58,6 +59,11 @@ dependencies {
 
     // --- Mocking Framework ---
     testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("org.jetbrains.kotlin:kotlin-reflect:2.0.20")
+
+    testImplementation(files(sourceSets.main.get().compileClasspath))
+    testRuntimeOnly(files(sourceSets.main.get().runtimeClasspath))
 }
 
 tasks.withType<JavaCompile> {
@@ -65,14 +71,16 @@ tasks.withType<JavaCompile> {
     options.release.set(21)
 }
 
+// FIXED: Upgraded from the deprecated kotlinOptions to the new compilerOptions DSL
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "21"
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+    }
 }
 
 tasks.withType<ShadowJar> {
     isZip64 = true
     configurations = listOf(shadeFiles)
-
     archiveClassifier.set("")
 }
 
