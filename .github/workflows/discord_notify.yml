@@ -47,7 +47,7 @@ jobs:
                   }
                 ],
                 "footer": {
-                  "text": "NovaCo",
+                  "text": "NovaCo"
                 },
                 "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
               }
