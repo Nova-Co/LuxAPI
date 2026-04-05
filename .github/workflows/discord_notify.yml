@@ -15,7 +15,7 @@ jobs:
           COMMIT_URL="${{ github.event.head_commit.url }}"
           REPO_URL="https://github.com/${{ github.repository }}"
           
-          if [ -z "$COMMIT_MSG" ]; then COMMIT_MSG="Manual system verification test."; fi
+          if [ -z "$COMMIT_MSG" ]; then COMMIT_MSG="Manual commit test."; fi
           if [ -z "$COMMIT_URL" ]; then COMMIT_URL="$REPO_URL"; fi
 
           curl -i -H "Content-Type: application/json" \
@@ -24,8 +24,7 @@ jobs:
             "content": "<@&1490287716192223332>",
             "embeds": [
               {
-                "title": "💎 NovaCo // System Update",
-                "description": "Deployment action by **${{ github.actor }}**",
+                "title": NovaCo Update",
                 "color": 3327231,
                 "thumbnail": {
                   "url": "https://avatars.githubusercontent.com/u/272980283?s=200&v=4"
@@ -48,8 +47,7 @@ jobs:
                   }
                 ],
                 "footer": {
-                  "text": "STYX Team • NovaCo Central",
-                  "icon_url": "https://github.com/${{ github.actor }}.png"
+                  "text": "NovaCo",
                 },
                 "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
               }
