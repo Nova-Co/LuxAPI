@@ -46,3 +46,5 @@ bin/
 /fabric/logs/2026-04-05-5.log.gz
 /fabric/logs/2026-04-05-6.log.gz
 /fabric/logs/latest.log
+/neoforge/logs/debug.log
+/neoforge/logs/latest.log
