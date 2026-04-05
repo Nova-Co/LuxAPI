@@ -11,15 +11,21 @@ jobs:
     steps:
       - name: Send NovaCo Push Notification
         run: |
-          # The color 3327231 is a deep 'Nova' Sapphire taken from your logo
-          curl -H "Content-Type: application/json" \
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          COMMIT_URL="${{ github.event.head_commit.url }}"
+          REPO_URL="https://github.com/${{ github.repository }}"
+          
+          if [ -z "$COMMIT_MSG" ]; then COMMIT_MSG="Manual system verification test."; fi
+          if [ -z "$COMMIT_URL" ]; then COMMIT_URL="$REPO_URL"; fi
+
+          curl -i -H "Content-Type: application/json" \
                -X POST \
                -d '{
             "content": "<@&1490287716192223332>",
             "embeds": [
               {
                 "title": "💎 NovaCo // System Update",
-                "description": "Deployment triggered by **${{ github.actor }}**",
+                "description": "Deployment action by **${{ github.actor }}**",
                 "color": 3327231,
                 "thumbnail": {
                   "url": "https://avatars.githubusercontent.com/u/272980283?s=200&v=4"
@@ -37,7 +43,7 @@ jobs:
                   },
                   {
                     "name": "📝 Change Log",
-                    "value": "```fix\n${{ github.event.head_commit.message }}\n```",
+                    "value": "```fix\n'"$COMMIT_MSG"'\n```",
                     "inline": false
                   }
                 ],
@@ -56,7 +62,7 @@ jobs:
                     "type": 2,
                     "style": 5,
                     "label": "Review Changes",
-                    "url": "${{ github.event.head_commit.url }}",
+                    "url": "'"$COMMIT_URL"'",
                     "emoji": { "name": "✨" }
                   },
                   {
