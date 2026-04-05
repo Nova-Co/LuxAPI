@@ -49,7 +49,7 @@ jobs:
                   }
                 ],
                 "footer": {
-                  "text": "STYX Team • NovaCo Infrastructure",
+                  "text": "",
                   "icon_url": "https://github.com/${{ github.actor }}.png"
                 },
                 "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
