@@ -9,9 +9,16 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: We must check out the code to read build.gradle.kts
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Send NovaCo Push Notification
         run: |
-          # 1. Setup variables with fallbacks for manual tests
+          # 1. Extract version from build.gradle.kts (looks for the first 'version = "..."')
+          RAW_VERSION=$(grep -m 1 "version =" build.gradle.kts | cut -d '"' -f 2)
+          
+          # 2. Setup variables with fallbacks
           MSG="${{ github.event.head_commit.message }}"
           URL="${{ github.event.head_commit.url }}"
           REPO="${{ github.repository }}"
@@ -19,8 +26,9 @@ jobs:
           
           if [ -z "$MSG" ]; then MSG="Manual system verification / No commit data"; fi
           if [ -z "$URL" ]; then URL="https://github.com/$REPO"; fi
+          if [ -z "$RAW_VERSION" ]; then RAW_VERSION="Unknown"; fi
 
-          # 2. Create the JSON payload file (Corrected syntax)
+          # 3. Create the JSON payload file
           cat <<EOF > payload.json
           {
             "content": "<@&1490287716192223332>",
@@ -34,7 +42,7 @@ jobs:
                 "fields": [
                   {
                     "name": "🏷️ Version",
-                    "value": "\`v1.0.$RUN\`",
+                    "value": "\`v$RAW_VERSION (Build #$RUN)\`",
                     "inline": true
                   },
                   {
@@ -49,7 +57,7 @@ jobs:
                   }
                 ],
                 "footer": {
-                  "text": "",
+                  "text": "STYX Team • NovaCo Infrastructure",
                   "icon_url": "https://github.com/${{ github.actor }}.png"
                 },
                 "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -72,7 +80,7 @@ jobs:
           }
           EOF
 
-          # 3. Execute the Post
+          # 4. Execute the Post
           curl -i -H "Content-Type: application/json" \
                -X POST \
                -d @payload.json \
