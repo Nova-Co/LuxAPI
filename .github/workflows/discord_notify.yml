@@ -24,7 +24,7 @@ jobs:
             "content": "<@&1490287716192223332>",
             "embeds": [
               {
-                "title": NovaCo Update",
+                "title": "NovaCo Update",
                 "color": 3327231,
                 "thumbnail": {
                   "url": "https://avatars.githubusercontent.com/u/272980283?s=200&v=4"
