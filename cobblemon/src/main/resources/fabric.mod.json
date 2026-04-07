@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "luxapi_cobblemon",
+  "version": "1.1.1",
+  "name": "LuxAPI Cobblemon",
+  "description": "Cobblemon module for LuxAPI",
+  "environment": "*",
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "minecraft": "~1.21.1"
+  }
+}

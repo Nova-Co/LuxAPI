@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "luxapi_core",
+  "version": "1.1.1",
+  "name": "LuxAPI Core",
+  "environment": "*",
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "minecraft": "~1.21.1"
+  }
+}
