@@ -3,6 +3,7 @@ package com.novaco.luxapi.cobblemon.battle
 import com.cobblemon.mod.common.Cobblemon
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle
 import com.cobblemon.mod.common.battles.BattleFormat
+import com.cobblemon.mod.common.battles.BattleRegistry
 import com.cobblemon.mod.common.battles.BattleSide
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
 import com.cobblemon.mod.common.battles.actor.PokemonBattleActor
@@ -94,6 +95,11 @@ class BattleBuilder(private val initiator: LuxPlayer) {
      */
     fun startAgainstNPC(npcEntity: NPCEntity): PokemonBattle? {
         val serverPlayer = initiator.parent as ServerPlayer
+
+        if (npcEntity.isInBattle() || BattleRegistry.getBattleByParticipatingPlayer(serverPlayer) != null) {
+            return null
+        }
+
         val p1Party = getBattleReadyParty(serverPlayer)
 
         if (p1Party.isEmpty()) {
@@ -113,7 +119,8 @@ class BattleBuilder(private val initiator: LuxPlayer) {
         ).ifSuccessful { battle ->
             activeBattle = battle
         }.ifErrored { error ->
-            serverPlayer.sendSystemMessage(Component.literal("§cFailed to start battle: $error"))
+            val errorMsg = error.errors.joinToString(", ") { it.javaClass.simpleName }
+            serverPlayer.sendSystemMessage(Component.literal("§cFailed to start battle: $errorMsg"))
         }
 
         return activeBattle
