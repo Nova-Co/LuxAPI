@@ -1,6 +1,7 @@
 package com.novaco.luxapi.cobblemon
 
 import com.novaco.luxapi.cobblemon.listener.CobblemonEventHandler
+import com.novaco.luxapi.cobblemon.manager.NPCInteractionManager
 
 /**
  * The primary entry point for the LuxAPI Cobblemon module.
@@ -15,5 +16,6 @@ object LuxCobblemon {
      */
     fun init() {
         CobblemonEventHandler.register()
+        NPCInteractionManager.register()
     }
 }
