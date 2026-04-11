@@ -1,5 +1,6 @@
 package com.novaco.luxapi.cobblemon.battle
 
+import com.cobblemon.mod.common.entity.npc.NPCEntity
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import com.novaco.luxapi.commons.player.LuxPlayer
 
@@ -23,6 +24,15 @@ fun LuxPlayer.forceBattleWild(wildEntity: PokemonEntity) {
  */
 fun LuxPlayer.forceBattlePlayer(opponent: LuxPlayer) {
     BattleBuilder(this).startAgainstPlayer(opponent)
+}
+
+/**
+ * Instantly initiates a standard 1v1 battle against an NPC Trainer.
+ *
+ * @param npcEntity The targeted NPC Trainer.
+ */
+fun LuxPlayer.forceBattleNPC(npcEntity: NPCEntity) {
+    BattleBuilder(this).startAgainstNPC(npcEntity)
 }
 
 /**
