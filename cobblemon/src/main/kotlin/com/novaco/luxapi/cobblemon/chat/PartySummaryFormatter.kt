@@ -18,6 +18,7 @@ object PartySummaryFormatter {
      * @param player The target player whose party will be summarized.
      * @return A SmartMessage ready to be sent or broadcasted.
      */
+    @JvmStatic
     fun format(player: ServerPlayer): SmartMessage {
         val party = Cobblemon.storage.getParty(player)
         val message = SmartMessage()
@@ -70,7 +71,7 @@ object PartySummaryFormatter {
                 append("&7Held Item: &8None\n")
             }
 
-            // สามารถเพิ่ม IVs/EVs โชว์ตรงนี้ในอนาคตได้สบายๆ ครับ
+            // add IVs/EVs
         }
 
         message.appendHoverText(visibleText, hoverText)
