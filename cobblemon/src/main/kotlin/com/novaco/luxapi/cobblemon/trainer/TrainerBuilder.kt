@@ -1,7 +1,9 @@
 package com.novaco.luxapi.cobblemon.trainer
 
 import com.cobblemon.mod.common.CobblemonEntities
+import com.cobblemon.mod.common.api.npc.NPCClasses
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
+import com.cobblemon.mod.common.api.storage.party.NPCPartyStore
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import com.cobblemon.mod.common.pokemon.Pokemon
 import com.novaco.luxapi.commons.player.LuxPlayer
@@ -18,6 +20,9 @@ class TrainerBuilder(private val spawner: LuxPlayer) {
     private var trainerName: Component = Component.literal("Pokémon Trainer")
     private val trainerParty: MutableList<Pokemon> = mutableListOf()
     private var interactDialog: Component = Component.literal("Let's battle!")
+
+    private var skinUsername: String = "Ash"
+    private var lookAtPlayer: Boolean = true
 
     /**
      * Sets the display name floating above the NPC's head.
@@ -71,6 +76,19 @@ class TrainerBuilder(private val spawner: LuxPlayer) {
     }
 
     /**
+     *
+     */
+    fun setSkin(username: String): TrainerBuilder {
+        this.skinUsername = username
+        return this
+    }
+
+    fun setLook(look: Boolean): TrainerBuilder {
+        this.lookAtPlayer = look
+        return this
+    }
+
+    /**
      * Finalizes the builder configuration and spawns the NPC Entity into the world,
      * placing it exactly two blocks in front of the initiating player.
      *
@@ -83,9 +101,35 @@ class TrainerBuilder(private val spawner: LuxPlayer) {
         val spawnPos = serverPlayer.position().add(lookVector.scale(2.0))
         val npcEntity = CobblemonEntities.NPC.create(serverLevel) ?: return null
 
+        val availableClasses = NPCClasses.classes
+
+        val classNames = availableClasses.joinToString(", ") { it.id.toString() }
+        println("[LuxAPI] Available NPC Classes: $classNames")
+
+        val targetNames = listOf("standard", "player", "trainer", "npc", "human")
+        var validClass = availableClasses.firstOrNull { classObj ->
+            targetNames.any { classObj.id.path.contains(it) }
+        }
+
+        if (validClass == null) {
+            validClass = availableClasses.firstOrNull { it.id.path != "dummy" }
+        }
+
+        if (validClass != null) {
+            npcEntity.npc = validClass
+        } else {
+            println("[LuxAPI] CRITICAL: No valid NPC classes found!")
+        }
+
         npcEntity.customName = trainerName
         npcEntity.isCustomNameVisible = true
         npcEntity.setPos(spawnPos.x, spawnPos.y, spawnPos.z)
+
+        npcEntity.loadTextureFromGameProfileName(skinUsername)
+
+        if (npcEntity.party == null) {
+            npcEntity.party = NPCPartyStore(npcEntity)
+        }
 
         npcEntity.party?.let { partyStore ->
             for (pokemon in trainerParty) {
@@ -94,6 +138,11 @@ class TrainerBuilder(private val spawner: LuxPlayer) {
         }
 
         val success = serverLevel.addFreshEntity(npcEntity)
+
+        if (success && lookAtPlayer) {
+            npcEntity.addTag("lux_look_at_interactor")
+        }
+
         return if (success) npcEntity else null
     }
 }
