@@ -123,7 +123,7 @@ open class PartySummaryFormatter {
         return buildString {
             append("&b&l${pokemon.species.name.replaceFirstChar { it.uppercase() }} Stats\n")
             append("&8-------------------\n")
-            append("&7Ability: &e${pokemon.ability.name.replaceFirstChar { it.uppercase() }}\n")
+            append("&7Ability: &e${pokemon.ability.displayName.replaceFirstChar { it.uppercase() }}\n")
             append("&7Nature: &e${pokemon.nature.displayName.replaceFirstChar { it.uppercase() }}\n")
             append("&7Friendship: &c${pokemon.friendship}\n")
 
