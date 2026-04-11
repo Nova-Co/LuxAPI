@@ -9,6 +9,8 @@ import com.cobblemon.mod.common.pokemon.Pokemon
 import com.novaco.luxapi.commons.player.LuxPlayer
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.phys.Vec3
+import java.util.concurrent.CompletableFuture
 
 /**
  * A fluent builder pattern designed to construct and spawn custom NPC Trainers dynamically.
@@ -97,35 +99,20 @@ class TrainerBuilder(private val spawner: LuxPlayer) {
     fun spawn(): NPCEntity? {
         val serverPlayer = spawner.parent as ServerPlayer
         val serverLevel = serverPlayer.serverLevel()
-        val lookVector = serverPlayer.lookAngle
-        val spawnPos = serverPlayer.position().add(lookVector.scale(2.0))
+
+        val flatLookVector = Vec3.directionFromRotation(0.0f, serverPlayer.yRot)
+        val spawnPos = serverPlayer.position().add(flatLookVector.scale(2.0))
+
         val npcEntity = CobblemonEntities.NPC.create(serverLevel) ?: return null
 
-        val availableClasses = NPCClasses.classes
-
-        val classNames = availableClasses.joinToString(", ") { it.id.toString() }
-        println("[LuxAPI] Available NPC Classes: $classNames")
-
-        val targetNames = listOf("standard", "player", "trainer", "npc", "human")
-        var validClass = availableClasses.firstOrNull { classObj ->
-            targetNames.any { classObj.id.path.contains(it) }
-        }
-
-        if (validClass == null) {
-            validClass = availableClasses.firstOrNull { it.id.path != "dummy" }
-        }
-
-        if (validClass != null) {
-            npcEntity.npc = validClass
-        } else {
-            println("[LuxAPI] CRITICAL: No valid NPC classes found!")
-        }
+        NPCClasses.getByName("standard")?.let { npcEntity.npc = it }
 
         npcEntity.customName = trainerName
         npcEntity.isCustomNameVisible = true
         npcEntity.setPos(spawnPos.x, spawnPos.y, spawnPos.z)
 
-        npcEntity.loadTextureFromGameProfileName(skinUsername)
+        npcEntity.yRot = serverPlayer.yRot + 180.0f
+        npcEntity.yHeadRot = npcEntity.yRot
 
         if (npcEntity.party == null) {
             npcEntity.party = NPCPartyStore(npcEntity)
@@ -139,8 +126,18 @@ class TrainerBuilder(private val spawner: LuxPlayer) {
 
         val success = serverLevel.addFreshEntity(npcEntity)
 
-        if (success && lookAtPlayer) {
-            npcEntity.addTag("lux_look_at_interactor")
+        if (success) {
+            if (lookAtPlayer) {
+                npcEntity.addTag("lux_look_at_interactor")
+            }
+
+            CompletableFuture.runAsync {
+                try {
+                    npcEntity.loadTextureFromGameProfileName(skinUsername)
+                } catch (e: Exception) {
+                    println("[LuxAPI] Failed to load skin asynchronously: ${e.message}")
+                }
+            }
         }
 
         return if (success) npcEntity else null
