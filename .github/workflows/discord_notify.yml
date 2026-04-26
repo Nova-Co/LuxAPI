@@ -15,77 +15,120 @@ jobs:
           fetch-depth: 0 # Ensures we can see the history if needed
 
       - name: Send NovaCo Push Notification
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          REPO: ${{ github.repository }}
+          EVENT_COMPARE: ${{ github.event.compare }}
         run: |
+          set -euo pipefail
+
           # 1. Get Version from Gradle
           RAW_VERSION=$(grep -m 1 "version =" build.gradle.kts | cut -d '"' -f 2)
           if [ -z "$RAW_VERSION" ]; then RAW_VERSION="Unknown"; fi
 
-          # 2. Extract and format the Change Log
-          # We use jq to parse the GitHub Event JSON for all commit messages
-          if [ "${{ github.event_name }}" == "push" ]; then
-            CHANGELOG=$(echo '${{ toJson(github.event.commits) }}' | jq -r '.[] | "• \(.message | split("\n")[0]) ([\(.id[0:7])])"' | sed ':a;N;$!ba;s/\n/\\n/g')
-          else
-            CHANGELOG="Manual system verification test."
+          # 2. Define basic variables
+          COMPARE_URL="${EVENT_COMPARE:-}"
+          if [ -z "$COMPARE_URL" ]; then
+          COMPARE_URL="https://github.com/$REPO"
           fi
 
-          # 3. Define basic variables
-          REPO="${{ github.repository }}"
-          COMPARE_URL="${{ github.event.compare || 'https://github.com/${{ github.repository }}' }}"
+          if [ -z "${WEBHOOK_URL:-}" ]; then
+            echo "DISCORD_WEBHOOK_URL is not configured."
+            exit 1
+          fi
 
-          # 4. Construct the JSON Payload
-          cat <<EOF > payload.json
-          {
-            "content": "<@&1490287716192223332>",
-            "embeds": [
-              {
-                "title": "💎 NovaCo // System Update",
-                "color": 3327231,
-                "thumbnail": {
-                  "url": "https://avatars.githubusercontent.com/u/272980283?s=200&v=4"
-                },
-                "fields": [
-                  {
-                    "name": "🏷️ Version",
-                    "value": "\`v$RAW_VERSION\`",
-                    "inline": true
+          # 3. Build a clickable changelog for multi-commit pushes
+          COMMITS_JSON=$(jq -c '.commits // []' "$GITHUB_EVENT_PATH")
+          if [ "$EVENT_NAME" = "push" ]; then
+            TOTAL_COMMITS=$(echo "$COMMITS_JSON" | jq -r 'if type == "array" then length else 0 end')
+
+            CHANGELOG=$(echo "$COMMITS_JSON" | jq -r --arg repo "$REPO" '
+              if type == "array" and length > 0 then
+                .[:12]
+                | map("• \(.message | split("\\n")[0]) ([`\(.id[0:7])`](https://github.com/\($repo)/commit/\(.id)))")
+                | join("\n")
+              else
+                "• No commit details available."
+              end
+            ')
+
+            if [ "$TOTAL_COMMITS" -gt 12 ]; then
+              REMAINING=$((TOTAL_COMMITS - 12))
+              CHANGELOG="${CHANGELOG}"$'\n'"• ...and $REMAINING more commit(s)."
+            fi
+          else
+            SHORT_SHA="${SHA:0:7}"
+            CHANGELOG="• Manual workflow dispatch ([\`$SHORT_SHA\`](https://github.com/$REPO/commit/$SHA))"
+          fi
+
+          # Keep the changelog inside Discord embed limits (field value max 1024 chars)
+          if [ "${#CHANGELOG}" -gt 1000 ]; then
+            CHANGELOG="${CHANGELOG:0:997}..."
+          fi
+
+          # 4. Construct the JSON payload safely (proper escaping for messages/links/newlines)
+          jq -n \
+            --arg version "$RAW_VERSION" \
+            --arg repo "$REPO" \
+            --arg changelog "$CHANGELOG" \
+            --arg compareUrl "$COMPARE_URL" \
+            --arg actor "$ACTOR" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              content: "<@&1490287716192223332>",
+              embeds: [
+                {
+                  title: "💎 NovaCo // System Update",
+                  color: 3327231,
+                  thumbnail: {
+                    url: "https://avatars.githubusercontent.com/u/272980283?s=200&v=4"
                   },
-                  {
-                    "name": "📂 Repository",
-                    "value": "[\`$REPO\`](https://github.com/$REPO)",
-                    "inline": true
+                  fields: [
+                    {
+                      name: "🏷️ Version",
+                      value: "`v\($version)`",
+                      inline: true
+                    },
+                    {
+                      name: "📂 Repository",
+                      value: "[`\($repo)`](https://github.com/\($repo))",
+                      inline: true
+                    },
+                    {
+                      name: "📝 Change Log",
+                      value: $changelog,
+                      inline: false
+                    }
+                  ],
+                  footer: {
+                    text: "",
+                    icon_url: "https://github.com/\($actor).png"
                   },
-                  {
-                    "name": "📝 Change Log",
-                    "value": "\`\`\`fix\n$CHANGELOG\n\`\`\`",
-                    "inline": false
-                  }
-                ],
-                "footer": {
-                  "text": "",
-                  "icon_url": "https://github.com/${{ github.actor }}.png"
-                },
-                "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-              }
-            ],
-            "components": [
-              {
-                "type": 1,
-                "components": [
-                  {
-                    "type": 2,
-                    "style": 5,
-                    "label": "Review All Changes",
-                    "url": "$COMPARE_URL",
-                    "emoji": { "name": "✨" }
-                  }
-                ]
-              }
-            ]
-          }
-          EOF
+                  timestamp: $timestamp
+                }
+              ],
+              components: [
+                {
+                  type: 1,
+                  components: [
+                    {
+                      type: 2,
+                      style: 5,
+                      label: "Review All Changes",
+                      url: $compareUrl,
+                      emoji: { name: "✨" }
+                    }
+                  ]
+                }
+              ]
+            }' > payload.json
 
           # 5. Send it
-          curl -i -H "Content-Type: application/json" \
+          curl --fail-with-body --retry 3 --retry-delay 2 -i -H "Content-Type: application/json" \
                -X POST \
                -d @payload.json \
-               "${{ secrets.DISCORD_WEBHOOK_URL }}"
+               "$WEBHOOK_URL"
