@@ -1,6 +1,7 @@
 package com.novaco.luxapi.neoforge
 
 import com.novaco.luxapi.cobblemon.LuxCobblemon
+import com.novaco.luxapi.cobblemon.boss.aggro.BossDamageListener
 import com.novaco.luxapi.cobblemon.evolution.EvolutionHookManager
 import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.chat.placeholder.DefaultPlayerProvider
@@ -12,10 +13,13 @@ import com.novaco.luxapi.neoforge.gui.NeoForgeGuiBuilder
 import com.novaco.luxapi.neoforge.gui.NeoForgePaginatedGuiBuilder
 import com.novaco.luxapi.neoforge.player.NeoForgePlayerManager
 import com.novaco.luxapi.neoforge.scheduler.NeoForgeLuxScheduler
+import net.minecraft.world.entity.LivingEntity
 import net.neoforged.bus.api.IEventBus
+import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.Mod
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.RegisterCommandsEvent
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent
 import net.neoforged.neoforge.event.server.ServerStartingEvent
 import org.slf4j.LoggerFactory
 
@@ -50,6 +54,7 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
         neoForgeScheduler.register()
 
         NeoForgeEventBridge.register()
+        NeoForge.EVENT_BUS.register(this)
 
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands)
         NeoForge.EVENT_BUS.addListener(this::onServerStarting)
@@ -73,5 +78,18 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
         InjectorRegistry.registerPlayerInjector(playerManager)
 
         logger.info("LuxAPI Player Injector (NeoForge) registered successfully!")
+    }
+
+    /**
+     * Catches entity damage events and forwards them to the Common Boss API
+     * to manage boss aggro, minion targeting, and scoreboards.
+     */
+    @SubscribeEvent
+    fun onEntityDamaged(event: LivingDamageEvent.Post) {
+        val entity = event.entity
+        val sourceEntity = event.source.entity as? LivingEntity
+        val amount = event.newDamage
+
+        BossDamageListener.processDamage(entity, sourceEntity, amount)
     }
 }

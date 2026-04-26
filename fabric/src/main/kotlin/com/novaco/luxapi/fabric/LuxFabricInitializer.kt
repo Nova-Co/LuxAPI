@@ -1,6 +1,7 @@
 package com.novaco.luxapi.fabric
 
 import com.novaco.luxapi.cobblemon.LuxCobblemon
+import com.novaco.luxapi.cobblemon.boss.aggro.BossDamageListener
 import com.novaco.luxapi.cobblemon.evolution.EvolutionHookManager
 import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.chat.placeholder.DefaultPlayerProvider
@@ -14,7 +15,9 @@ import com.novaco.luxapi.fabric.player.FabricPlayerManager
 import com.novaco.luxapi.fabric.scheduler.FabricLuxScheduler
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
+import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
+import net.minecraft.world.entity.LivingEntity
 import org.slf4j.LoggerFactory
 
 class LuxFabricInitializer : ModInitializer {
@@ -44,6 +47,12 @@ class LuxFabricInitializer : ModInitializer {
         fabricScheduler.registerTickListener()
 
         FabricEventBridge.register()
+
+        ServerLivingEntityEvents.ALLOW_DAMAGE.register { entity, source, amount ->
+            val sourceEntity = source.entity as? LivingEntity
+            BossDamageListener.processDamage(entity, sourceEntity, amount)
+            true
+        }
 
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
             commandManager.setDispatcher(dispatcher)
