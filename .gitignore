@@ -36,25 +36,12 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-/core/logs/2026-04-05-1.log.gz
-/core/logs/2026-04-05-2.log.gz
-/core/logs/latest.log
-/fabric/logs/2026-04-05-1.log.gz
-/fabric/logs/2026-04-05-2.log.gz
-/fabric/logs/2026-04-05-3.log.gz
-/fabric/logs/2026-04-05-4.log.gz
-/fabric/logs/2026-04-05-5.log.gz
-/fabric/logs/2026-04-05-6.log.gz
-/fabric/logs/latest.log
-/neoforge/logs/debug.log
-/neoforge/logs/latest.log
-/cobblemon/logs/2026-04-06-1.log.gz
-/cobblemon/logs/2026-04-06-2.log.gz
-/cobblemon/logs/2026-04-06-3.log.gz
-/cobblemon/logs/2026-04-06-4.log.gz
-/cobblemon/logs/2026-04-06-5.log.gz
-/cobblemon/logs/2026-04-06-6.log.gz
-/cobblemon/logs/2026-04-06-7.log.gz
-/cobblemon/logs/latest.log
-/core/logs/2026-04-05-3.log.gz
-/neoforge/logs/debug-1.log.gz
+
+/neoforge/run/*
+/fabric/run/*
+/cobblemon/run/*
+/neoforge/logs/*
+/fabric/logs/*
+/cobblemon/logs/*
+
+/core/logs/*
