@@ -1,9 +1,5 @@
 # LuxAPI Development Roadmap
 
-**LuxAPI** is a high-level developer framework and API designed **exclusively for Cobblemon**.
-
----
-
 ## 🟢 Phase 1: Multi-loader Architecture & Core Infrastructure (Completed)
 *The baseline foundation that allows LuxAPI to run seamlessly on both Fabric and NeoForge.*
 - [x] **Platform-Agnostic Bridge:** Unified `commons` and `core` modules mapping directly to `fabric` and `neoforge` implementations.

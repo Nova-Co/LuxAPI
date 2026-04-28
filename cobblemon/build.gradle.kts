@@ -21,7 +21,7 @@ dependencies {
     /**
      * Cobblemon API
      */
-    compileOnly("com.cobblemon:neoforge:1.7.3+1.21.1") {
+    modCompileOnly("com.cobblemon:mod:1.7.3+1.21.1") {
         isTransitive = false
     }
 
