@@ -3,16 +3,19 @@ package com.novaco.luxapi.neoforge
 import com.novaco.luxapi.cobblemon.LuxCobblemon
 import com.novaco.luxapi.cobblemon.boss.aggro.BossDamageListener
 import com.novaco.luxapi.cobblemon.evolution.EvolutionHookManager
+import com.novaco.luxapi.cobblemon.npc.event.NPCInteractionListener
 import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.chat.placeholder.DefaultPlayerProvider
 import com.novaco.luxapi.commons.chat.placeholder.PlaceholderManager
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
+import com.novaco.luxapi.core.server.LuxServerManager
 import com.novaco.luxapi.neoforge.command.NeoForgeCommandManager
 import com.novaco.luxapi.neoforge.event.NeoForgeEventBridge
 import com.novaco.luxapi.neoforge.gui.NeoForgeGuiBuilder
 import com.novaco.luxapi.neoforge.gui.NeoForgePaginatedGuiBuilder
 import com.novaco.luxapi.neoforge.player.NeoForgePlayerManager
 import com.novaco.luxapi.neoforge.scheduler.NeoForgeLuxScheduler
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.LivingEntity
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.bus.api.SubscribeEvent
@@ -20,7 +23,9 @@ import net.neoforged.fml.common.Mod
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.RegisterCommandsEvent
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent
 import net.neoforged.neoforge.event.server.ServerStartingEvent
+import net.neoforged.neoforge.event.server.ServerStoppedEvent
 import org.slf4j.LoggerFactory
 
 /**
@@ -58,6 +63,7 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
 
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands)
         NeoForge.EVENT_BUS.addListener(this::onServerStarting)
+        NeoForge.EVENT_BUS.addListener(this::onServerStopped)
     }
 
     /**
@@ -74,10 +80,16 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
     private fun onServerStarting(event: ServerStartingEvent) {
         val server = event.server
 
+        LuxServerManager.init(server)
+
         val playerManager = NeoForgePlayerManager(server)
         InjectorRegistry.registerPlayerInjector(playerManager)
 
         logger.info("LuxAPI Player Injector (NeoForge) registered successfully!")
+    }
+
+    private fun onServerStopped(event: ServerStoppedEvent) {
+        LuxServerManager.clear()
     }
 
     /**
@@ -91,5 +103,18 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
         val amount = event.newDamage
 
         BossDamageListener.processDamage(entity, sourceEntity, amount)
+    }
+
+    /**
+     * Catches entity interact events
+     */
+    @SubscribeEvent
+    fun onEntityInteract(event: PlayerInteractEvent.EntityInteract) {
+        val player = event.entity as? ServerPlayer ?: return
+        val target = event.target
+
+        if (NPCInteractionListener.onInteract(player, target)) {
+            event.isCanceled = true // Prevent default behavior if we handled it
+        }
     }
 }
