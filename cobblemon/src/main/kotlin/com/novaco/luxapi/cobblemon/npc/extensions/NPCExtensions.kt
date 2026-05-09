@@ -1,31 +1,26 @@
-package com.novaco.luxapi.cobblemon.npc
+package com.novaco.luxapi.cobblemon.npc.extensions
 
 import com.cobblemon.mod.common.entity.npc.NPCEntity
+import com.novaco.luxapi.cobblemon.npc.LuxNPCBuilder
 import com.novaco.luxapi.commons.player.LuxPlayer
+
+/**
+ * Extension functions to streamline the creation and spawning of universal NPCs.
+ * Provides a highly readable Kotlin DSL.
+ */
 
 /**
  * Opens a builder context to configure and instantly spawn a universal NPC
  * in front of the player.
  *
- * Example Usage (Trainer):
- * ```
- * player.spawnNPC {
- * name("§cGym Leader Brock")
- * skin("Brock")
- * addPokemon("onix lvl=20")
- * onInteract { p, npc -> BattleManager.startBattle(p, npc) }
- * }
- * ```
- *
- * Example Usage (Story Dialogue):
+ * Example Usage:
  * ```
  * player.spawnNPC {
  * name("§bProfessor Oak")
  * skin("Prof_Oak")
+ * movement(LuxMovement.STATIONARY)
  * onInteract { p, npc ->
- * LuxDialogueBuilder()
- * .addPage("start", "oak", "Hello there!")
- * .buildAndOpen(LuxPlayer.of(p), npc)
+ * // Handle dialogue logic here
  * }
  * }
  * ```
