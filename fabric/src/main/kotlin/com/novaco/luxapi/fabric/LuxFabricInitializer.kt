@@ -3,10 +3,12 @@ package com.novaco.luxapi.fabric
 import com.novaco.luxapi.cobblemon.LuxCobblemon
 import com.novaco.luxapi.cobblemon.boss.aggro.BossDamageListener
 import com.novaco.luxapi.cobblemon.evolution.EvolutionHookManager
+import com.novaco.luxapi.cobblemon.npc.event.NPCInteractionListener
 import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.chat.placeholder.DefaultPlayerProvider
 import com.novaco.luxapi.commons.chat.placeholder.PlaceholderManager
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
+import com.novaco.luxapi.core.server.LuxServerManager
 import com.novaco.luxapi.fabric.command.FabricCommandManager
 import com.novaco.luxapi.fabric.event.FabricEventBridge
 import com.novaco.luxapi.fabric.gui.FabricGuiBuilder
@@ -17,6 +19,9 @@ import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
+import net.fabricmc.fabric.api.event.player.UseEntityCallback
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.LivingEntity
 import org.slf4j.LoggerFactory
 
@@ -48,6 +53,15 @@ class LuxFabricInitializer : ModInitializer {
 
         FabricEventBridge.register()
 
+        UseEntityCallback.EVENT.register { player, world, hand, target, hitResult ->
+            if (!world.isClientSide && player is ServerPlayer) {
+                if (NPCInteractionListener.onInteract(player, target)) {
+                    return@register InteractionResult.SUCCESS // Prevent default behavior
+                }
+            }
+            InteractionResult.PASS
+        }
+
         ServerLivingEntityEvents.ALLOW_DAMAGE.register { entity, source, amount ->
             val sourceEntity = source.entity as? LivingEntity
             BossDamageListener.processDamage(entity, sourceEntity, amount)
@@ -59,9 +73,15 @@ class LuxFabricInitializer : ModInitializer {
         }
 
         ServerLifecycleEvents.SERVER_STARTING.register { server ->
+            LuxServerManager.init(server)
+
             val playerManager = FabricPlayerManager(server)
             InjectorRegistry.registerPlayerInjector(playerManager)
             logger.info("LuxAPI Player Injector (Fabric) registered successfully!")
+        }
+
+        ServerLifecycleEvents.SERVER_STOPPED.register { _ ->
+            LuxServerManager.clear()
         }
     }
 }
