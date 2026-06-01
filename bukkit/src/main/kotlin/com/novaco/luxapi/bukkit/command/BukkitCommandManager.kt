@@ -14,8 +14,11 @@ import org.bukkit.plugin.Plugin
 import java.lang.reflect.Field
 
 /**
- * Bukkit-specific implementation of the CommandManager.
- * Utilizes reflection to inject commands dynamically into the server's CommandMap.
+ * Bukkit-specific implementation of the [CommandManager].
+ * Responsible for dynamically injecting registered commands directly into the server's
+ * internal command map, bypassing the need for static declarations in `plugin.yml`.
+ * It also automatically initializes platform-specific argument injectors and tab handlers.
+ * * @property plugin The Bukkit plugin instance that is registering the commands.
  */
 class BukkitCommandManager(private val plugin: Plugin) : CommandManager {
 
@@ -29,7 +32,11 @@ class BukkitCommandManager(private val plugin: Plugin) : CommandManager {
     }
 
     /**
-     * Extracts the SimpleCommandMap from the Bukkit server using reflection.
+     * Extracts the [SimpleCommandMap] from the Bukkit server using reflection.
+     * This enables runtime registration of commands without server restarts.
+     *
+     * @return The active [SimpleCommandMap] used by the Bukkit server.
+     * @throws RuntimeException If the reflection operation fails to find or access the command map.
      */
     private fun getBukkitCommandMap(): SimpleCommandMap {
         try {
@@ -44,6 +51,11 @@ class BukkitCommandManager(private val plugin: Plugin) : CommandManager {
 
     /**
      * Registers an annotated command instance directly into the Bukkit runtime.
+     * Validates the presence of the [Command] annotation, wraps the execution logic
+     * inside a [BukkitCommandWrapper], and injects it into the server's command map.
+     *
+     * @param commandInstance The object instance containing the command execution methods.
+     * @throws IllegalArgumentException If the provided instance is not annotated with [Command].
      */
     override fun register(commandInstance: Any) {
         val clazz = commandInstance.javaClass
