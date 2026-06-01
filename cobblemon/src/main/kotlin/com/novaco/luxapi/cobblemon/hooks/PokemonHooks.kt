@@ -5,14 +5,20 @@ import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.player.PlayerManager
 
 /**
- * Internal bridge that listens to raw CobblemonEvents and redirects them
- * to the simplified LuxAPI Hook system.
+ * An internal bridge that listens to raw Cobblemon events and translates them
+ * into the simplified LuxAPI hook system. This object is responsible for
+ * subscribing to the underlying game events and broadcasting them through the [HookManager].
  */
 object PokemonHooks {
 
+    /**
+     * Initializes all the necessary event listeners. This method should be called
+     * once during the server startup phase to ensure all hooks are active.
+     */
     fun initialize() {
         val playerManager = LuxAPI.getService<PlayerManager>()
 
+        // Listen for when a Pokémon is captured.
         CobblemonEvents.POKEMON_CAPTURED.subscribe { event ->
             val serverPlayer = event.player
             val caughtPokemon = event.pokemon
@@ -25,6 +31,7 @@ object PokemonHooks {
             }
         }
 
+        // Listen for when a battle concludes with a victory.
         CobblemonEvents.BATTLE_VICTORY.subscribe { event ->
             val winners = event.winners
                 .filterIsInstance<com.cobblemon.mod.common.battles.actor.PlayerBattleActor>()
@@ -41,6 +48,7 @@ object PokemonHooks {
             }
         }
 
+        // Listen for when a Pokémon levels up.
         CobblemonEvents.LEVEL_UP_EVENT.subscribe { event ->
             val pokemon = event.pokemon
             val ownerUUID = pokemon.getOwnerUUID()
@@ -55,6 +63,7 @@ object PokemonHooks {
             }
         }
 
+        // Listen for when a Pokémon completes its evolution.
         CobblemonEvents.EVOLUTION_COMPLETE.subscribe { event ->
             val ownerUUID = event.pokemon.getOwnerUUID()
             if (ownerUUID != null) {
@@ -65,6 +74,7 @@ object PokemonHooks {
             }
         }
 
+        // Listen for when a Pokémon egg hatches.
         CobblemonEvents.HATCH_EGG_POST.subscribe { event ->
             val ownerUUID = event.pokemon.getOwnerUUID()
             if (ownerUUID != null) {
