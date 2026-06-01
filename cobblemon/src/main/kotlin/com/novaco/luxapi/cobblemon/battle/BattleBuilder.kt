@@ -24,16 +24,31 @@ class BattleBuilder(private val initiator: LuxPlayer) {
     private var isDoubleBattle: Boolean = false
     private var allowSpectators: Boolean = true
 
+    /**
+     * Sets whether the battle should be a double battle.
+     * @param isDouble True for a double battle, false for a single battle.
+     * @return This BattleBuilder instance for chaining.
+     */
     fun setDoubleBattle(isDouble: Boolean): BattleBuilder {
         this.isDoubleBattle = isDouble
         return this
     }
 
+    /**
+     * Sets whether spectators are allowed in the battle.
+     * @param allow True to allow spectators, false to disallow.
+     * @return This BattleBuilder instance for chaining.
+     */
     fun setSpectatorAllowed(allow: Boolean): BattleBuilder {
         this.allowSpectators = allow
         return this
     }
 
+    /**
+     * Retrieves a list of Pokemon from the player's party that are able to battle.
+     * @param player The server player whose party is to be checked.
+     * @return A list of BattlePokemon that are conscious and ready for battle.
+     */
     private fun getBattleReadyParty(player: ServerPlayer): List<BattlePokemon> {
         val party = player.party()
         val battleReadyList = mutableListOf<BattlePokemon>()
@@ -46,6 +61,11 @@ class BattleBuilder(private val initiator: LuxPlayer) {
         return battleReadyList
     }
 
+    /**
+     * Initiates a battle against a wild Pokemon.
+     * @param wildEntity The wild Pokemon entity to battle against.
+     * @return The created PokemonBattle instance, or null if the battle could not be started.
+     */
     fun startAgainstWild(wildEntity: PokemonEntity): PokemonBattle? {
         val serverPlayer = initiator.parent as ServerPlayer
         val battleParty = getBattleReadyParty(serverPlayer)
@@ -66,6 +86,11 @@ class BattleBuilder(private val initiator: LuxPlayer) {
         return activeBattle
     }
 
+    /**
+     * Initiates a battle against another player.
+     * @param opponent The opposing player.
+     * @return The created PokemonBattle instance, or null if the battle could not be started.
+     */
     fun startAgainstPlayer(opponent: LuxPlayer): PokemonBattle? {
         val p1 = initiator.parent as ServerPlayer
         val p2 = opponent.parent as ServerPlayer
@@ -92,6 +117,8 @@ class BattleBuilder(private val initiator: LuxPlayer) {
     /**
      * Executes a battle initialization against a custom NPC Entity.
      * Uses Cobblemon's native Player VS NPC (PVN) builder for perfect state management.
+     * @param npcEntity The NPC entity to battle against.
+     * @return The created PokemonBattle instance, or null if the battle could not be started.
      */
     fun startAgainstNPC(npcEntity: NPCEntity): PokemonBattle? {
         val serverPlayer = initiator.parent as ServerPlayer
