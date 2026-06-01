@@ -15,9 +15,9 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 
 /**
- * A highly fluent builder for creating Cobblemon dialogues.
- * Instead of re-opening dialogues for branching, this builder groups all pages
- * into a single [Dialogue] object and uses internal page jumping for a flicker-free UI.
+ * A fluent builder for constructing complex, multi-page Cobblemon dialogues.
+ * This builder simplifies the creation of branching conversations by grouping all pages
+ * into a single [Dialogue] object, allowing for seamless page transitions without UI flicker.
  */
 class LuxDialogueBuilder {
 
@@ -26,21 +26,29 @@ class LuxDialogueBuilder {
     private var defaultBackground: ResourceLocation = Dialogue.DEFAULT_BACKGROUND
 
     /**
-     * Registers a speaker with an optional custom portrait face.
-     * @param id The ID used to reference this speaker in pages.
-     * @param name The display name in the dialogue box.
-     * @param facePath Example: "cobblemon:textures/gui/dialogue/oak.png"
+     * Registers a speaker who can be referenced in dialogue pages.
+     *
+     * @param id A unique identifier for this speaker.
+     * @param name The name to be displayed in the dialogue box.
+     * @param facePath An optional resource path to a texture for the speaker's portrait (e.g., "cobblemon:textures/gui/dialogue/oak.png").
+     * @return This [LuxDialogueBuilder] instance for method chaining.
      */
     fun addSpeaker(id: String, name: String, facePath: String? = null): LuxDialogueBuilder {
         val speaker = DialogueSpeaker().of(name.text())
-        // (Optional) If you want to use the DialogueFaceProvider in the future,
-        // you would register the resource location to the 'face' argument.
+        // Note: The 'facePath' parameter is reserved for future implementation of custom portraits.
         speakers[id] = speaker
         return this
     }
 
     /**
-     * Adds a simple linear page where the player clicks anywhere to continue.
+     * Adds a standard dialogue page where the player clicks to advance.
+     *
+     * @param id A unique identifier for this page.
+     * @param speakerId The ID of the speaker for this page, if any.
+     * @param text The text content of the page.
+     * @param nextPageId The ID of the page to navigate to next. If null, the dialogue closes.
+     * @param onEnter An optional action to execute when the player enters this page.
+     * @return This [LuxDialogueBuilder] instance for method chaining.
      */
     @JvmOverloads
     fun addPage(
@@ -73,7 +81,14 @@ class LuxDialogueBuilder {
     }
 
     /**
-     * Adds a page that automatically transitions to the next page after a delay.
+     * Adds a page that automatically advances to the next one after a short delay.
+     *
+     * @param id A unique identifier for this page.
+     * @param speakerId The ID of the speaker for this page, if any.
+     * @param text The text content of the page.
+     * @param nextPageId The ID of the page to navigate to next. Note: Due to Cobblemon limitations, this relies on page order.
+     * @param showTimer Whether to display a visual timer for the auto-advance.
+     * @return This [LuxDialogueBuilder] instance for method chaining.
      */
     fun addAutoPage(
         id: String,
@@ -84,8 +99,8 @@ class LuxDialogueBuilder {
     ): LuxDialogueBuilder {
         val input = DialogueAutoContinueInput().apply {
             this.showTimer = showTimer
-            // Unfortunately, Cobblemon's DialogueAutoContinueInput hardcodes action to incrementPage.
-            // For custom routing, we rely on standard next-page index logic for auto pages.
+            // Note: Cobblemon's DialogueAutoContinueInput hardcodes the action to simply increment the page index.
+            // For custom routing, ensure pages are added in the desired sequence.
         }
 
         val page = DialoguePage.of(
@@ -99,7 +114,13 @@ class LuxDialogueBuilder {
     }
 
     /**
-     * Initiates the building of a choice-based page (Branching).
+     * Adds a page that presents the player with multiple choices.
+     *
+     * @param id A unique identifier for this page.
+     * @param speakerId The ID of the speaker for this page, if any.
+     * @param text The question or statement to present before the choices.
+     * @param setup A lambda function to configure the choices using the [LuxChoicePageBuilder].
+     * @return This [LuxDialogueBuilder] instance for method chaining.
      */
     fun addChoicePage(
         id: String,
@@ -114,7 +135,10 @@ class LuxDialogueBuilder {
     }
 
     /**
-     * Changes the default dialogue background.
+     * Sets a custom background texture for the entire dialogue.
+     *
+     * @param texturePath The resource path to the background texture.
+     * @return This [LuxDialogueBuilder] instance for method chaining.
      */
     fun setBackground(texturePath: String): LuxDialogueBuilder {
         this.defaultBackground = ResourceLocation.parse(texturePath)
@@ -122,8 +146,11 @@ class LuxDialogueBuilder {
     }
 
     /**
-     * Builds and immediately opens the dialogue for the specified player.
-     * @param npc Optional NPC entity to bind to the dialogue.
+     * Finalizes the construction of the dialogue and immediately displays it to the player.
+     *
+     * @param player The [LuxPlayer] who will see the dialogue.
+     * @param npc An optional [NPCEntity] to associate with the dialogue, making them the primary speaker.
+     * @return The [ActiveDialogue] instance that was created.
      */
     @JvmOverloads
     fun buildAndOpen(player: LuxPlayer, npc: NPCEntity? = null): ActiveDialogue {
