@@ -1,0 +1,13 @@
+[versions]
+kotlin = "2.4.0-RC2"
+
+spigot-api = "1.21.1-R0.1-SNAPSHOT"
+
+shadow = "9.4.2"
+
+[libraries]
+spigot-api = { module = "org.spigotmc:spigot-api", version.ref = "spigot-api" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

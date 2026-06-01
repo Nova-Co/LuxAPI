@@ -1,0 +1,9 @@
+name: LuxEC
+description: $description
+prefix: LuxEC
+version: '${version}'
+
+main: com.novaco.economy.LuxEconomy
+api-version: '1.21'
+
+authors: [NovaCo]
