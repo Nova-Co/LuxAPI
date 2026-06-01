@@ -8,8 +8,9 @@ import kotlin.math.atan2
 import kotlin.math.sqrt
 
 /**
- * A highly optimized tracker that handles dynamic head-rotation AI for LuxNPCs.
- * Only processes NPCs explicitly registered to look at players.
+ * An optimized tracker that manages dynamic "look at player" AI for specific LuxNPCs.
+ * Instead of iterating through all entities, this tracker only processes NPCs that have been
+ * explicitly registered, significantly improving performance on servers with many entities.
  */
 object LuxNPCTracker {
 
@@ -17,7 +18,10 @@ object LuxNPCTracker {
     private const val TRACKING_RADIUS = 7.0
 
     /**
-     * Registers an NPC to actively look at nearby players.
+     * Registers an NPC to be processed by the tracker.
+     * Only NPCs registered here will have their head rotation updated by this system.
+     *
+     * @param uuid The UUID of the NPCEntity to track.
      */
     fun register(uuid: UUID) {
         trackedNPCs.add(uuid)
@@ -25,14 +29,19 @@ object LuxNPCTracker {
 
     /**
      * Unregisters an NPC from the tracking system.
+     * This should be called when the NPC is removed or no longer needs this behavior.
+     *
+     * @param uuid The UUID of the NPCEntity to stop tracking.
      */
     fun unregister(uuid: UUID) {
         trackedNPCs.remove(uuid)
     }
 
     /**
-     * MUST be called during a Server Tick Event (e.g., via LuxScheduler).
-     * Processes all registered NPCs and updates their look vectors.
+     * The main tick function for the tracker. This must be called on every server tick.
+     * It iterates through all tracked NPCs, finds them in the world, and updates their look direction.
+     *
+     * @param server The main MinecraftServer instance.
      */
     fun tick(server: MinecraftServer) {
         if (trackedNPCs.isEmpty()) return
@@ -40,37 +49,42 @@ object LuxNPCTracker {
         val deadEntities = mutableListOf<UUID>()
 
         for (uuid in trackedNPCs) {
-            // Locate the entity across all dimensions
+            // Find the entity across all server levels (dimensions).
             val entity = server.allLevels
                 .mapNotNull { it.getEntity(uuid) }
                 .firstOrNull() as? NPCEntity
 
-            // Clean up if the NPC was deleted or unloaded
+            // If the NPC is gone (unloaded or dead), schedule it for removal.
             if (entity == null || !entity.isAlive) {
                 deadEntities.add(uuid)
                 continue
             }
 
+            // If the NPC is in battle, temporarily skip this behavior.
+            if (entity.isInBattle()) continue
+
             processLookAtPlayer(entity)
         }
 
-        // Cleanup dead references
+        // Clean up any references to NPCs that no longer exist.
         if (deadEntities.isNotEmpty()) {
             trackedNPCs.removeAll(deadEntities.toSet())
         }
     }
 
     /**
-     * Calculates the yaw and pitch required for the NPC to look at the nearest player.
+     * Calculates and applies the necessary head and body rotation for an NPC to look at the nearest player.
+     *
+     * @param npc The NPCEntity to update.
      */
     private fun processLookAtPlayer(npc: NPCEntity) {
-        // Find the nearest player within the tracking radius
+        // Find the closest player within the defined radius.
         val nearestPlayer = npc.level().getNearestPlayer(
             npc.x, npc.y, npc.z, TRACKING_RADIUS, false
         )
 
         if (nearestPlayer == null) {
-            // Gradually return head to default position here
+            // Optional: Implement logic here to make the NPC's head gradually return to a default forward-facing position.
             return
         }
 
@@ -82,13 +96,14 @@ object LuxNPCTracker {
         val dz = targetVec.z - npcVec.z
         val horizontalDistance = sqrt(dx * dx + dz * dz)
 
-        // Calculate new rotations
+        // Calculate the required yaw (horizontal) and pitch (vertical) rotations.
         val yaw = (atan2(dz, dx) * (180.0 / Math.PI)).toFloat() - 90.0f
         val pitch = (-(atan2(dy, horizontalDistance) * (180.0 / Math.PI))).toFloat()
 
-        // Apply to the NPC
+        // Apply the new rotations to the NPC entity.
         npc.yHeadRot = yaw
         npc.xRot = pitch
+        // Smoothly turn the body to partially face the target, creating a more natural look.
         val bodyYawDifference = yaw - npc.yBodyRot
         npc.yBodyRot += bodyYawDifference * 0.1f
     }

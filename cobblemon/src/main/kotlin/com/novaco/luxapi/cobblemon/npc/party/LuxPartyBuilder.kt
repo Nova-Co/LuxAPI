@@ -7,8 +7,9 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 
 /**
- * A fluent API for developers to easily construct NPC teams.
- * Supports both static parties and randomized pool-based parties.
+ * A fluent builder for constructing NPC Pokémon parties.
+ * This class simplifies the creation of both fixed, static teams and complex, randomized teams
+ * drawn from a weighted pool of possible Pokémon. It is used as a component within the [LuxNPCBuilder].
  */
 class LuxPartyBuilder {
 
@@ -19,6 +20,7 @@ class LuxPartyBuilder {
     private var poolMaxCount = 6
     private var useFixedRandom = false
 
+    /** Internal data class to hold configuration for a single entry in a randomized pool. */
     private data class PoolEntryData(
         val spec: String,
         val weight: Float,
@@ -28,7 +30,11 @@ class LuxPartyBuilder {
     )
 
     /**
-     * Adds a static Pokémon to the team via spec string.
+     * Adds a Pokémon with a fixed definition to the NPC's party.
+     * Use this for creating a static, non-randomized team.
+     *
+     * @param spec A string defining the Pokémon (e.g., "pikachu level=10 shiny").
+     * @return This [LuxPartyBuilder] instance for method chaining.
      */
     fun add(spec: String): LuxPartyBuilder {
         if (staticSpecs.size < 6) {
@@ -38,7 +44,12 @@ class LuxPartyBuilder {
     }
 
     /**
-     * Configures the party to act as a randomized pool.
+     * Configures the party to be a randomized pool, where the final team size
+     * will be between the specified min and max values.
+     *
+     * @param min The minimum number of Pokémon in the generated party.
+     * @param max The maximum number of Pokémon in the generated party.
+     * @return This [LuxPartyBuilder] instance for method chaining.
      */
     fun randomizeFromPool(min: Int, max: Int): LuxPartyBuilder {
         this.poolMinCount = min.coerceIn(1, 6)
@@ -47,7 +58,14 @@ class LuxPartyBuilder {
     }
 
     /**
-     * Adds an entry to the randomized Pokémon pool.
+     * Adds a potential Pokémon to the randomized pool.
+     *
+     * @param spec A string defining the Pokémon (e.g., "snorlax").
+     * @param weight The selection weight. Higher values increase the chance of this entry being chosen.
+     * @param levelVariation A random value to add or subtract from the NPC's base level.
+     * @param selectableTimes The maximum number of times this specific entry can be chosen for the party.
+     * @param npcLevels The range of NPC levels for which this entry is valid.
+     * @return This [LuxPartyBuilder] instance for method chaining.
      */
     @JvmOverloads
     fun addPoolEntry(
@@ -62,7 +80,11 @@ class LuxPartyBuilder {
     }
 
     /**
-     * Sets whether the random generation should use a fixed seed based on NPC UUID.
+     * If enabled, the random party generation will be deterministic, using the NPC's UUID as a seed.
+     * This means a specific NPC will always generate the same "random" party.
+     *
+     * @param fixed `true` to enable deterministic generation, `false` for pure randomness.
+     * @return This [LuxPartyBuilder] instance for method chaining.
      */
     fun fixedRandom(fixed: Boolean = true): LuxPartyBuilder {
         this.useFixedRandom = fixed
@@ -70,10 +92,15 @@ class LuxPartyBuilder {
     }
 
     /**
-     * Compiles the configuration into a native Cobblemon NPCPartyProvider.
+     * Internal method to compile the builder's configuration into a native Cobblemon [NPCPartyProvider].
+     * It determines whether to create a [SimplePartyProvider] (for static teams) or a
+     * [PoolPartyProvider] (for randomized teams) based on the methods called.
+     *
+     * @return The appropriate [NPCPartyProvider], or null if no Pokémon were defined.
      */
     internal fun build(): NPCPartyProvider? {
-        // Handle PoolPartyProvider via JSON bypass
+        // If pool entries exist, build a PoolPartyProvider.
+        // This uses a JSON bypass to correctly configure the provider without direct class manipulation.
         if (poolEntries.isNotEmpty()) {
             val provider = PoolPartyProvider()
             val json = JsonObject()
@@ -97,7 +124,8 @@ class LuxPartyBuilder {
             return provider
         }
 
-        // Handle SimplePartyProvider via JSON bypass to avoid type mismatch and MoLang issues
+        // If only static specs exist, build a SimplePartyProvider.
+        // This also uses a JSON bypass to avoid potential type mismatches and MoLang parsing issues.
         if (staticSpecs.isNotEmpty()) {
             val provider = SimplePartyProvider()
             val json = JsonObject()
