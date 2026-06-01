@@ -1,8 +1,10 @@
 package com.novaco.luxapi.bukkit.command
 
+import com.novaco.luxapi.bukkit.command.injector.BukkitPlayerInjector
 import com.novaco.luxapi.commons.command.CommandManager
 import com.novaco.luxapi.commons.command.CommandProcessor
 import com.novaco.luxapi.commons.command.annotation.Command
+import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import org.bukkit.Bukkit
 import org.bukkit.command.SimpleCommandMap
 import org.bukkit.plugin.Plugin
@@ -18,6 +20,7 @@ class BukkitCommandManager(private val plugin: Plugin) : CommandManager {
 
     init {
         commandMap = getBukkitCommandMap()
+        InjectorRegistry.register(BukkitPlayerInjector())
     }
 
     /**

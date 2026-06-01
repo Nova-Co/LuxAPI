@@ -37,6 +37,24 @@ class BukkitCommandWrapper(
         val safeArgs = args.filterNotNull().toTypedArray()
         val onlinePlayers = Bukkit.getOnlinePlayers().map { it.name }
 
-        return processor.getSuggestions(luxSender, safeArgs, onlinePlayers)
+        val suggestions = processor.getSuggestions(luxSender, safeArgs, onlinePlayers)
+
+        if (suggestions.isEmpty() && safeArgs.isNotEmpty()) {
+            val currentInput = safeArgs.last().lowercase()
+            val isSubCommandMatch = safeArgs.size >= 2 && (safeArgs[0].equals("forcesync", ignoreCase = true) || safeArgs[0].equals("audit", ignoreCase = true))
+
+            if (isSubCommandMatch) {
+                val results = mutableListOf<String>()
+
+                if (safeArgs[0].equals("forcesync", ignoreCase = true) && "all".startsWith(currentInput)) {
+                    results.add("all")
+                }
+
+                results.addAll(onlinePlayers.filter { it.lowercase().startsWith(currentInput) })
+                return results
+            }
+        }
+
+        return suggestions
     }
 }
