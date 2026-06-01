@@ -21,6 +21,7 @@ jobs:
           SHA: ${{ github.sha }}
           ACTOR: ${{ github.actor }}
           WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          WEBHOOK_URL_2: ${{ secrets.DISCORD_WEBHOOK_URL_2 }}
           REPO: ${{ github.repository }}
           EVENT_COMPARE: ${{ github.event.compare }}
         run: |
@@ -127,8 +128,18 @@ jobs:
               ]
             }' > payload.json
 
-          # 5. Send it
+          # 5. Send it to the first webhook
           curl --fail-with-body --retry 3 --retry-delay 2 -i -H "Content-Type: application/json" \
                -X POST \
                -d @payload.json \
                "$WEBHOOK_URL"
+
+          # 6. Send it to the second webhook if configured
+          if [ -n "${WEBHOOK_URL_2:-}" ]; then
+            curl --fail-with-body --retry 3 --retry-delay 2 -i -H "Content-Type: application/json" \
+                 -X POST \
+                 -d @payload.json \
+                 "$WEBHOOK_URL_2"
+          else
+            echo "DISCORD_WEBHOOK_URL_2 is not configured, skipping second notification."
+          fi
