@@ -14,31 +14,36 @@ import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 
 /**
- * Core API for managing Multi-player vs 1 Boss Battles (Raid style).
- * Gives developers the tools to add players to an ongoing boss battle.
+ * Provides the core functionality for managing multi-player vs. single boss battles (raid-style encounters).
+ * This API allows developers to dynamically add players to an ongoing boss battle.
  */
 object WorldBossBattleAPI {
 
     /**
-     * Event Hook: Triggered when a player tries to join an ongoing Boss Battle.
-     * Devs can set this to handle specific logic (e.g., checking if the raid is full).
+     * A customizable event hook that is triggered when a player attempts to join an ongoing boss battle.
+     * Developers can implement this to add custom logic, such as checking for raid capacity or player eligibility.
+     * It should return `true` to allow the player to join, or `false` to prevent them.
      */
     var onPlayerJoinBossBattle: ((ServerPlayer, PokemonBattle, PokemonEntity) -> Boolean)? = null
 
     /**
-     * Registers the listener to intercept Poké Ball throws and handle raid joins.
+     * Registers the necessary event listeners to enable the raid join functionality.
+     * It specifically listens for a Poke Ball being thrown at a boss, interpreting it as a request to join the battle.
      */
     fun register() {
         CobblemonEvents.THROWN_POKEBALL_HIT.subscribe { event ->
             val targetBoss = event.pokemon
             val player = event.pokeBall.owner as? ServerPlayer ?: return@subscribe
 
+            // Check if the target is a designated world boss
             if (targetBoss.tags.contains("lux_is_world_boss") || targetBoss.tags.contains("lux_is_boss")) {
+                // If the boss is already in a battle, treat this as a join attempt
                 if (targetBoss.isBattling && targetBoss.battleId != null) {
                     val activeBattle = BattleRegistry.getBattle(targetBoss.battleId!!) ?: return@subscribe
 
-                    event.cancel()
+                    event.cancel() // Prevent the Poke Ball from being used
 
+                    // Check with the custom hook if the player is allowed to join
                     val shouldJoin = onPlayerJoinBossBattle?.invoke(player, activeBattle, targetBoss) ?: true
                     if (shouldJoin) {
                         joinOngoingBattle(player, activeBattle)
@@ -49,16 +54,21 @@ object WorldBossBattleAPI {
     }
 
     /**
-     * Injects a new player into an existing Turn-Based Battle on the "Player" side.
-     * * @param player The player joining the raid.
-     * @param battle The ongoing PokemonBattle instance.
+     * Injects a player into an existing battle.
+     * This method handles the logic of adding a new player actor to the correct side of the battle
+     * and synchronizing the battle state with the new player's client.
+     *
+     * @param player The player to be added to the battle.
+     * @param battle The ongoing `PokemonBattle` instance.
      */
     fun joinOngoingBattle(player: ServerPlayer, battle: PokemonBattle) {
+        // Prevent a player from joining the same battle multiple times
         if (battle.actors.any { it.isForPlayer(player) }) {
             player.sendSystemMessage(Component.literal("§cYou are already in this battle!"))
             return
         }
 
+        // Find the side that is opposing the boss (the "player" side)
         val playerSide = battle.actors.firstOrNull { actor ->
             actor.pokemonList.none { pkmn ->
                 pkmn.entity?.tags?.contains("lux_is_boss") == true || pkmn.entity?.tags?.contains("lux_is_world_boss") == true
@@ -69,7 +79,7 @@ object WorldBossBattleAPI {
             val battlePokemonList = player.party().map { BattlePokemon(it) }
             val newActor = PlayerBattleActor(player.uuid, battlePokemonList)
 
-            // Reflection hack to inject the new actor into the immutable BattleSide array
+            // Use reflection to add the new actor to the battle, as the underlying collections are immutable
             try {
                 val actorsField = BattleSide::class.java.getDeclaredField("actors")
                 actorsField.isAccessible = true
@@ -80,6 +90,7 @@ object WorldBossBattleAPI {
 
                 actorsField.set(playerSide, newActorsArray)
 
+                // Also add to the battle's main actor list for proper tracking
                 @Suppress("UNCHECKED_CAST")
                 val battleActorsCollection = battle.actors as? MutableCollection<BattleActor>
                 battleActorsCollection?.add(newActor)
@@ -92,7 +103,7 @@ object WorldBossBattleAPI {
 
             newActor.battle = battle
 
-            // Force UI sync using BattleInitializePacket with the designated ally side
+            // Send the initialization packet to the new player to sync their UI
             val initPacket = BattleInitializePacket(battle, playerSide)
             newActor.sendUpdate(initPacket)
 

@@ -6,7 +6,8 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Tracks player damage and calculates aggro to determine the primary target for boss AI.
+ * Manages aggro (threat) levels of players towards boss entities.
+ * This is used to determine the boss's target in a multi-player battle scenario.
  */
 object BossAggroManager {
 
@@ -14,7 +15,12 @@ object BossAggroManager {
     private val aggroTables = ConcurrentHashMap<UUID, ConcurrentHashMap<UUID, Double>>()
 
     /**
-     * Adds aggro (damage or threat) for a specific player against a boss.
+     * Adds a specified amount of aggro for a player towards a boss.
+     * This is typically called when a player deals damage or uses a threat-generating ability.
+     *
+     * @param bossEntity The boss Pokemon entity.
+     * @param player The player generating the aggro.
+     * @param amount The amount of aggro to add.
      */
     fun addAggro(bossEntity: PokemonEntity, player: ServerPlayer, amount: Double) {
         val bossTable = aggroTables.getOrPut(bossEntity.uuid) { ConcurrentHashMap() }
@@ -23,7 +29,12 @@ object BossAggroManager {
     }
 
     /**
-     * Reduces the aggro of a specific player (e.g., when they use a stealth skill or die).
+     * Reduces a player's aggro towards a boss by a specified amount.
+     * This can be used for abilities that reduce threat or upon player death.
+     *
+     * @param bossEntity The boss Pokemon entity.
+     * @param player The player whose aggro is to be reduced.
+     * @param amount The amount of aggro to reduce.
      */
     fun reduceAggro(bossEntity: PokemonEntity, player: ServerPlayer, amount: Double) {
         val bossTable = aggroTables[bossEntity.uuid] ?: return
@@ -33,7 +44,11 @@ object BossAggroManager {
     }
 
     /**
-     * Retrieves the player with the highest aggro for a given boss.
+     * Determines and returns the player with the highest aggro for a specific boss.
+     * This player should be the primary target for the boss's attacks.
+     *
+     * @param bossEntity The boss Pokemon entity.
+     * @return The ServerPlayer with the highest aggro, or null if no player has aggro.
      */
     fun getTopTarget(bossEntity: PokemonEntity): ServerPlayer? {
         val bossTable = aggroTables[bossEntity.uuid] ?: return null
@@ -44,7 +59,11 @@ object BossAggroManager {
     }
 
     /**
-     * Returns a sorted list of players based on their aggro towards the boss.
+     * Retrieves a sorted list of players based on their aggro value, from highest to lowest.
+     * This can be used for displaying damage meters or for mechanics based on aggro ranking.
+     *
+     * @param bossEntity The boss Pokemon entity.
+     * @return A list of pairs, each containing a player's UUID and their aggro value, sorted in descending order.
      */
     fun getTopDamagers(bossEntity: PokemonEntity): List<Pair<UUID, Double>> {
         val bossTable = aggroTables[bossEntity.uuid] ?: return emptyList()
@@ -52,7 +71,10 @@ object BossAggroManager {
     }
 
     /**
-     * Clears the aggro table for a specific boss when it is defeated or despawns.
+     * Clears all aggro data associated with a specific boss.
+     * This should be called when the boss is defeated, despawns, or the encounter resets.
+     *
+     * @param bossUuid The UUID of the boss whose aggro table should be cleared.
      */
     fun clearAggro(bossUuid: UUID) {
         aggroTables.remove(bossUuid)

@@ -6,32 +6,35 @@ import com.novaco.luxapi.core.bossbar.BossBarManager
 import java.util.UUID
 
 /**
- * API Tool to synchronize a Pokémon's internal Battle HP with the Global Boss Bar.
- * Overcomes the limitation where Minecraft entity health does not update instantly during turn-based battles.
+ * Synchronizes a Pokemon's internal battle health with a global boss bar and the entity's physical health attribute.
+ * This is crucial because a Pokemon's health in a Cobblemon battle is managed separately from the Minecraft entity's health.
+ * This object ensures that the visual boss bar and the entity's health in the overworld accurately reflect the state of the battle.
  */
 object BossHpSynchronizer {
 
     private val trackedBosses = mutableMapOf<UUID, PokemonEntity>()
 
     /**
-     * Binds a Pokémon's health updates directly to the BossBarManager.
-     * * @param bossEntity The World Boss entity.
+     * Starts tracking a boss entity, linking its health updates to the BossBarManager.
+     *
+     * @param bossEntity The boss Pokemon entity to be tracked.
      */
     fun bindToBossBar(bossEntity: PokemonEntity) {
         trackedBosses[bossEntity.uuid] = bossEntity
     }
 
     /**
-     * Unbinds the entity from synchronization.
-     * * @param uuid The UUID of the boss entity.
+     * Stops tracking a boss entity, effectively unlinking it from the health synchronization process.
+     *
+     * @param uuid The UUID of the boss entity to unbind.
      */
     fun unbind(uuid: UUID) {
         trackedBosses.remove(uuid)
     }
 
     /**
-     * Must be called every server tick.
-     * Dynamically reads the true internal HP and updates the core Boss Bar for all bound bosses.
+     * The main update loop for the synchronizer. This method should be called on every server tick.
+     * It iterates through all tracked bosses, updates their health, and handles cleanup for dead or removed entities.
      */
     fun tick() {
         if (trackedBosses.isEmpty()) return
@@ -50,9 +53,11 @@ object BossHpSynchronizer {
     }
 
     /**
-     * Manually forces a health synchronization for a specific boss.
-     * Calculates the internal Pokémon HP percentage and pushes it to the generic BossBarManager.
-     * * @param bossEntity The World Boss entity.
+     * Forces an immediate health synchronization for a specific boss.
+     * It calculates the Pokemon's current health percentage, updates the boss bar, evaluates phase transitions,
+     * and synchronizes the Minecraft entity's health attribute to match.
+     *
+     * @param bossEntity The boss Pokemon entity to synchronize.
      */
     fun syncHealth(bossEntity: PokemonEntity) {
         val pokemon = bossEntity.pokemon
@@ -61,13 +66,14 @@ object BossHpSynchronizer {
 
         val progress = (currentHp / maxHp).coerceIn(0.0, 1.0).toFloat()
 
+        // Check if a phase change should be triggered at the new health percentage
         BossPhaseManager.evaluatePhases(bossEntity, progress)
 
         // Push the accurate battle HP percentage to the Core UI
         BossBarManager.updateProgress(bossEntity.uuid, progress)
 
         // Synchronize the physical Minecraft entity health to match the battle health.
-        // Ensures that overworld visual damage or direct hits respect the battle state.
+        // This ensures that overworld visual damage or direct hits respect the battle state.
         bossEntity.health = (bossEntity.maxHealth * progress)
     }
 }

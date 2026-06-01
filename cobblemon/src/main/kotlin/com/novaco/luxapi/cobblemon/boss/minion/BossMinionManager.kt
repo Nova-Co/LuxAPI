@@ -11,14 +11,21 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Manages the summoning, tracking, and lifecycle of boss minions.
+ * Manages the lifecycle of minions associated with a boss entity.
+ * This includes summoning, target assignment, and cleanup.
  */
 object BossMinionManager {
 
+    // Map<BossUUID, List<MinionEntity>>
     private val activeMinions = ConcurrentHashMap<UUID, MutableList<PokemonEntity>>()
 
     /**
-     * Summons a specified amount of minion Pokemon radially around the boss entity.
+     * Summons a specified number of minions in a circular pattern around a boss.
+     *
+     * @param bossEntity The central boss entity.
+     * @param propertyString A string defining the properties of the minions to be summoned (e.g., "species=zubat level=15").
+     * @param amount The number of minions to summon.
+     * @param radius The distance from the boss at which to spawn the minions.
      */
     fun summonMinions(bossEntity: PokemonEntity, propertyString: String, amount: Int, radius: Double = 3.0) {
         val level = bossEntity.level() as? ServerLevel ?: return
@@ -55,7 +62,9 @@ object BossMinionManager {
     }
 
     /**
-     * Forces all active minions of a boss to pathfind and attack the boss's top aggro target.
+     * Directs all active minions of a specific boss to attack the player with the highest aggro.
+     *
+     * @param bossEntity The boss whose minions need their targets updated.
      */
     fun updateMinionTargets(bossEntity: PokemonEntity) {
         val bossUuid = bossEntity.uuid
@@ -73,7 +82,10 @@ object BossMinionManager {
     }
 
     /**
-     * Instantly removes all active minions associated with a specific boss UUID.
+     * Removes and despawns all minions associated with a given boss UUID.
+     * This is typically called when a boss is defeated or the encounter resets.
+     *
+     * @param bossUuid The UUID of the boss whose minions should be cleared.
      */
     fun clearMinions(bossUuid: UUID) {
         val minions = activeMinions.remove(bossUuid) ?: return
@@ -92,7 +104,11 @@ object BossMinionManager {
     }
 
     /**
-     * Removes a specific minion from the tracking list if it was killed by a player.
+     * Removes a single minion from the tracking list.
+     * This is typically called when a minion is defeated individually.
+     *
+     * @param bossUuid The UUID of the owner boss.
+     * @param minionEntity The specific minion entity to remove.
      */
     fun removeMinionFromTracking(bossUuid: UUID, minionEntity: PokemonEntity) {
         activeMinions[bossUuid]?.remove(minionEntity)

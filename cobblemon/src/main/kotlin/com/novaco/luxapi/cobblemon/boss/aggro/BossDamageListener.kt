@@ -8,15 +8,20 @@ import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.projectile.Projectile
 
 /**
- * Automates the tracking of damage dealt to boss entities and dynamically
- * updates the aggro tables and visual scoreboards.
- * * Note: This is a Common API. Platform-specific event listeners (Fabric/NeoForge)
- * must call [processDamage] when a LivingDamage event occurs.
+ * Listens for damage events, specifically tracking damage dealt to boss entities.
+ * It updates aggro tables and associated visual elements like scoreboards in real-time.
+ * Note: This is a common API. Platform-specific event listeners (e.g., Fabric/NeoForge)
+ * must call the [processDamage] method when a LivingDamage event occurs.
  */
 object BossDamageListener {
 
     /**
-     * The entry point for platform-specific events to push damage data into the Boss API.
+     * Processes incoming damage events. This is the main entry point for platform-specific listeners.
+     * It filters for damage dealt to boss entities and identifies the responsible attacker.
+     *
+     * @param entity The entity receiving damage.
+     * @param sourceEntity The entity that is the source of the damage.
+     * @param amount The amount of damage dealt.
      */
     fun processDamage(entity: LivingEntity, sourceEntity: LivingEntity?, amount: Float) {
         if (entity !is PokemonEntity) return
@@ -28,8 +33,12 @@ object BossDamageListener {
     }
 
     /**
-     * The core processor that intercepts damage, updates the internal aggro table,
-     * and forces a real-time refresh of the visual scoreboard.
+     * Records the damage dealt by an attacker to a boss, updating the aggro system and scoreboard.
+     * It also triggers a re-evaluation of minion targets based on the new aggro levels.
+     *
+     * @param bossEntity The boss Pokemon entity that received damage.
+     * @param attacker The player who dealt the damage.
+     * @param damageAmount The amount of damage dealt.
      */
     private fun recordDamage(bossEntity: PokemonEntity, attacker: ServerPlayer, damageAmount: Double) {
         // Update internal aggro database
@@ -43,7 +52,10 @@ object BossDamageListener {
     }
 
     /**
-     * Refreshes the top 5 damagers on the dynamic virtual scoreboard.
+     * Updates the dynamic scoreboard to reflect the current top damagers.
+     * It fetches the latest aggro data and displays the top 5 players.
+     *
+     * @param bossEntity The boss Pokemon entity associated with the scoreboard.
      */
     private fun updateScoreboard(bossEntity: PokemonEntity) {
         val server = bossEntity.server ?: return
@@ -64,8 +76,11 @@ object BossDamageListener {
     }
 
     /**
-     * Utility to resolve the true attacker from a damage source, handling projectiles
-     * and owner-pet relationships.
+     * Resolves the actual player attacker from a damage source.
+     * This handles cases where the damage comes from a projectile or a player's Pokemon.
+     *
+     * @param sourceEntity The source of the damage (e.g., player, projectile, Pokemon).
+     * @return The ServerPlayer who is the ultimate source of the damage, or null if not determinable.
      */
     private fun resolveAttacker(sourceEntity: LivingEntity?): ServerPlayer? {
         if (sourceEntity is ServerPlayer) return sourceEntity
