@@ -1,12 +1,15 @@
 package com.novaco.luxapi.bukkit.command
 
 import com.novaco.luxapi.bukkit.command.injector.BukkitPlayerInjector
+import com.novaco.luxapi.bukkit.command.tab.BukkitPlayerTabHandler
 import com.novaco.luxapi.commons.command.CommandManager
 import com.novaco.luxapi.commons.command.CommandProcessor
 import com.novaco.luxapi.commons.command.annotation.Command
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
+import com.novaco.luxapi.commons.command.tab.TabRegistry
 import org.bukkit.Bukkit
 import org.bukkit.command.SimpleCommandMap
+import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
 import java.lang.reflect.Field
 
@@ -20,7 +23,9 @@ class BukkitCommandManager(private val plugin: Plugin) : CommandManager {
 
     init {
         commandMap = getBukkitCommandMap()
+        // Register platform-specific integrations into the core
         InjectorRegistry.register(BukkitPlayerInjector())
+        TabRegistry.register(Player::class.java, BukkitPlayerTabHandler())
     }
 
     /**

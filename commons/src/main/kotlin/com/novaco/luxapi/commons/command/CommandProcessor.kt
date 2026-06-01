@@ -5,6 +5,7 @@ import com.novaco.luxapi.commons.command.annotation.SubCommand
 import com.novaco.luxapi.commons.command.exception.CommandParseException
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import com.novaco.luxapi.commons.command.sender.CommandSender
+import com.novaco.luxapi.commons.command.tab.TabRegistry
 import com.novaco.luxapi.commons.player.LuxPlayer
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -138,9 +139,10 @@ class CommandProcessor(private val commandInstance: Any) {
     }
 
     /**
-     * Generates tab completion suggestions based on the current input and available online players.
+     * Generates tab completion suggestions based on the current input.
+     * Utilizes TabRegistry for dynamic, type-based suggestions.
      */
-    fun getSuggestions(sender: CommandSender, args: Array<String>, onlinePlayers: List<String>): List<String> {
+    fun getSuggestions(sender: CommandSender, args: Array<String>, fallbackPlayers: List<String> = emptyList()): List<String> {
         val currentInput = args.lastOrNull()?.lowercase() ?: ""
 
         if (args.size <= 1) {
@@ -148,7 +150,7 @@ class CommandProcessor(private val commandInstance: Any) {
             suggestions.addAll(subCommands.keys.filter { it.startsWith(currentInput) })
 
             mainExecuteMethods.forEach { method ->
-                suggestions.addAll(getParameterSuggestions(method, sender, args, onlinePlayers))
+                suggestions.addAll(getParameterSuggestions(method, sender, args))
             }
 
             return suggestions.distinct()
@@ -156,29 +158,36 @@ class CommandProcessor(private val commandInstance: Any) {
 
         if (subCommands.containsKey(args[0].lowercase())) {
             val subMethod = subCommands[args[0].lowercase()]!!
-            return getParameterSuggestions(subMethod, sender, args.drop(1).toTypedArray(), onlinePlayers)
+            return getParameterSuggestions(subMethod, sender, args.drop(1).toTypedArray())
         }
 
         val targetMainMethod = mainExecuteMethods.firstOrNull { it.parameterCount - 1 >= args.size }
             ?: mainExecuteMethods.first()
 
-        return getParameterSuggestions(targetMainMethod, sender, args, onlinePlayers)
+        return getParameterSuggestions(targetMainMethod, sender, args)
     }
 
     /**
-     * Returns suggestions for specific method parameters such as online players.
+     * Returns suggestions for specific method parameters using registered TabHandlers.
      */
-    private fun getParameterSuggestions(method: Method, sender: CommandSender, args: Array<String>, onlinePlayers: List<String>): List<String> {
+    private fun getParameterSuggestions(method: Method, sender: CommandSender, args: Array<String>): List<String> {
         val paramIndex = args.size
         val parameters = method.parameterTypes
 
         if (paramIndex >= parameters.size) return emptyList()
 
         val targetParam = wrapPrimitive(parameters[paramIndex])
-        val currentInput = args.lastOrNull()?.lowercase() ?: ""
+
+        val handler = TabRegistry.getHandler(targetParam)
+        if (handler != null) {
+            return handler.getSuggestions(sender, args)
+        }
 
         if (targetParam == LuxPlayer::class.java) {
-            return onlinePlayers.filter { it.lowercase().startsWith(currentInput) }
+            val luxHandler = TabRegistry.getHandler(LuxPlayer::class.java)
+            if (luxHandler != null) {
+                return luxHandler.getSuggestions(sender, args)
+            }
         }
 
         return emptyList()
