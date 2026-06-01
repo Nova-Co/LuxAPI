@@ -44,7 +44,6 @@ object PokedexManager {
         // Fetch the specific record for this Pokémon species
         val record = serverPlayer.pokedex().speciesRecords[species.resourceIdentifier] ?: return false
 
-        // 🌟 Fix: If the record exists and knowledge isn't NONE, it means it has been seen/encountered.
         return !record.getKnowledge().name.equals("NONE", ignoreCase = true)
     }
 
