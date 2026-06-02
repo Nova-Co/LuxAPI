@@ -51,6 +51,6 @@ class BukkitCommandWrapper(
         val luxSender = BukkitCommandSender(sender)
         val safeArgs = args.filterNotNull().toTypedArray()
 
-        return processor.getSuggestions(luxSender, safeArgs, emptyList())
+        return processor.getSuggestions(luxSender, safeArgs)
     }
 }

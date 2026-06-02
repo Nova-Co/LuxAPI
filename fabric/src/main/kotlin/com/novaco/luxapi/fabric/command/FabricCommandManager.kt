@@ -56,9 +56,7 @@ class FabricCommandManager : AbstractCommandManager() {
                 val source = context.source
                 if (source.isPlayer) {
                     val sender = FabricLuxPlayer(source.playerOrException)
-                    val onlinePlayers = source.server.playerList.players.map { it.scoreboardName }
-
-                    processor.getSuggestions(sender, args, onlinePlayers).forEach { builder.suggest(it) }
+                    processor.getSuggestions(sender, args).forEach { builder.suggest(it) }
                 }
 
                 builder.buildFuture()
