@@ -5,6 +5,9 @@ import com.novaco.luxapi.commons.event.Subscribe
 import com.novaco.luxapi.commons.event.player.PlayerChatEvent
 import com.novaco.luxapi.commons.event.player.PlayerJoinEvent
 import com.novaco.luxapi.commons.event.player.PlayerQuitEvent
+import com.novaco.luxapi.neoforge.LuxNeoForgeInitializer
+import com.novaco.luxapi.neoforge.player.NeoForgeLuxPlayer
+import com.novaco.luxapi.neoforge.player.NeoForgePlayerManager
 import net.minecraft.SharedConstants
 import net.minecraft.network.chat.Component
 import net.minecraft.server.Bootstrap
@@ -20,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
+import java.util.UUID
 
 /**
  * A dummy listener to intercept and verify events passing through the cross-platform EventBus.
@@ -29,21 +33,36 @@ class TestBridgeSubscriber {
     var quitFired = false
     var chatEvent: PlayerChatEvent? = null
 
+    /**
+     * Intercepts the join event.
+     */
     @Subscribe
     fun onJoin(event: PlayerJoinEvent) { joinFired = true }
 
+    /**
+     * Intercepts the quit event.
+     */
     @Subscribe
     fun onQuit(event: PlayerQuitEvent) { quitFired = true }
 
+    /**
+     * Intercepts the chat event.
+     */
     @Subscribe
     fun onChat(event: PlayerChatEvent) { chatEvent = event }
 }
 
+/**
+ * Unit tests evaluating the translation of native NeoForge events into cross-platform LuxAPI events.
+ */
 class NeoForgeEventBridgeTest {
 
     private lateinit var testSubscriber: TestBridgeSubscriber
 
     companion object {
+        /**
+         * Initializes the server registries.
+         */
         @JvmStatic
         @BeforeAll
         fun initBridge() {
@@ -52,59 +71,82 @@ class NeoForgeEventBridgeTest {
         }
     }
 
+    /**
+     * Sets up the event subscribers and injects a mock PlayerManager.
+     */
     @BeforeEach
     fun setup() {
         testSubscriber = TestBridgeSubscriber()
         EventBus.register(testSubscriber)
+
+        val mockManager = mock<NeoForgePlayerManager>()
+        val field = LuxNeoForgeInitializer::class.java.getDeclaredField("playerManager")
+        field.isAccessible = true
+        field.set(null, mockManager)
+
+        whenever(mockManager.login(any())).thenAnswer { NeoForgeLuxPlayer(it.getArgument(0)) }
+        whenever(mockManager.getPlayer(any<UUID>())).thenAnswer {
+            val p = mock<ServerPlayer>()
+            whenever(p.uuid).thenReturn(it.getArgument(0))
+            NeoForgeLuxPlayer(p)
+        }
     }
 
+    /**
+     * Unregisters the subscriber to ensure a clean slate.
+     */
     @AfterEach
     fun teardown() {
         EventBus.unregister(testSubscriber)
     }
 
+    /**
+     * Verifies that the native JOIN event successfully delegates to the cross-platform PlayerJoinEvent.
+     */
     @Test
     fun `test neoforge login event translates to lux join event`() {
-        // 1. Mock the native ServerPlayer and the Forge Event
         val mockPlayer = mock<ServerPlayer>()
         val mockEvent = mock<PlayerEvent.PlayerLoggedInEvent>()
 
         whenever(mockEvent.entity).thenReturn(mockPlayer)
 
-        // 2. Pass it directly to the bridge handler
         NeoForgeEventBridge.onPlayerJoin(mockEvent)
 
-        // 3. Verify our EventBus caught the translated event
-        assertTrue(testSubscriber.joinFired, "The native PlayerLoggedInEvent should trigger PlayerJoinEvent on the EventBus.")
+        assertTrue(testSubscriber.joinFired)
     }
 
+    /**
+     * Verifies that the native DISCONNECT event successfully delegates to the cross-platform PlayerQuitEvent.
+     */
     @Test
     fun `test neoforge logout event translates to lux quit event`() {
         val mockPlayer = mock<ServerPlayer>()
         val mockEvent = mock<PlayerEvent.PlayerLoggedOutEvent>()
 
+        whenever(mockPlayer.uuid).thenReturn(UUID.randomUUID())
         whenever(mockEvent.entity).thenReturn(mockPlayer)
 
         NeoForgeEventBridge.onPlayerQuit(mockEvent)
 
-        assertTrue(testSubscriber.quitFired, "The native PlayerLoggedOutEvent should trigger PlayerQuitEvent on the EventBus.")
+        assertTrue(testSubscriber.quitFired)
     }
 
+    /**
+     * Validates that standard chat messages are caught, formatted, and delivered correctly.
+     */
     @Test
-    @Disabled("Requires a full NeoForge Server environment due to intermediary field obfuscation (field_xxx) blocking Mockito.")
-    fun `test neoforge chat event translates, formats, and broadcasts correctly`() {
+    @Disabled("Requires a full NeoForge Server environment due to intermediary field obfuscation blocking Mockito.")
+    fun `test neoforge chat event translates formats and broadcasts correctly`() {
         val mockServer = mock<MinecraftServer>()
         val mockPlayerList = mock<PlayerList>()
         val mockSender = mock<ServerPlayer>()
         val mockTargetPlayer = mock<ServerPlayer>()
         val mockEvent = mock<ServerChatEvent>()
 
-        // Use Reflection to set the public 'server' field on the sender
         val serverField = ServerPlayer::class.java.getDeclaredField("server")
         serverField.isAccessible = true
         serverField.set(mockSender, mockServer)
 
-        // Use Reflection to set the public 'players' list on the PlayerList
         val playersField = PlayerList::class.java.getDeclaredField("players")
         playersField.isAccessible = true
         playersField.set(mockPlayerList, listOf(mockSender, mockTargetPlayer))
@@ -114,23 +156,20 @@ class NeoForgeEventBridgeTest {
         whenever(mockEvent.player).thenReturn(mockSender)
         whenever(mockEvent.rawText).thenReturn("Hello NeoForge!")
 
-        // Manually trigger the event
         NeoForgeEventBridge.onPlayerChat(mockEvent)
 
-        // Verify Event Translation
-        assertNotNull(testSubscriber.chatEvent, "The native Chat event should trigger PlayerChatEvent.")
+        assertNotNull(testSubscriber.chatEvent)
         assertEquals("Hello NeoForge!", testSubscriber.chatEvent?.message)
-        assertEquals(2, testSubscriber.chatEvent?.recipients?.size, "Recipients list should contain all online players.")
-
-        // Verify native event cancellation (to block vanilla chat)
+        assertEquals(2, testSubscriber.chatEvent?.recipients?.size)
         verify(mockEvent).isCanceled = true
-
-        // Verify custom component delivery to targets
         verify(mockTargetPlayer).sendSystemMessage(any<Component>())
     }
 
+    /**
+     * Ensures that cancelling the cross-platform chat event halts native delivery.
+     */
     @Test
-    @Disabled("Requires a full NeoForge Server environment due to intermediary field obfuscation (field_xxx) blocking Mockito.")
+    @Disabled("Requires a full NeoForge Server environment due to intermediary field obfuscation blocking Mockito.")
     fun `test cancelled lux chat event blocks delivery`() {
         val mockServer = mock<MinecraftServer>()
         val mockPlayerList = mock<PlayerList>()
@@ -149,7 +188,6 @@ class NeoForgeEventBridgeTest {
         whenever(mockEvent.player).thenReturn(mockSender)
         whenever(mockEvent.rawText).thenReturn("Bad Words")
 
-        // Intercept and cancel the event before it broadcasts
         val cancelSubscriber = object {
             @Subscribe
             fun onChat(event: PlayerChatEvent) {
@@ -158,15 +196,11 @@ class NeoForgeEventBridgeTest {
         }
         EventBus.register(cancelSubscriber)
 
-        // Manually trigger the event
         NeoForgeEventBridge.onPlayerChat(mockEvent)
 
         EventBus.unregister(cancelSubscriber)
 
-        // Verify the native event was still canceled
         verify(mockEvent).isCanceled = true
-
-        // Verify NO manual messages were sent because our cross-platform event was cancelled
         verify(mockSender, never()).sendSystemMessage(any<Component>())
     }
 }
