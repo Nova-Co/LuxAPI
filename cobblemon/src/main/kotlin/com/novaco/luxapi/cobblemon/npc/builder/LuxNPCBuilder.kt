@@ -154,7 +154,10 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
         val npcEntity = CobblemonEntities.NPC.create(serverLevel) ?: return null
 
         // 1. Assign Native Class & Preset safely via Cloning
-        val baseClass = NPCClasses.getByIdentifier(ResourceLocation.parse(npcClassId)) ?: NPCClasses.dummy()
+        val baseClass = NPCClasses.getByIdentifier(ResourceLocation.parse(npcClassId))
+            ?: NPCClasses.getByName("standard")
+            ?: NPCClasses.dummy()
+
         val npcClassInst = cloneNPCClass(baseClass)
         npcPresetId?.let { NPCPresets.getPreset(ResourceLocation.parse(it))?.applyTo(npcClassInst) }
         npcEntity.npc = npcClassInst
