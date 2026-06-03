@@ -25,13 +25,25 @@ import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.LivingEntity
 import org.slf4j.LoggerFactory
 
+/**
+ * The main entry point and initializer for the Fabric platform.
+ */
 class LuxFabricInitializer : ModInitializer {
 
     companion object {
         const val MOD_ID = "luxapi"
         val logger = LoggerFactory.getLogger(MOD_ID)
 
+        init {
+            val fabricScheduler = FabricLuxScheduler()
+            LuxAPI.schedulerProvider = { fabricScheduler }
+            fabricScheduler.registerTickListener()
+        }
+
         val commandManager = FabricCommandManager()
+
+        var playerManager: FabricPlayerManager? = null
+            private set
     }
 
     override fun onInitialize() {
@@ -47,16 +59,12 @@ class LuxFabricInitializer : ModInitializer {
         LuxAPI.guiProvider = { FabricGuiBuilder() }
         LuxAPI.paginatedGuiProvider = { FabricPaginatedGuiBuilder() }
 
-        val fabricScheduler = FabricLuxScheduler()
-        LuxAPI.schedulerProvider = { fabricScheduler }
-        fabricScheduler.registerTickListener()
-
         FabricEventBridge.register()
 
         UseEntityCallback.EVENT.register { player, world, hand, target, hitResult ->
             if (!world.isClientSide && player is ServerPlayer) {
                 if (NPCInteractionListener.onInteract(player, target)) {
-                    return@register InteractionResult.SUCCESS // Prevent default behavior
+                    return@register InteractionResult.SUCCESS
                 }
             }
             InteractionResult.PASS
@@ -75,13 +83,20 @@ class LuxFabricInitializer : ModInitializer {
         ServerLifecycleEvents.SERVER_STARTING.register { server ->
             LuxServerManager.init(server)
 
-            val playerManager = FabricPlayerManager(server)
-            InjectorRegistry.registerPlayerInjector(playerManager)
+            val manager = FabricPlayerManager(server)
+            playerManager = manager
+            InjectorRegistry.registerPlayerInjector(manager)
+
+            InjectorRegistry.register<ServerPlayer> { _, args, index ->
+                if (args.size > index) server.playerList.getPlayerByName(args[index]) else null
+            }
+
             logger.info("LuxAPI Player Injector (Fabric) registered successfully!")
         }
 
         ServerLifecycleEvents.SERVER_STOPPED.register { _ ->
             LuxServerManager.clear()
+            playerManager = null
         }
     }
 }
