@@ -7,30 +7,46 @@ import net.minecraft.server.level.ServerPlayer
 import java.util.UUID
 
 /**
- * The NeoForge implementation of the cross-platform LuxPlayer.
- * Wraps a native NeoForge ServerPlayer.
+ * NeoForge implementation of LuxPlayer wrapping Minecraft's native ServerPlayer object.
+ *
+ * @param serverPlayer The target native ServerPlayer instance.
  */
-class NeoForgeLuxPlayer(private val serverPlayer: ServerPlayer) : LuxPlayer {
+class NeoForgeLuxPlayer(private var serverPlayer: ServerPlayer) : LuxPlayer {
 
-    override val name: String get() = serverPlayer.scoreboardName
-    override val uniqueId: UUID get() = serverPlayer.uuid
-    override val parent: Any get() = serverPlayer
+    override val name: String
+        get() = serverPlayer.scoreboardName
+
+    override val uniqueId: UUID
+        get() = serverPlayer.uuid
+
+    override val parent: Any
+        get() = serverPlayer
+
     override val locale: String
         get() = serverPlayer.clientInformation().language()
+
     override val position: Vector3D
         get() = Vector3D(serverPlayer.x, serverPlayer.y, serverPlayer.z)
+
+    /**
+     * Re-assigns the inner native player reference upon world transits or respawns.
+     *
+     * @param player The newly instantiated ServerPlayer snapshot.
+     */
+    fun updateInstance(player: ServerPlayer) {
+        this.serverPlayer = player
+    }
 
     override fun sendMessage(message: String) {
         serverPlayer.sendSystemMessage(Component.literal(message))
     }
 
     override fun hasPermission(permission: String): Boolean {
-        // TODO: Implement actual permission check using NeoForge's permission API later.
+        // TODO: Map to NeoForge PermissionAPI later if needed
         return true
     }
 
     override fun sendTitle(title: String, subtitle: String) {
-        // Implementation for titles can be added here
     }
 
     override fun kick(reason: String) {

@@ -10,9 +10,7 @@ import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 
 /**
- * Manages Fabric-specific command registration and bridges Brigadier with LuxAPI logic.
- * This class uses a caching mechanism to ensure commands are safely registered
- * even if the server dispatcher is reloaded or initialized late.
+ * Bridges Brigadier registries with the core LuxAPI annotation-driven CommandProcessor on the Fabric platform.
  */
 class FabricCommandManager : AbstractCommandManager() {
 
@@ -20,60 +18,80 @@ class FabricCommandManager : AbstractCommandManager() {
     private val commandCache = mutableListOf<CommandProcessor>()
 
     /**
-     * Initializes the command dispatcher and registers all cached commands.
-     * This should be called during the Fabric command registration callback.
+     * Assigns the main Brigadier server dispatcher and flushes all cached command setups.
+     * * @param dispatcher The target CommandDispatcher node stack.
      */
     fun setDispatcher(dispatcher: CommandDispatcher<CommandSourceStack>) {
         this.dispatcher = dispatcher
         commandCache.forEach { registerNode(it, dispatcher) }
     }
 
-    /**
-     * Stores the command processor in the cache and registers it to the platform
-     * immediately if the dispatcher is already available.
-     */
     override fun registerToPlatform(processor: CommandProcessor) {
         commandCache.add(processor)
         dispatcher?.let { registerNode(processor, it) }
     }
 
     /**
-     * Registers the command as a root literal followed by a dynamic argument node.
-     * This structure delegates all string parsing and tab completion logic to the
-     * core CommandProcessor for method overloading support.
+     * Translates a command processor layout into standard native greedy string literal configurations.
+     * * @param processor The processed command container metadata.
+     * @param targetDispatcher The live platform command router.
      */
     private fun registerNode(processor: CommandProcessor, targetDispatcher: CommandDispatcher<CommandSourceStack>) {
-        val commandName = processor.commandInfo.name.lowercase()
+        val commandNames = mutableListOf(processor.commandInfo.name.lowercase())
+        commandNames.addAll(processor.commandInfo.aliases.map { it.lowercase() })
 
-        val rootNode = Commands.literal(commandName)
-            .executes { context -> executeCommand(context, processor, emptyArray()) }
+        for (commandName in commandNames) {
+            val rootNode = Commands.literal(commandName)
+                .executes { context -> executeCommand(context, processor, emptyArray()) }
 
-        val argumentNode = Commands.argument("args", StringArgumentType.greedyString())
-            .suggests { context, builder ->
-                val remainingInput = builder.remaining.lowercase()
-                val args = if (remainingInput.isEmpty()) emptyArray() else remainingInput.split(" ").toTypedArray()
+            val argumentNode = Commands.argument("args", StringArgumentType.greedyString())
+                .suggests { context, builder ->
+                    val fullInput = builder.input
+                    val commandPrefix = "/$commandName "
 
-                val source = context.source
-                if (source.isPlayer) {
-                    val sender = FabricLuxPlayer(source.playerOrException)
-                    processor.getSuggestions(sender, args).forEach { builder.suggest(it) }
+                    val rawArgsString = if (fullInput.startsWith(commandPrefix, ignoreCase = true)) {
+                        fullInput.substring(commandPrefix.length)
+                    } else {
+                        builder.remaining
+                    }
+
+                    if (rawArgsString.isEmpty()) return@suggests builder.buildFuture()
+
+                    val fullArgs = rawArgsString.split(" ").toTypedArray()
+                    val adjustedArgs = if (rawArgsString.endsWith(" ")) fullArgs + "" else fullArgs
+                    val methodArgs = if (adjustedArgs.size > 1) adjustedArgs.drop(1).toTypedArray() else emptyArray()
+
+                    val source = context.source
+                    if (source.isPlayer) {
+                        val sender = FabricLuxPlayer(source.playerOrException)
+                        val currentWord = if (rawArgsString.endsWith(" ")) "" else adjustedArgs.lastOrNull() ?: ""
+
+                        processor.getSuggestions(sender, methodArgs)
+                            .filter { it.lowercase().startsWith(currentWord.lowercase()) }
+                            .forEach { builder.suggest(it) }
+                    }
+
+                    builder.buildFuture()
+                }
+                .executes { context ->
+                    val rawArgs = StringArgumentType.getString(context, "args")
+                    val fullArgsArray = rawArgs.split(" ").filter { it.isNotEmpty() }.toTypedArray()
+                    val methodArgsArray = if (fullArgsArray.size > 1) fullArgsArray.drop(1).toTypedArray() else emptyArray()
+
+                    executeCommand(context, processor, methodArgsArray)
                 }
 
-                builder.buildFuture()
-            }
-            .executes { context ->
-                val rawArgs = StringArgumentType.getString(context, "args")
-                val argsArray = rawArgs.split(" ").filter { it.isNotEmpty() }.toTypedArray()
-                executeCommand(context, processor, argsArray)
-            }
-
-        rootNode.then(argumentNode)
-        targetDispatcher.register(rootNode)
+            rootNode.then(argumentNode)
+            targetDispatcher.register(rootNode)
+        }
     }
 
     /**
-     * Executes the command logic by wrapping the Minecraft source as a LuxPlayer.
-     * The execution is safely ignored if the sender is not a player.
+     * Invokes the processor pipeline by wrapping raw Brigadier command interactions.
+     * * @param context The current execution snapshot context.
+     * @param processor The associated command layout blueprint.
+     * @param args The adjusted method execution arguments.
+     * @return Execution confirmation value.
      */
     private fun executeCommand(
         context: CommandContext<CommandSourceStack>,

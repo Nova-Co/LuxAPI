@@ -6,7 +6,7 @@ import com.novaco.luxapi.commons.event.player.PlayerChatEvent
 import com.novaco.luxapi.commons.event.player.PlayerJoinEvent
 import com.novaco.luxapi.commons.event.player.PlayerQuitEvent
 import com.novaco.luxapi.commons.player.LuxPlayer
-import com.novaco.luxapi.fabric.player.FabricLuxPlayer
+import com.novaco.luxapi.fabric.LuxFabricInitializer
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents
 import net.minecraft.network.chat.Component
@@ -23,47 +23,48 @@ object FabricEventBridge {
      * This includes player connection state changes and chat message interception.
      */
     fun register() {
-        // --- Player Join Event ---
         ServerPlayConnectionEvents.JOIN.register { handler, _, _ ->
-            val luxPlayer = FabricLuxPlayer(handler.player)
-            EventBus.fire(PlayerJoinEvent(luxPlayer))
+            LuxFabricInitializer.playerManager?.let { manager ->
+                val luxPlayer = manager.login(handler.player)
+                EventBus.fire(PlayerJoinEvent(luxPlayer))
+            }
         }
 
-        // --- Player Quit Event ---
         ServerPlayConnectionEvents.DISCONNECT.register { handler, _ ->
-            val luxPlayer = FabricLuxPlayer(handler.player)
-            EventBus.fire(PlayerQuitEvent(luxPlayer))
+            LuxFabricInitializer.playerManager?.let { manager ->
+                val uuid = handler.player.uuid
+                val luxPlayer = manager.getPlayer(uuid)
+                if (luxPlayer != null) {
+                    EventBus.fire(PlayerQuitEvent(luxPlayer))
+                }
+                manager.logout(uuid)
+            }
         }
 
-        // --- Player Chat Event ---
         ServerMessageEvents.ALLOW_CHAT_MESSAGE.register { message, sender, _ ->
-            val luxPlayer = FabricLuxPlayer(sender)
+            val playerManager = LuxFabricInitializer.playerManager ?: return@register false
+            val luxPlayer = playerManager.getPlayer(sender.uuid) ?: return@register false
             val rawMessage = message.signedContent()
 
-            // Collect all online players to populate the recipients list
-            val recipients = sender.server.playerList.players.map { FabricLuxPlayer(it) as LuxPlayer }.toMutableSet()
+            val recipients = sender.server.playerList.players.mapNotNull {
+                playerManager.getPlayer(it.uuid)
+            }.toMutableSet()
 
-            // Dispatch the cross-platform event
             val event = PlayerChatEvent(luxPlayer, rawMessage, "<%player_name%> %message%", recipients)
             EventBus.fire(event)
 
-            // If a plugin cancelled the event, stop processing and block the vanilla chat
             if (event.isCancelled) {
                 return@register false
             }
 
-            // Apply placeholders and formatting
             val renderedText = PlaceholderManager.replace(luxPlayer, event.getRenderedMessage())
             val component = Component.literal(renderedText)
 
-            // Broadcast the formatted message manually to the designated recipients
             event.recipients.forEach { target ->
                 val targetServerPlayer = target.parent as ServerPlayer
                 targetServerPlayer.sendSystemMessage(component)
             }
 
-            // Always return false to suppress the default vanilla chat broadcast,
-            // as we have manually handled the delivery above.
             false
         }
     }
