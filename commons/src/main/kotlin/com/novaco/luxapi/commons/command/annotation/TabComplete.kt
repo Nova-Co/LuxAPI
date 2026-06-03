@@ -4,11 +4,9 @@ import com.novaco.luxapi.commons.command.tab.TabHandler
 import kotlin.reflect.KClass
 
 /**
- * Marks a command parameter to use a specific TabHandler for suggestions.
- * This allows native types like String or Int to have dynamic tab completions
- * without requiring custom argument wrappers.
+ * Instructs the command parser to use a specific TabHandler for this parameter.
  *
- * @property value The TabHandler class to instantiate and use.
+ * @property value The TabHandler class to instantiate for suggestions.
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)

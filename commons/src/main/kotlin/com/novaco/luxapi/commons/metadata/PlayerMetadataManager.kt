@@ -15,14 +15,18 @@ object PlayerMetadataManager {
 
     /**
      * Gets or creates a metadata container for the specified player UUID.
+     *
+     * @param uuid The unique identifier of the player.
+     * @return The player's metadata container.
      */
     fun getContainer(uuid: UUID): MetadataContainer {
         return playerContainers.computeIfAbsent(uuid) { MetadataContainer() }
     }
 
     /**
-     * Internal event listener to automatically destroy metadata
-     * when a player leaves the server.
+     * Internal event listener to automatically destroy metadata when a player leaves the server.
+     *
+     * @param event The player quit event dispatched by the platform.
      */
     @Subscribe
     internal fun onPlayerQuit(event: PlayerQuitEvent) {
