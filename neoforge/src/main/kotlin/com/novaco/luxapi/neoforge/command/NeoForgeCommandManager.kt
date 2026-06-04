@@ -34,9 +34,6 @@ class NeoForgeCommandManager : AbstractCommandManager() {
 
     /**
      * Translates a command processor layout into standard native greedy string literal configurations.
-     *
-     * @param processor The processed command container metadata.
-     * @param targetDispatcher The live platform command router.
      */
     private fun registerNode(processor: CommandProcessor, targetDispatcher: CommandDispatcher<CommandSourceStack>) {
         val commandNames = mutableListOf(processor.commandInfo.name.lowercase())
@@ -57,30 +54,30 @@ class NeoForgeCommandManager : AbstractCommandManager() {
                         builder.remaining
                     }
 
-                    if (rawArgsString.isEmpty()) return@suggests builder.buildFuture()
+                    // Keeping the exact split to ensure trailing spaces generate an empty string
+                    val argsList = rawArgsString.split(" ").toTypedArray()
+                    val currentWord = argsList.lastOrNull() ?: ""
 
-                    val fullArgs = rawArgsString.split(" ").toTypedArray()
-                    val adjustedArgs = if (rawArgsString.endsWith(" ")) fullArgs + "" else fullArgs
-                    val methodArgs = if (adjustedArgs.size > 1) adjustedArgs.drop(1).toTypedArray() else emptyArray()
+                    // Calculate the proper offset to prevent overwriting previous arguments
+                    val offset = fullInput.length - currentWord.length
+                    val offsetBuilder = builder.createOffset(offset)
 
                     val source = context.source
                     if (source.isPlayer) {
                         val sender = NeoForgeLuxPlayer(source.playerOrException)
-                        val currentWord = if (rawArgsString.endsWith(" ")) "" else adjustedArgs.lastOrNull() ?: ""
 
-                        processor.getSuggestions(sender, methodArgs)
+                        processor.getSuggestions(sender, argsList)
                             .filter { it.lowercase().startsWith(currentWord.lowercase()) }
-                            .forEach { builder.suggest(it) }
+                            .forEach { offsetBuilder.suggest(it) }
                     }
 
-                    builder.buildFuture()
+                    offsetBuilder.buildFuture()
                 }
                 .executes { context ->
                     val rawArgs = StringArgumentType.getString(context, "args")
                     val fullArgsArray = rawArgs.split(" ").filter { it.isNotEmpty() }.toTypedArray()
-                    val methodArgsArray = if (fullArgsArray.size > 1) fullArgsArray.drop(1).toTypedArray() else emptyArray()
 
-                    executeCommand(context, processor, methodArgsArray)
+                    executeCommand(context, processor, fullArgsArray)
                 }
 
             rootNode.then(argumentNode)

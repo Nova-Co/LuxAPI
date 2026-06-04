@@ -129,7 +129,9 @@ class CommandProcessor(private val commandInstance: Any) {
      */
     private fun findMainExecuteMethods(): List<Method> {
         val methods = commandInstance.javaClass.declaredMethods.filter {
-            it.parameterCount >= 1 &&
+            java.lang.reflect.Modifier.isPublic(it.modifiers) &&
+                    !it.isSynthetic &&
+                    it.parameterCount >= 1 &&
                     CommandSender::class.java.isAssignableFrom(it.parameterTypes[0]) &&
                     !it.isAnnotationPresent(SubCommand::class.java)
         }

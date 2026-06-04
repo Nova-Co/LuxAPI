@@ -8,6 +8,9 @@ import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.chat.placeholder.DefaultPlayerProvider
 import com.novaco.luxapi.commons.chat.placeholder.PlaceholderManager
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
+import com.novaco.luxapi.commons.command.sender.CommandSender
+import com.novaco.luxapi.commons.command.tab.TabHandler
+import com.novaco.luxapi.commons.command.tab.TabRegistry
 import com.novaco.luxapi.core.server.LuxServerManager
 import com.novaco.luxapi.neoforge.command.NeoForgeCommandManager
 import com.novaco.luxapi.neoforge.event.NeoForgeEventBridge
@@ -89,6 +92,12 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
         InjectorRegistry.register<ServerPlayer> { _, args, index ->
             if (args.size > index) server.playerList.getPlayerByName(args[index]) else null
         }
+
+        TabRegistry.register(ServerPlayer::class.java, object : TabHandler {
+            override fun getSuggestions(sender: CommandSender, args: Array<String>): List<String> {
+                return server.playerList.players.map { it.scoreboardName }
+            }
+        })
 
         logger.info("LuxAPI Player Injector (NeoForge) registered successfully!")
     }
