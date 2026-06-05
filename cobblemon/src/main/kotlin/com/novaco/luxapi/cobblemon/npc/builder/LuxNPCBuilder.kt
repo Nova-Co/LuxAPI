@@ -10,15 +10,17 @@ import com.cobblemon.mod.common.api.npc.configuration.interaction.DialogueNPCInt
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import com.cobblemon.mod.common.api.npc.partyproviders.SimplePartyProvider
 import com.cobblemon.mod.common.entity.npc.NPCEntity
+import com.novaco.luxapi.cobblemon.npc.battle.LuxBattleRegistry
+import com.novaco.luxapi.cobblemon.npc.battle.LuxBattleResult
 import com.novaco.luxapi.commons.player.LuxPlayer
+import com.novaco.luxapi.cobblemon.npc.manager.LuxInteractionRegistry
 import com.novaco.luxapi.cobblemon.npc.manager.LuxNPCManager
 import com.novaco.luxapi.cobblemon.npc.party.LuxPartyBuilder
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.phys.Vec3
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -30,7 +32,6 @@ import java.util.concurrent.CompletableFuture
  */
 class LuxNPCBuilder(private val spawner: LuxPlayer) {
 
-    // --- Internal State Properties ---
     private var npcName: Component = Component.literal("Villager")
     private var skinUsername: String? = null
     private var customId: String? = null
@@ -50,7 +51,7 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
     private var interactionConfiguration: NPCInteractConfiguration? = null
     private var registeredInteractionId: String? = null
 
-    // --- Configuration Methods ---
+    private var battleEndAction: ((ServerPlayer, NPCEntity, LuxBattleResult) -> Unit)? = null
 
     /** Sets a custom ID for tracking the NPC via [LuxNPCManager]. */
     fun id(id: String): LuxNPCBuilder { this.customId = id; return this }
@@ -126,9 +127,13 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
         return this
     }
 
-    /** Defines a custom, dynamic interaction in Kotlin code. Overrides native dialogues. */
+    /** * Defines a custom, dynamic interaction in Kotlin code.
+     * Automatically hijacks the interaction via LuxInteractionRegistry to bypass native auto-battles.
+     */
     fun onInteract(action: (player: ServerPlayer, npc: NPCEntity) -> Unit): LuxNPCBuilder {
-        this.interactionConfiguration = LuxCustomInteraction(action)
+        val uniqueId = UUID.randomUUID().toString()
+        this.registeredInteractionId = uniqueId
+        LuxInteractionRegistry.register(uniqueId, action)
         return this
     }
 
@@ -138,7 +143,16 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
         return this
     }
 
-    // --- Spawning Logic ---
+    /**
+     * Defines a custom callback to be executed when a battle with this NPC concludes.
+     *
+     * @param action The logic to run, providing the player, the NPC, and the battle outcome.
+     * @return This builder instance for method chaining.
+     */
+    fun onBattleEnd(action: (ServerPlayer, NPCEntity, LuxBattleResult) -> Unit): LuxNPCBuilder {
+        this.battleEndAction = action
+        return this
+    }
 
     /**
      * Constructs and spawns the NPC in the world in front of the spawner.
@@ -153,7 +167,6 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
 
         val npcEntity = CobblemonEntities.NPC.create(serverLevel) ?: return null
 
-        // 1. Assign Native Class & Preset safely via Cloning
         val baseClass = NPCClasses.getByIdentifier(ResourceLocation.parse(npcClassId))
             ?: NPCClasses.getByName("standard")
             ?: NPCClasses.dummy()
@@ -162,14 +175,12 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
         npcPresetId?.let { NPCPresets.getPreset(ResourceLocation.parse(it))?.applyTo(npcClassInst) }
         npcEntity.npc = npcClassInst
 
-        // 2. Core Visuals & Scaling
         npcEntity.customName = npcName
         npcEntity.isCustomNameVisible = !hideNameTag
         npcEntity.hideNameTag = hideNameTag
         npcEntity.renderScale = renderScale
         npcEntity.hitboxScale = renderScale
 
-        // 3. Apply AI Movement & Behaviors
         npcEntity.isMovable = (movementType == LuxMovement.WANDER)
         if (nativeBehaviors.isNotEmpty()) {
             npcEntity.behavioursAreCustom = true
@@ -177,18 +188,15 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
         }
         if (isPersistent) npcEntity.setPersistenceRequired()
 
-        // 4. Apply Aspects
         if (extraAspects.isNotEmpty()) {
             npcEntity.appliedAspects.addAll(extraAspects)
             npcEntity.updateAspects()
         }
 
-        // 5. Position & Rotation
         npcEntity.setPos(spawnPos.x, spawnPos.y, spawnPos.z)
         npcEntity.yRot = serverPlayer.yRot + 180.0f
         npcEntity.yHeadRot = npcEntity.yRot
 
-        // 6. Battle & Party Setup
         if (partyProvider != null) {
             npcEntity.npc.party = partyProvider
             npcEntity.party = partyProvider?.provide(npcEntity, npcEntity.level)
@@ -198,16 +206,18 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
             npcEntity.npc.party = simpleProvider
             npcEntity.party = simpleProvider.provide(npcEntity, npcEntity.level)
         }
+
         if (canChallenge) {
             npcEntity.getBattleConfiguration().canChallenge = true
             if (battleTheme != null) npcEntity.npc.battleTheme = battleTheme
+        } else {
+            // Explicitly disable native auto-challenging to protect dialogue flows
+            npcEntity.getBattleConfiguration().canChallenge = false
         }
 
-        // 7. Inject Interactions
         if (interactionConfiguration != null) npcEntity.interaction = interactionConfiguration
         if (registeredInteractionId != null) npcEntity.addTag("lux_interact:$registeredInteractionId")
 
-        // 8. Spawn & Finalize
         val success = serverLevel.addFreshEntity(npcEntity)
         if (success) {
             if (lookAtPlayer) {
@@ -215,6 +225,11 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
                 com.novaco.luxapi.cobblemon.npc.tracker.LuxNPCTracker.register(npcEntity.uuid)
             }
             customId?.let { LuxNPCManager.registerNPC(it, npcEntity.uuid) }
+
+            battleEndAction?.let { action ->
+                LuxBattleRegistry.register(npcEntity.uuid, action)
+            }
+
             skinUsername?.let { username ->
                 CompletableFuture.runAsync {
                     try {
@@ -232,7 +247,6 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
     /** Creates a deep clone of an NPCClass to prevent modifying the original registry. */
     private fun cloneNPCClass(original: NPCClass): NPCClass {
         val clone = NPCClass()
-        // Manually copy all relevant properties from the original to the clone
         clone.id = original.id
         clone.resourceIdentifier = original.resourceIdentifier
         clone.names = original.names.toMutableList()
@@ -257,22 +271,5 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
         clone.allowProjectileHits = original.allowProjectileHits
         clone.hideNameTag = original.hideNameTag
         return clone
-    }
-
-    /** A custom interaction configuration that wraps a Kotlin lambda. */
-    private class LuxCustomInteraction(
-        private val action: (ServerPlayer, NPCEntity) -> Unit
-    ) : NPCInteractConfiguration {
-        override val type: String = "lux_custom"
-        override fun interact(npc: NPCEntity, player: ServerPlayer): Boolean {
-            action(player, npc)
-            return true
-        }
-        // These methods are for serialization, not needed for this dynamic type.
-        override fun encode(buffer: RegistryFriendlyByteBuf) {}
-        override fun decode(buffer: RegistryFriendlyByteBuf) {}
-        override fun writeToNBT(compoundTag: CompoundTag) {}
-        override fun readFromNBT(compoundTag: CompoundTag) {}
-        override fun isDifferentTo(other: NPCInteractConfiguration) = true
     }
 }

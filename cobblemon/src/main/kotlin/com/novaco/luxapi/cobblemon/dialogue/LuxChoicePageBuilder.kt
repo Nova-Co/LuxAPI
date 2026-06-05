@@ -40,23 +40,20 @@ class LuxChoicePageBuilder(
         action: ((ServerPlayer, ActiveDialogue) -> Unit)? = null
     ): LuxChoicePageBuilder {
 
-        // The 'value' must be unique for Cobblemon to correctly handle the client-server packet.
         val optionValue = text.lowercase().replace(" ", "_")
 
         val dialogueOption = DialogueOption(
             text = WrappedDialogueText(text.text()),
             value = optionValue,
             action = FunctionDialogueAction { activeDialogue, _ ->
-                // Execute the custom server-side action if provided.
-                action?.invoke(activeDialogue.playerEntity, activeDialogue)
-
-                // Find and navigate to the next page if a target ID is specified.
                 val nextPage = activeDialogue.dialogueReference.pages.find { it.id == targetPageId }
+
                 if (nextPage != null) {
                     activeDialogue.setPage(nextPage)
+                    action?.invoke(activeDialogue.playerEntity, activeDialogue)
                 } else {
-                    // If no target page, close the dialogue.
                     activeDialogue.close()
+                    action?.invoke(activeDialogue.playerEntity, activeDialogue)
                 }
             }
         )

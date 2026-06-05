@@ -7,34 +7,34 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 
 /**
- * A fluent builder for constructing NPC Pokémon parties.
- * This class simplifies the creation of both fixed, static teams and complex, randomized teams
- * drawn from a weighted pool of possible Pokémon. It is used as a component within the [LuxNPCBuilder].
+ * A fluent API builder for configuring native Cobblemon NPCPartyProviders.
+ * Fully compatible with MoLang Expression systems introduced in newer Cobblemon iterations.
  */
 class LuxPartyBuilder {
 
     private val staticSpecs = mutableListOf<String>()
     private val poolEntries = mutableListOf<PoolEntryData>()
 
-    private var poolMinCount = 1
-    private var poolMaxCount = 6
+    private var poolMinCount = "1"
+    private var poolMaxCount = "6"
     private var useFixedRandom = false
 
-    /** Internal data class to hold configuration for a single entry in a randomized pool. */
+    /**
+     * Inner transfer block defining structural layouts for a dynamic pool member.
+     */
     private data class PoolEntryData(
         val spec: String,
-        val weight: Float,
-        val levelVariation: Int,
-        val selectableTimes: Int,
-        val npcLevels: IntRange
+        val weight: String,
+        val levelVariation: String,
+        val selectableTimes: String,
+        val npcLevels: String
     )
 
     /**
-     * Adds a Pokémon with a fixed definition to the NPC's party.
-     * Use this for creating a static, non-randomized team.
+     * appends a definitive static Pokémon specification into the non-randomized array slot.
      *
-     * @param spec A string defining the Pokémon (e.g., "pikachu level=10 shiny").
-     * @return This [LuxPartyBuilder] instance for method chaining.
+     * @param spec The explicit property designator (e.g., "charizard level=50 shiny=true").
+     * @return The updated builder context instance.
      */
     fun add(spec: String): LuxPartyBuilder {
         if (staticSpecs.size < 6) {
@@ -44,47 +44,60 @@ class LuxPartyBuilder {
     }
 
     /**
-     * Configures the party to be a randomized pool, where the final team size
-     * will be between the specified min and max values.
+     * Defines size boundaries for dynamic selector engines using strict raw values or MoLang expressions.
      *
-     * @param min The minimum number of Pokémon in the generated party.
-     * @param max The maximum number of Pokémon in the generated party.
-     * @return This [LuxPartyBuilder] instance for method chaining.
+     * @param min The text formula defining lower capacity bounds.
+     * @param max The text formula defining upper capacity bounds.
+     * @return The updated builder context instance.
      */
-    fun randomizeFromPool(min: Int, max: Int): LuxPartyBuilder {
-        this.poolMinCount = min.coerceIn(1, 6)
-        this.poolMaxCount = max.coerceIn(this.poolMinCount, 6)
+    fun randomizeFromPool(min: String, max: String): LuxPartyBuilder {
+        this.poolMinCount = min
+        this.poolMaxCount = max
         return this
     }
 
     /**
-     * Adds a potential Pokémon to the randomized pool.
+     * Defines size boundaries for dynamic selector engines using discrete size boundaries.
      *
-     * @param spec A string defining the Pokémon (e.g., "snorlax").
-     * @param weight The selection weight. Higher values increase the chance of this entry being chosen.
-     * @param levelVariation A random value to add or subtract from the NPC's base level.
-     * @param selectableTimes The maximum number of times this specific entry can be chosen for the party.
-     * @param npcLevels The range of NPC levels for which this entry is valid.
-     * @return This [LuxPartyBuilder] instance for method chaining.
+     * @param min The exact minimum party allocation count.
+     * @param max The exact maximum party allocation count.
+     * @return The updated builder context instance.
+     */
+    fun randomizeFromPool(min: Int, max: Int): LuxPartyBuilder {
+        val clampedMin = min.coerceIn(1, 6)
+        val clampedMax = max.coerceIn(clampedMin, 6)
+        this.poolMinCount = clampedMin.toString()
+        this.poolMaxCount = clampedMax.toString()
+        return this
+    }
+
+    /**
+     * Appends a complex contextual specification node entry directly into the randomized selection table.
+     *
+     * @param spec The concrete property designator mapping target traits.
+     * @param weight The chance calculation formula or value.
+     * @param levelVariation The level alteration offset bound formula or value.
+     * @param selectableTimes The extraction maximum capacity constraint formula or value.
+     * @param npcLevels The validity limit format boundary string (e.g., "1-100").
+     * @return The updated builder context instance.
      */
     @JvmOverloads
     fun addPoolEntry(
         spec: String,
-        weight: Float = 1.0f,
-        levelVariation: Int = 0,
-        selectableTimes: Int = 1,
-        npcLevels: IntRange = 1..100
+        weight: String = "1",
+        levelVariation: String = "0",
+        selectableTimes: String = "1",
+        npcLevels: String = "1-100"
     ): LuxPartyBuilder {
         poolEntries.add(PoolEntryData(spec, weight, levelVariation, selectableTimes, npcLevels))
         return this
     }
 
     /**
-     * If enabled, the random party generation will be deterministic, using the NPC's UUID as a seed.
-     * This means a specific NPC will always generate the same "random" party.
+     * Controls whether the stochastic generation mechanics should lock onto specific stable seeds.
      *
-     * @param fixed `true` to enable deterministic generation, `false` for pure randomness.
-     * @return This [LuxPartyBuilder] instance for method chaining.
+     * @param fixed State flag denoting deterministic mapping constraint.
+     * @return The updated builder context instance.
      */
     fun fixedRandom(fixed: Boolean = true): LuxPartyBuilder {
         this.useFixedRandom = fixed
@@ -92,44 +105,41 @@ class LuxPartyBuilder {
     }
 
     /**
-     * Internal method to compile the builder's configuration into a native Cobblemon [NPCPartyProvider].
-     * It determines whether to create a [SimplePartyProvider] (for static teams) or a
-     * [PoolPartyProvider] (for randomized teams) based on the methods called.
+     * Transforms the current builder instance layout structures into verified native platform party nodes.
      *
-     * @return The appropriate [NPCPartyProvider], or null if no Pokémon were defined.
+     * @return The verified instance implementation node, or null if configurations are empty.
      */
     internal fun build(): NPCPartyProvider? {
-        // If pool entries exist, build a PoolPartyProvider.
-        // This uses a JSON bypass to correctly configure the provider without direct class manipulation.
         if (poolEntries.isNotEmpty()) {
             val provider = PoolPartyProvider()
             val json = JsonObject()
+
             json.addProperty("isStatic", false)
             json.addProperty("useFixedRandom", this.useFixedRandom)
-            json.addProperty("minPokemon", this.poolMinCount.toString())
-            json.addProperty("maxPokemon", this.poolMaxCount.toString())
+            json.addProperty("minPokemon", this.poolMinCount)
+            json.addProperty("maxPokemon", this.poolMaxCount)
 
             val poolArray = JsonArray()
             for (entry in poolEntries) {
                 val entryJson = JsonObject()
                 entryJson.addProperty("pokemon", entry.spec)
-                entryJson.addProperty("weight", entry.weight.toString())
-                entryJson.addProperty("levelVariation", entry.levelVariation.toString())
-                entryJson.addProperty("selectableTimes", entry.selectableTimes.toString())
-                entryJson.addProperty("npcLevels", "${entry.npcLevels.first}-${entry.npcLevels.last}")
+                entryJson.addProperty("weight", entry.weight)
+                entryJson.addProperty("levelVariation", entry.levelVariation)
+                entryJson.addProperty("selectableTimes", entry.selectableTimes)
+                entryJson.addProperty("npcLevels", entry.npcLevels)
                 poolArray.add(entryJson)
             }
             json.add("pool", poolArray)
+
             provider.loadFromJSON(json)
             return provider
         }
 
-        // If only static specs exist, build a SimplePartyProvider.
-        // This also uses a JSON bypass to avoid potential type mismatches and MoLang parsing issues.
         if (staticSpecs.isNotEmpty()) {
             val provider = SimplePartyProvider()
             val json = JsonObject()
             val pokemonArray = JsonArray()
+
             staticSpecs.forEach { pokemonArray.add(it) }
             json.add("pokemon", pokemonArray)
 
