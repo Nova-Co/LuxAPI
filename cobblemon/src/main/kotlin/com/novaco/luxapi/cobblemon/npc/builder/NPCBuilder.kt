@@ -10,12 +10,13 @@ import com.cobblemon.mod.common.api.npc.configuration.interaction.DialogueNPCInt
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import com.cobblemon.mod.common.api.npc.partyproviders.SimplePartyProvider
 import com.cobblemon.mod.common.entity.npc.NPCEntity
-import com.novaco.luxapi.cobblemon.npc.battle.LuxBattleRegistry
-import com.novaco.luxapi.cobblemon.npc.battle.LuxBattleResult
+import com.novaco.luxapi.cobblemon.npc.battle.BattleRegistry
+import com.novaco.luxapi.cobblemon.npc.battle.BattleResult
 import com.novaco.luxapi.commons.player.LuxPlayer
-import com.novaco.luxapi.cobblemon.npc.manager.LuxInteractionRegistry
-import com.novaco.luxapi.cobblemon.npc.manager.LuxNPCManager
-import com.novaco.luxapi.cobblemon.npc.party.LuxPartyBuilder
+import com.novaco.luxapi.cobblemon.npc.manager.InteractionRegistry
+import com.novaco.luxapi.cobblemon.npc.manager.NPCManager
+import com.novaco.luxapi.cobblemon.npc.party.PartyBuilder
+import com.novaco.luxapi.cobblemon.npc.tracker.NPCTracker
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
@@ -30,7 +31,7 @@ import java.util.concurrent.CompletableFuture
  *
  * @param spawner The player who is initiating the creation of this NPC.
  */
-class LuxNPCBuilder(private val spawner: LuxPlayer) {
+class NPCBuilder(private val spawner: LuxPlayer) {
 
     private var npcName: Component = Component.literal("Villager")
     private var skinUsername: String? = null
@@ -40,7 +41,7 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
     private var npcClassId: String = "cobblemon:standard"
     private var npcPresetId: String? = null
     private var partyProvider: NPCPartyProvider? = null
-    private var movementType: LuxMovement = LuxMovement.STATIONARY
+    private var movementType: Movement = Movement.STATIONARY
     private var lookAtPlayer: Boolean = true
     private var isPersistent: Boolean = true
     private var hideNameTag: Boolean = false
@@ -51,76 +52,76 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
     private var interactionConfiguration: NPCInteractConfiguration? = null
     private var registeredInteractionId: String? = null
 
-    private var battleEndAction: ((ServerPlayer, NPCEntity, LuxBattleResult) -> Unit)? = null
+    private var battleEndAction: ((ServerPlayer, NPCEntity, BattleResult) -> Unit)? = null
 
-    /** Sets a custom ID for tracking the NPC via [LuxNPCManager]. */
-    fun id(id: String): LuxNPCBuilder { this.customId = id; return this }
+    /** Sets a custom ID for tracking the NPC via [NPCManager]. */
+    fun id(id: String): NPCBuilder { this.customId = id; return this }
 
     /** Sets the display name of the NPC. */
-    fun name(name: String): LuxNPCBuilder { this.npcName = Component.literal(name); return this }
+    fun name(name: String): NPCBuilder { this.npcName = Component.literal(name); return this }
 
     /** Sets the NPC's skin to that of a Minecraft player. */
-    fun skin(username: String): LuxNPCBuilder { this.skinUsername = username; return this }
+    fun skin(username: String): NPCBuilder { this.skinUsername = username; return this }
 
     /** Adds one or more visual aspects to the NPC (e.g., "shiny"). */
-    fun addAspects(vararg aspects: String): LuxNPCBuilder { this.extraAspects.addAll(aspects); return this }
+    fun addAspects(vararg aspects: String): NPCBuilder { this.extraAspects.addAll(aspects); return this }
 
     /** Sets the render scale of the NPC. */
-    fun scale(scale: Float): LuxNPCBuilder { this.renderScale = scale; return this }
+    fun scale(scale: Float): NPCBuilder { this.renderScale = scale; return this }
 
     /** Hides the NPC's name tag. */
-    fun hideNameTag(hide: Boolean = true): LuxNPCBuilder { this.hideNameTag = hide; return this }
+    fun hideNameTag(hide: Boolean = true): NPCBuilder { this.hideNameTag = hide; return this }
 
     /** Makes the NPC look at nearby players. */
-    fun lookAtPlayer(look: Boolean = true): LuxNPCBuilder { this.lookAtPlayer = look; return this }
+    fun lookAtPlayer(look: Boolean = true): NPCBuilder { this.lookAtPlayer = look; return this }
 
     /** Defines the NPC's movement behavior. */
-    fun movement(movement: LuxMovement): LuxNPCBuilder { this.movementType = movement; return this }
+    fun movement(movement: Movement): NPCBuilder { this.movementType = movement; return this }
 
     /** If true, the NPC will not despawn naturally. */
-    fun persistent(persistent: Boolean = true): LuxNPCBuilder { this.isPersistent = persistent; return this }
+    fun persistent(persistent: Boolean = true): NPCBuilder { this.isPersistent = persistent; return this }
 
     /** Sets the base NPC class (e.g., "cobblemon:trainer"). */
-    fun npcClass(classId: String): LuxNPCBuilder { this.npcClassId = classId; return this }
+    fun npcClass(classId: String): NPCBuilder { this.npcClassId = classId; return this }
 
     /** Applies a predefined NPC preset from data packs. */
-    fun preset(presetId: String): LuxNPCBuilder { this.npcPresetId = presetId; return this }
+    fun preset(presetId: String): NPCBuilder { this.npcPresetId = presetId; return this }
 
     /** Configures the NPC's party using a dedicated builder. */
-    fun party(setup: LuxPartyBuilder.() -> Unit): LuxNPCBuilder {
-        val partyBuilder = LuxPartyBuilder()
+    fun party(setup: PartyBuilder.() -> Unit): NPCBuilder {
+        val partyBuilder = PartyBuilder()
         partyBuilder.setup()
         this.partyProvider = partyBuilder.build()
         return this
     }
 
     /** Adds a Pokémon to the NPC's party using a spec string (e.g., "pikachu level=10"). */
-    fun addPokemon(spec: String): LuxNPCBuilder {
+    fun addPokemon(spec: String): NPCBuilder {
         if (trainerParty.size < 6) trainerParty.add(PokemonProperties.parse(spec))
         return this
     }
 
     /** Adds a Pokémon to the NPC's party using a [PokemonProperties] object. */
-    fun addPokemon(properties: PokemonProperties): LuxNPCBuilder {
+    fun addPokemon(properties: PokemonProperties): NPCBuilder {
         if (trainerParty.size < 6) trainerParty.add(properties)
         return this
     }
 
     /** Enables battling against this NPC and optionally sets a battle theme. */
-    fun enableBattle(themePath: String? = null): LuxNPCBuilder {
+    fun enableBattle(themePath: String? = null): NPCBuilder {
         this.canChallenge = true
         if (themePath != null) this.battleTheme = ResourceLocation.parse(themePath)
         return this
     }
 
     /** Adds a native Cobblemon AI behavior (e.g., "cobblemon:healer_behavior"). */
-    fun addNativeBehavior(behaviorId: String): LuxNPCBuilder {
+    fun addNativeBehavior(behaviorId: String): NPCBuilder {
         this.nativeBehaviors.add(ResourceLocation.parse(behaviorId))
         return this
     }
 
     /** Loads a native Cobblemon JSON dialogue from a data pack. */
-    fun nativeDialogue(dialoguePath: String): LuxNPCBuilder {
+    fun nativeDialogue(dialoguePath: String): NPCBuilder {
         val config = DialogueNPCInteractionConfiguration()
         config.dialogue = ResourceLocation.parse(dialoguePath)
         this.interactionConfiguration = config
@@ -130,15 +131,15 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
     /** * Defines a custom, dynamic interaction in Kotlin code.
      * Automatically hijacks the interaction via LuxInteractionRegistry to bypass native auto-battles.
      */
-    fun onInteract(action: (player: ServerPlayer, npc: NPCEntity) -> Unit): LuxNPCBuilder {
+    fun onInteract(action: (player: ServerPlayer, npc: NPCEntity) -> Unit): NPCBuilder {
         val uniqueId = UUID.randomUUID().toString()
         this.registeredInteractionId = uniqueId
-        LuxInteractionRegistry.register(uniqueId, action)
+        InteractionRegistry.register(uniqueId, action)
         return this
     }
 
     /** Binds this NPC to a globally registered interaction that persists across server restarts. */
-    fun bindInteraction(interactId: String): LuxNPCBuilder {
+    fun bindInteraction(interactId: String): NPCBuilder {
         this.registeredInteractionId = interactId
         return this
     }
@@ -149,7 +150,7 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
      * @param action The logic to run, providing the player, the NPC, and the battle outcome.
      * @return This builder instance for method chaining.
      */
-    fun onBattleEnd(action: (ServerPlayer, NPCEntity, LuxBattleResult) -> Unit): LuxNPCBuilder {
+    fun onBattleEnd(action: (ServerPlayer, NPCEntity, BattleResult) -> Unit): NPCBuilder {
         this.battleEndAction = action
         return this
     }
@@ -181,7 +182,7 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
         npcEntity.renderScale = renderScale
         npcEntity.hitboxScale = renderScale
 
-        npcEntity.isMovable = (movementType == LuxMovement.WANDER)
+        npcEntity.isMovable = (movementType == Movement.WANDER)
         if (nativeBehaviors.isNotEmpty()) {
             npcEntity.behavioursAreCustom = true
             npcEntity.behaviours.addAll(nativeBehaviors)
@@ -222,12 +223,12 @@ class LuxNPCBuilder(private val spawner: LuxPlayer) {
         if (success) {
             if (lookAtPlayer) {
                 npcEntity.addTag("lux_look_at_interactor")
-                com.novaco.luxapi.cobblemon.npc.tracker.LuxNPCTracker.register(npcEntity.uuid)
+                NPCTracker.register(npcEntity.uuid)
             }
-            customId?.let { LuxNPCManager.registerNPC(it, npcEntity.uuid) }
+            customId?.let { NPCManager.registerNPC(it, npcEntity.uuid) }
 
             battleEndAction?.let { action ->
-                LuxBattleRegistry.register(npcEntity.uuid, action)
+                BattleRegistry.register(npcEntity.uuid, action)
             }
 
             skinUsername?.let { username ->

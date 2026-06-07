@@ -12,7 +12,7 @@ import kotlin.math.sqrt
  * Instead of iterating through all entities, this tracker only processes NPCs that have been
  * explicitly registered, significantly improving performance on servers with many entities.
  */
-object LuxNPCTracker {
+object NPCTracker {
 
     private val trackedNPCs = mutableSetOf<UUID>()
     private const val TRACKING_RADIUS = 7.0

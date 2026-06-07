@@ -3,7 +3,7 @@ package com.novaco.luxapi.cobblemon.npc
 /**
  * Defines the built-in AI movement and behavior presets for a LuxNPC.
  */
-enum class LuxMovement {
+enum class Movement {
     /** * The NPC will remain frozen exactly where spawned.
      * It cannot be pushed by entities or wander off.
      */

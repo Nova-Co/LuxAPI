@@ -8,9 +8,9 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * A global registry for managing post-battle interaction logic.
  */
-object LuxBattleRegistry {
+object BattleRegistry {
 
-    private val battleCallbacks = ConcurrentHashMap<UUID, (ServerPlayer, NPCEntity, LuxBattleResult) -> Unit>()
+    private val battleCallbacks = ConcurrentHashMap<UUID, (ServerPlayer, NPCEntity, BattleResult) -> Unit>()
 
     /**
      * Registers a persistent post-battle callback for a specific NPC.
@@ -18,7 +18,7 @@ object LuxBattleRegistry {
      * @param npcUuid The unique identifier of the NPCEntity.
      * @param action The callback to execute when the battle ends.
      */
-    fun register(npcUuid: UUID, action: (ServerPlayer, NPCEntity, LuxBattleResult) -> Unit) {
+    fun register(npcUuid: UUID, action: (ServerPlayer, NPCEntity, BattleResult) -> Unit) {
         battleCallbacks[npcUuid] = action
     }
 
@@ -28,7 +28,7 @@ object LuxBattleRegistry {
      * @param npcUuid The unique identifier of the NPCEntity.
      * @return The callback function, or null if none is registered.
      */
-    fun get(npcUuid: UUID): ((ServerPlayer, NPCEntity, LuxBattleResult) -> Unit)? {
+    fun get(npcUuid: UUID): ((ServerPlayer, NPCEntity, BattleResult) -> Unit)? {
         return battleCallbacks[npcUuid]
     }
 

@@ -10,7 +10,7 @@ import com.google.gson.JsonObject
  * A fluent API builder for configuring native Cobblemon NPCPartyProviders.
  * Fully compatible with MoLang Expression systems introduced in newer Cobblemon iterations.
  */
-class LuxPartyBuilder {
+class PartyBuilder {
 
     private val staticSpecs = mutableListOf<String>()
     private val poolEntries = mutableListOf<PoolEntryData>()
@@ -36,7 +36,7 @@ class LuxPartyBuilder {
      * @param spec The explicit property designator (e.g., "charizard level=50 shiny=true").
      * @return The updated builder context instance.
      */
-    fun add(spec: String): LuxPartyBuilder {
+    fun add(spec: String): PartyBuilder {
         if (staticSpecs.size < 6) {
             staticSpecs.add(spec)
         }
@@ -50,7 +50,7 @@ class LuxPartyBuilder {
      * @param max The text formula defining upper capacity bounds.
      * @return The updated builder context instance.
      */
-    fun randomizeFromPool(min: String, max: String): LuxPartyBuilder {
+    fun randomizeFromPool(min: String, max: String): PartyBuilder {
         this.poolMinCount = min
         this.poolMaxCount = max
         return this
@@ -63,7 +63,7 @@ class LuxPartyBuilder {
      * @param max The exact maximum party allocation count.
      * @return The updated builder context instance.
      */
-    fun randomizeFromPool(min: Int, max: Int): LuxPartyBuilder {
+    fun randomizeFromPool(min: Int, max: Int): PartyBuilder {
         val clampedMin = min.coerceIn(1, 6)
         val clampedMax = max.coerceIn(clampedMin, 6)
         this.poolMinCount = clampedMin.toString()
@@ -88,7 +88,7 @@ class LuxPartyBuilder {
         levelVariation: String = "0",
         selectableTimes: String = "1",
         npcLevels: String = "1-100"
-    ): LuxPartyBuilder {
+    ): PartyBuilder {
         poolEntries.add(PoolEntryData(spec, weight, levelVariation, selectableTimes, npcLevels))
         return this
     }
@@ -99,7 +99,7 @@ class LuxPartyBuilder {
      * @param fixed State flag denoting deterministic mapping constraint.
      * @return The updated builder context instance.
      */
-    fun fixedRandom(fixed: Boolean = true): LuxPartyBuilder {
+    fun fixedRandom(fixed: Boolean = true): PartyBuilder {
         this.useFixedRandom = fixed
         return this
     }

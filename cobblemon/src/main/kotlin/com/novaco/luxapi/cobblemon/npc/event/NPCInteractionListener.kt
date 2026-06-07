@@ -1,7 +1,7 @@
 package com.novaco.luxapi.cobblemon.npc.event
 
 import com.cobblemon.mod.common.entity.npc.NPCEntity
-import com.novaco.luxapi.cobblemon.npc.manager.LuxInteractionRegistry
+import com.novaco.luxapi.cobblemon.npc.manager.InteractionRegistry
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
 
@@ -24,7 +24,7 @@ object NPCInteractionListener {
         val interactId = interactTag.substringAfter("lux_interact:")
 
         // Fetch and execute the logic
-        val handler = LuxInteractionRegistry.get(interactId)
+        val handler = InteractionRegistry.get(interactId)
         if (handler != null) {
             handler.invoke(player, target)
             return true // We handled it, cancel native processing

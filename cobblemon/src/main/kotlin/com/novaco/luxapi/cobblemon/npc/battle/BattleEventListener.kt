@@ -10,19 +10,19 @@ import net.minecraft.server.level.ServerPlayer
 /**
  * Listens for Cobblemon battle termination events and routes them to the LuxBattleRegistry.
  */
-object LuxBattleEventListener {
+object BattleEventListener {
 
     /**
      * Subscribes to the Cobblemon event bus.
      */
     fun register() {
         CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL) { event ->
-            handleBattleEnd(event.winners.toList(), event.losers.toList(), LuxBattleResult.VICTORY)
+            handleBattleEnd(event.winners.toList(), event.losers.toList(), BattleResult.VICTORY)
         }
 
         CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.NORMAL) { event ->
             val battle = event.battle
-            handleBattleEnd(battle.actors.toList(), battle.actors.toList(), LuxBattleResult.DEFEAT)
+            handleBattleEnd(battle.actors.toList(), battle.actors.toList(), BattleResult.DEFEAT)
         }
     }
 
@@ -36,7 +36,7 @@ object LuxBattleEventListener {
     private fun handleBattleEnd(
         winners: List<Any>,
         losers: List<Any>,
-        defaultResult: LuxBattleResult
+        defaultResult: BattleResult
     ) {
         val allActors = winners + losers
 
@@ -47,13 +47,13 @@ object LuxBattleEventListener {
         val npc = npcActor.entity as? NPCEntity ?: return
 
         val result = if (winners.contains(playerActor)) {
-            LuxBattleResult.VICTORY
+            BattleResult.VICTORY
         } else if (losers.contains(playerActor)) {
-            LuxBattleResult.DEFEAT
+            BattleResult.DEFEAT
         } else {
-            LuxBattleResult.DRAW
+            BattleResult.DRAW
         }
 
-        LuxBattleRegistry.get(npc.uuid)?.invoke(player, npc, result)
+        BattleRegistry.get(npc.uuid)?.invoke(player, npc, result)
     }
 }

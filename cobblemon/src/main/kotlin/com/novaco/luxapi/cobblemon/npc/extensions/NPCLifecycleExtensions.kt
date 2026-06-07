@@ -1,6 +1,6 @@
 package com.novaco.luxapi.cobblemon.npc.extensions
 
-import com.novaco.luxapi.cobblemon.npc.manager.LuxNPCManager
+import com.novaco.luxapi.cobblemon.npc.manager.NPCManager
 import net.minecraft.server.MinecraftServer
 
 /**
@@ -17,12 +17,12 @@ import net.minecraft.server.MinecraftServer
  * @return True if the NPC was removed, false if it could not be found.
  */
 fun MinecraftServer.despawnNPC(customId: String): Boolean {
-    return LuxNPCManager.removeNPC(customId, this)
+    return NPCManager.removeNPC(customId, this)
 }
 
 /**
  * Checks if a specific LuxAPI NPC is currently registered and loaded.
  */
 fun MinecraftServer.isNPCLoaded(customId: String): Boolean {
-    return LuxNPCManager.getNPC(customId, this) != null
+    return NPCManager.getNPC(customId, this) != null
 }

@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Ensures that custom Kotlin interactions survive server restarts by decoupling
  * the logic from the ephemeral NPC Builder instance.
  */
-object LuxInteractionRegistry {
+object InteractionRegistry {
 
     private val interactions = ConcurrentHashMap<String, (ServerPlayer, NPCEntity) -> Unit>()
 

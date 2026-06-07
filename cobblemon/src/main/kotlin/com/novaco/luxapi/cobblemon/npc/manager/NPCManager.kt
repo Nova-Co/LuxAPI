@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
  * A central registry for managing custom NPCs spawned via LuxAPI.
  * Allows developers to retrieve, track, and safely despawn NPCs using custom String IDs.
  */
-object LuxNPCManager {
+object NPCManager {
 
     // Maps a developer-defined String ID to the Minecraft Entity UUID
     private val npcRegistry = ConcurrentHashMap<String, UUID>()
@@ -55,7 +55,7 @@ object LuxNPCManager {
         unregisterNPC(customId)
 
         // Also unregister from head-tracking if applicable
-        com.novaco.luxapi.cobblemon.npc.tracker.LuxNPCTracker.unregister(entity.uuid)
+        com.novaco.luxapi.cobblemon.npc.tracker.NPCTracker.unregister(entity.uuid)
 
         return true
     }
