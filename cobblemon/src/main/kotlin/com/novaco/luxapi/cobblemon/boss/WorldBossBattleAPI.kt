@@ -14,6 +14,16 @@ import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 
 /**
+ * Indicates the result of a player attempting to join a boss battle.
+ */
+enum class BossJoinStatus {
+    SUCCESS,
+    ALREADY_IN_BATTLE,
+    INVALID_SIDE,
+    ERROR
+}
+
+/**
  * Provides the core functionality for managing multi-player vs. single boss battles (raid-style encounters).
  * This API allows developers to dynamically add players to an ongoing boss battle.
  */
@@ -25,6 +35,20 @@ object WorldBossBattleAPI {
      * It should return `true` to allow the player to join, or `false` to prevent them.
      */
     var onPlayerJoinBossBattle: ((ServerPlayer, PokemonBattle, PokemonEntity) -> Boolean)? = null
+
+    /**
+     * The global default feedback handler for join attempts.
+     * Developers can override this entirely to integrate their own language files or display methods (e.g., Titles/ActionBars).
+     */
+    var joinFeedbackHandler: (ServerPlayer, BossJoinStatus) -> Unit = { player, status ->
+        val message = when (status) {
+            BossJoinStatus.SUCCESS -> "§aYou have joined the raid!"
+            BossJoinStatus.ALREADY_IN_BATTLE -> "§cYou are already in this battle!"
+            BossJoinStatus.INVALID_SIDE -> "§cFailed to find a valid side to join!"
+            BossJoinStatus.ERROR -> "§cAn error occurred while joining the raid!"
+        }
+        player.sendSystemMessage(Component.literal(message))
+    }
 
     /**
      * Registers the necessary event listeners to enable the raid join functionality.
@@ -61,10 +85,14 @@ object WorldBossBattleAPI {
      * @param player The player to be added to the battle.
      * @param battle The ongoing `PokemonBattle` instance.
      */
-    fun joinOngoingBattle(player: ServerPlayer, battle: PokemonBattle) {
+    fun joinOngoingBattle(
+        player: ServerPlayer,
+        battle: PokemonBattle,
+        onFeedback: ((ServerPlayer, BossJoinStatus) -> Unit) = joinFeedbackHandler
+    ) {
         // Prevent a player from joining the same battle multiple times
         if (battle.actors.any { it.isForPlayer(player) }) {
-            player.sendSystemMessage(Component.literal("§cYou are already in this battle!"))
+            onFeedback.invoke(player, BossJoinStatus.ALREADY_IN_BATTLE)
             return
         }
 
@@ -97,7 +125,7 @@ object WorldBossBattleAPI {
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                player.sendSystemMessage(Component.literal("§cAn error occurred while joining the raid!"))
+                onFeedback.invoke(player, BossJoinStatus.ERROR)
                 return
             }
 
@@ -107,9 +135,9 @@ object WorldBossBattleAPI {
             val initPacket = BattleInitializePacket(battle, playerSide)
             newActor.sendUpdate(initPacket)
 
-            player.sendSystemMessage(Component.literal("§aYou have joined the raid!"))
+            onFeedback.invoke(player, BossJoinStatus.SUCCESS)
         } else {
-            player.sendSystemMessage(Component.literal("§cFailed to find a valid side to join!"))
+            onFeedback.invoke(player, BossJoinStatus.INVALID_SIDE)
         }
     }
 }

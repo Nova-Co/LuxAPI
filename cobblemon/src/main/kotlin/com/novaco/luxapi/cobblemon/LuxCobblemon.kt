@@ -4,7 +4,7 @@ import com.novaco.luxapi.cobblemon.boss.BossDefeatListener
 import com.novaco.luxapi.cobblemon.listener.CobblemonEventHandler
 import com.novaco.luxapi.cobblemon.listener.UncatchableManager
 import com.novaco.luxapi.cobblemon.manager.NPCInteractionManager
-import com.novaco.luxapi.cobblemon.npc.tracker.LuxNPCTracker
+import com.novaco.luxapi.cobblemon.npc.tracker.NPCTracker
 import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.core.server.LuxServerManager
 
@@ -30,7 +30,7 @@ object LuxCobblemon {
 
             if (server != null) {
                 // Execute the math logic for all active stationary NPCs
-                LuxNPCTracker.tick(server)
+                NPCTracker.tick(server)
             }
         }
 

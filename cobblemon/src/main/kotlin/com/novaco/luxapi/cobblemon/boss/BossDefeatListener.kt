@@ -6,7 +6,7 @@ import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import com.novaco.luxapi.cobblemon.boss.aggro.BossAggroManager
 import com.novaco.luxapi.cobblemon.boss.event.BossDefeatEvent
-import com.novaco.luxapi.cobblemon.boss.event.LuxBossHooks
+import com.novaco.luxapi.cobblemon.boss.event.BossHooks
 import com.novaco.luxapi.cobblemon.boss.minion.BossMinionManager
 import com.novaco.luxapi.core.bossbar.BossBarManager
 import com.novaco.luxapi.core.scoreboard.ScoreboardManager
@@ -99,7 +99,7 @@ object BossDefeatListener {
 
         // Fire the official API event with damage data
         val topDamagers = BossAggroManager.getTopDamagers(bossEntity)
-        LuxBossHooks.triggerDefeat(BossDefeatEvent(bossEntity, topDamagers))
+        BossHooks.triggerDefeat(BossDefeatEvent(bossEntity, topDamagers))
 
         // Despawn the boss entity
         bossEntity.discard()

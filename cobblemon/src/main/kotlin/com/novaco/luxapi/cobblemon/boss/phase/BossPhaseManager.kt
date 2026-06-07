@@ -3,7 +3,7 @@ package com.novaco.luxapi.cobblemon.boss.phase
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import com.novaco.luxapi.cobblemon.boss.event.BossPhaseChangeEvent
-import com.novaco.luxapi.cobblemon.boss.event.LuxBossHooks
+import com.novaco.luxapi.cobblemon.boss.event.BossHooks
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -63,7 +63,7 @@ object BossPhaseManager {
             if (!phase.isTriggered && currentHpRatio <= phase.healthThreshold) {
                 phase.isTriggered = true
                 phase.action(bossEntity)
-                LuxBossHooks.triggerPhaseChange(BossPhaseChangeEvent(bossEntity, phase.healthThreshold))
+                BossHooks.triggerPhaseChange(BossPhaseChangeEvent(bossEntity, phase.healthThreshold))
             }
         }
     }

@@ -35,6 +35,8 @@ object BossMinionManager {
 
         val angleStep = (2 * Math.PI) / amount
 
+        val baseProperties = PokemonProperties.parse(propertyString)
+
         for (i in 0 until amount) {
             val angle = i * angleStep
             val spawnX = bossEntity.x + (cos(angle) * radius)
@@ -42,8 +44,7 @@ object BossMinionManager {
             val spawnZ = bossEntity.z + (sin(angle) * radius)
 
             // Parse Pokemon properties (e.g., "species=zubat level=15")
-            val pokemon = PokemonProperties.parse(propertyString).create()
-
+            val pokemon = baseProperties.create()
             val minionEntity = PokemonEntity(level, pokemon)
 
             minionEntity.setPos(spawnX, spawnY, spawnZ)

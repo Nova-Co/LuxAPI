@@ -7,7 +7,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * This object provides methods for subscribing to various boss events and is responsible
  * for dispatching those events to all registered listeners.
  */
-object LuxBossHooks {
+object BossHooks {
 
     private val spawnListeners = CopyOnWriteArrayList<(BossSpawnEvent) -> Unit>()
     private val phaseChangeListeners = CopyOnWriteArrayList<(BossPhaseChangeEvent) -> Unit>()
