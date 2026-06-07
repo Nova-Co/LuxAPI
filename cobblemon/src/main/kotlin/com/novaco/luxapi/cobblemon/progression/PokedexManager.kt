@@ -26,7 +26,6 @@ object PokedexManager {
         // Fetch the specific record for this Pokémon species
         val record = serverPlayer.pokedex().speciesRecords[species.resourceIdentifier] ?: return false
 
-        // 🌟 Fix: Use the internal knowledge enum to verify if the status is CAUGHT
         return record.getKnowledge().name.equals("CAUGHT", ignoreCase = true)
     }
 
