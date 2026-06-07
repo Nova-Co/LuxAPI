@@ -136,9 +136,12 @@ jobs:
 
           # 6. Send it to the second webhook if configured
           if [ -n "${WEBHOOK_URL_2:-}" ]; then
+            # Create a new payload for the second webhook
+            jq '.content = ""' payload.json > payload_2.json
+            
             curl --fail-with-body --retry 3 --retry-delay 2 -i -H "Content-Type: application/json" \
                  -X POST \
-                 -d @payload.json \
+                 -d @payload_2.json \
                  "$WEBHOOK_URL_2"
           else
             echo "DISCORD_WEBHOOK_URL_2 is not configured, skipping second notification."
