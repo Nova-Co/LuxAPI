@@ -1,6 +1,5 @@
 package com.novaco.luxapi.cobblemon.hooks
 
-import com.cobblemon.mod.common.pokemon.Pokemon
 import com.novaco.luxapi.commons.player.LuxPlayer
 
 /**
@@ -10,7 +9,7 @@ import com.novaco.luxapi.commons.player.LuxPlayer
  *
  * @param T The type of data that will be passed when the event is triggered.
  */
-interface LuxHook<T> {
+interface Hook<T> {
     /**
      * This method is called by the [HookManager] when the corresponding event occurs.
      *

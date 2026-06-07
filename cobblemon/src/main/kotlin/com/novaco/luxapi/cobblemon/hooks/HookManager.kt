@@ -13,26 +13,26 @@ import com.novaco.luxapi.commons.player.LuxPlayer
  * in-game events (like catching a Pokémon) and execute custom logic.
  */
 object HookManager {
-    private val catchHooks = mutableListOf<LuxHook<Pokemon>>()
-    private val defeatHooks = mutableListOf<LuxHook<BattleVictoryEvent>>()
-    private val levelUpHooks = mutableListOf<LuxHook<LevelUpEvent>>()
-    private val evolutionHooks = mutableListOf<LuxHook<EvolutionEvent>>()
-    private val eggHatchHooks = mutableListOf<LuxHook<HatchEggEvent>>()
+    private val catchHooks = mutableListOf<Hook<Pokemon>>()
+    private val defeatHooks = mutableListOf<Hook<BattleVictoryEvent>>()
+    private val levelUpHooks = mutableListOf<Hook<LevelUpEvent>>()
+    private val evolutionHooks = mutableListOf<Hook<EvolutionEvent>>()
+    private val eggHatchHooks = mutableListOf<Hook<HatchEggEvent>>()
 
     /** Registers a hook to be triggered when a Pokémon is caught. */
-    fun registerCatchHook(hook: LuxHook<Pokemon>) = catchHooks.add(hook)
+    fun registerCatchHook(hook: Hook<Pokemon>) = catchHooks.add(hook)
 
     /** Registers a hook to be triggered when a player wins a battle. */
-    fun registerDefeatHook(hook: LuxHook<BattleVictoryEvent>) = defeatHooks.add(hook)
+    fun registerDefeatHook(hook: Hook<BattleVictoryEvent>) = defeatHooks.add(hook)
 
     /** Registers a hook to be triggered when a Pokémon levels up. */
-    fun registerLevelUpHook(hook: LuxHook<LevelUpEvent>) = levelUpHooks.add(hook)
+    fun registerLevelUpHook(hook: Hook<LevelUpEvent>) = levelUpHooks.add(hook)
 
     /** Registers a hook to be triggered when a Pokémon evolves. */
-    fun registerEvolutionHook(hook: LuxHook<EvolutionEvent>) = evolutionHooks.add(hook)
+    fun registerEvolutionHook(hook: Hook<EvolutionEvent>) = evolutionHooks.add(hook)
 
     /** Registers a hook to be triggered when an egg hatches. */
-    fun registerEggHatchHook(hook: LuxHook<HatchEggEvent>) = eggHatchHooks.add(hook)
+    fun registerEggHatchHook(hook: Hook<HatchEggEvent>) = eggHatchHooks.add(hook)
 
     /**
      * Internally broadcasts a "catch" event to all registered listeners.
