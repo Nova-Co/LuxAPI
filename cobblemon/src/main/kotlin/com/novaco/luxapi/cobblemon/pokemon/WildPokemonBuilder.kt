@@ -7,7 +7,7 @@ import com.cobblemon.mod.common.api.pokemon.stats.Stats
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import com.novaco.luxapi.cobblemon.boss.BossHpSynchronizer
 import com.novaco.luxapi.cobblemon.boss.event.BossSpawnEvent
-import com.novaco.luxapi.cobblemon.boss.event.LuxBossHooks
+import com.novaco.luxapi.cobblemon.boss.event.BossHooks
 import com.novaco.luxapi.cobblemon.boss.phase.BossPhase
 import com.novaco.luxapi.cobblemon.boss.phase.BossPhaseManager
 import com.novaco.luxapi.cobblemon.listener.UncatchableManager
@@ -313,7 +313,7 @@ class WildPokemonBuilder(private val speciesName: String) {
             BossPhaseManager.registerPhases(pokemonEntity.uuid, phases)
         }
 
-        LuxBossHooks.triggerSpawn(BossSpawnEvent(pokemonEntity))
+        BossHooks.triggerSpawn(BossSpawnEvent(pokemonEntity))
 
         return pokemonEntity
     }
