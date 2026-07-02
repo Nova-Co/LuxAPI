@@ -3,7 +3,6 @@ package com.novaco.luxapi.cobblemon.boss.minion
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import com.novaco.luxapi.cobblemon.boss.aggro.BossAggroManager
-import com.novaco.luxapi.cobblemon.fx.BossFxWrapper
 import net.minecraft.server.level.ServerLevel
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -32,9 +31,7 @@ object BossMinionManager {
         val bossUuid = bossEntity.uuid
 
         val minionList = activeMinions.getOrPut(bossUuid) { mutableListOf() }
-
         val angleStep = (2 * Math.PI) / amount
-
         val baseProperties = PokemonProperties.parse(propertyString)
 
         for (i in 0 until amount) {
@@ -92,13 +89,6 @@ object BossMinionManager {
         val minions = activeMinions.remove(bossUuid) ?: return
         minions.forEach { minion ->
             if (minion.isAlive) {
-                // Optional: Play a poof particle before discarding
-                /*
-                BossFxWrapper.playMoveParticle(
-                    minion,
-                    BossFxWrapper.MoveParticle.EXPLOSION_BOOM
-                )
-                */
                 minion.discard()
             }
         }
