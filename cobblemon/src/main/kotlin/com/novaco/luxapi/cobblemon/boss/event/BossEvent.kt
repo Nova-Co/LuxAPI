@@ -7,7 +7,7 @@ import java.util.UUID
  * A base interface for all events related to LuxAPI boss encounters.
  * It ensures that every boss event provides access to the associated boss entity.
  */
-interface LuxBossEvent {
+interface BossEvent {
     /** The Pokemon entity designated as the boss for this event. */
     val bossEntity: PokemonEntity
 }
@@ -20,7 +20,7 @@ interface LuxBossEvent {
  */
 data class BossSpawnEvent(
     override val bossEntity: PokemonEntity
-) : LuxBossEvent
+) : BossEvent
 
 /**
  * Fired when a boss's health drops to a predefined threshold, triggering a phase change.
@@ -32,7 +32,7 @@ data class BossSpawnEvent(
 data class BossPhaseChangeEvent(
     override val bossEntity: PokemonEntity,
     val healthThreshold: Float
-) : LuxBossEvent
+) : BossEvent
 
 /**
  * Fired when a boss is defeated.
@@ -44,4 +44,4 @@ data class BossPhaseChangeEvent(
 data class BossDefeatEvent(
     override val bossEntity: PokemonEntity,
     val topDamagers: List<Pair<UUID, Double>>
-) : LuxBossEvent
+) : BossEvent
