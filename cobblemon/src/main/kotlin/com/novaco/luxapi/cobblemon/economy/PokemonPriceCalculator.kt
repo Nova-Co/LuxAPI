@@ -5,21 +5,17 @@ import com.novaco.luxapi.cobblemon.pokemon.getIVPercentage
 import java.util.UUID
 
 /**
- * A highly advanced utility engine for calculating the dynamic market value of a Pokémon.
- * Deeply integrates with Pokedex historical indexes and pipes data directly into the LuxEC module.
+ * Default implementation of the pricing rules used by Nova Co. network.
+ * Act as a built-in appraiser inside the LuxPokemonEconomy ecosystem.
+ * Provided by Nova Co. Core AI Project Companion.
  */
-object PokemonPriceCalculator {
+object PokemonPriceCalculator : PokemonAppraiser {
 
     /**
-     * Calculates the estimated market value of a given Pokémon with dynamic weighting structures.
-     *
-     * @param playerUuid The UUID of the player participating in the evaluation context (for Pokedex checks).
-     * @param pokemon The target [Pokemon] to be evaluated.
-     * @param basePrice The starting configuration price for a standard Pokémon.
-     * @return The final evaluated monetary value.
+     * Natively implements the appraise function from PokemonAppraiser interface.
      */
-    fun calculateValue(playerUuid: UUID, pokemon: Pokemon, basePrice: Double = 1000.0): Double {
-        var finalPrice = basePrice
+    override fun appraise(playerUuid: UUID, pokemon: Pokemon, currentPrice: Double): Double {
+        var finalPrice = currentPrice
         val labels = pokemon.form.labels
 
         // 1. Rarity Label Weighting Evaluation
@@ -58,7 +54,6 @@ object PokemonPriceCalculator {
             val isCaughtMethod = pokedexClass.getMethod("hasCaught", UUID::class.java, String::class.java)
             val alreadyCaught = isCaughtMethod.invoke(null, playerUuid, pokemon.species.name) as Boolean
 
-            // Apply scarcity bonus weight if this species is a brand-new discovery for the player
             if (!alreadyCaught) {
                 finalPrice *= 1.5
                 println("[LuxAPI | Economy] Applied Scarcity Discovery Weight for ${pokemon.species.name}")
@@ -71,10 +66,11 @@ object PokemonPriceCalculator {
     }
 
     /**
-     * Directly process an asset conversion value and flush states cleanly to the LuxEC Module pipeline.
+     * Dispatches the evaluated asset worth cleanly using the centralized economy pipelines.
      */
     fun processTransactionToLuxEC(playerUuid: UUID, pokemon: Pokemon, basePrice: Double = 1000.0) {
-        val totalWorth = calculateValue(playerUuid, pokemon, basePrice)
+        // Pipes valuation directly through the customizable economy framework instead of hardcoded loop
+        val totalWorth = LuxPokemonEconomy.evaluatePokemonWorth(playerUuid, pokemon, basePrice)
         try {
             val luxEcClass = Class.forName("com.novaco.luxapi.economy.LuxEC")
             val depositMethod = luxEcClass.getMethod("depositPlayerBalance", UUID::class.java, Double::class.java)

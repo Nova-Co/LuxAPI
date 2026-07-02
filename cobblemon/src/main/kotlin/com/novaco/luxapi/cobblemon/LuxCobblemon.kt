@@ -1,6 +1,8 @@
 package com.novaco.luxapi.cobblemon
 
 import com.novaco.luxapi.cobblemon.boss.BossDefeatListener
+import com.novaco.luxapi.cobblemon.economy.LuxPokemonEconomy
+import com.novaco.luxapi.cobblemon.economy.PokemonPriceCalculator
 import com.novaco.luxapi.cobblemon.listener.CobblemonEventHandler
 import com.novaco.luxapi.cobblemon.listener.UncatchableManager
 import com.novaco.luxapi.cobblemon.manager.NPCInteractionManager
@@ -61,6 +63,7 @@ object LuxCobblemon {
 
         try {
             Class.forName("com.novaco.luxapi.economy.LuxEC")
+            LuxPokemonEconomy.registerAppraiser(PokemonPriceCalculator)
             println("[LuxAPI] Optional economy module detected and verified successfully.")
         } catch (e: ClassNotFoundException) {
             println("[LuxAPI] Optional economy module not found. Skipping dynamic economic features safely.")
