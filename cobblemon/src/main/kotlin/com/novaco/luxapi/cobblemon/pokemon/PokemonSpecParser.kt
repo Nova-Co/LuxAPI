@@ -2,37 +2,33 @@ package com.novaco.luxapi.cobblemon.pokemon
 
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import com.cobblemon.mod.common.pokemon.Pokemon
+import net.minecraft.resources.ResourceLocation
 
 /**
  * A utility registry for parsing and generating Pokemon entities from strings.
- * Acts as a safe wrapper around Cobblemon's native PokemonProperties system,
- * preventing server crashes from malformed strings.
+ * Upgraded to safely interface with modern Cobblemon genetic matrices and aspect layers.
  */
 object PokemonSpecParser {
 
     /**
-     * Safely parses a string specification into a new Pokemon object.
-     * Example: "pikachu lvl=50 shiny=yes form=gmax"
+     * Safely parses a string specification into a new Pokemon object, including aspect labels.
+     * Example: "charizard lvl=80 shiny=yes aspect=gmax aspect=custom_genetics"
      *
      * @param spec The specification string.
-     * @return The generated Pokemon, or null if the string is invalid or the species doesn't exist.
+     * @return The generated Pokemon, or null if the string is invalid.
      */
     fun parse(spec: String): Pokemon? {
         return try {
             val properties = PokemonProperties.parse(spec)
             properties.create()
         } catch (e: Exception) {
+            println("[LuxAPI] Intercepted failure while parsing Pokemon Spec string safely: ${e.message}")
             null
         }
     }
 
     /**
      * Parses a string specification into a Pokemon object, throwing an exception on failure.
-     * Use this ONLY when you are absolutely sure the spec is hardcoded or validated.
-     *
-     * @param spec The specification string.
-     * @return The generated Pokemon.
-     * @throws IllegalArgumentException If the parsing fails.
      */
     fun parseOrThrow(spec: String): Pokemon {
         try {
@@ -45,12 +41,7 @@ object PokemonSpecParser {
 
     /**
      * Parses a spec and directly applies it to modify an EXISTING Pokemon.
-     * Perfect for quest rewards (e.g., making a player's existing Pokemon shiny).
-     * Example spec: "shiny=yes level=100"
-     *
-     * @param pokemon The existing Pokemon to modify.
-     * @param spec The specification string with modifications.
-     * @return True if the modification was successful, false if the spec was invalid.
+     * Fully updates genetic variants and aspect trackers.
      */
     fun modify(pokemon: Pokemon, spec: String): Boolean {
         return try {
@@ -58,14 +49,29 @@ object PokemonSpecParser {
             properties.apply(pokemon)
             true
         } catch (e: Exception) {
+            println("[LuxAPI] Failsafe triggered during runtime Pokemon modification.")
             false
         }
     }
 
     /**
-     * Checks if a given specification string is syntactically valid.
-     * * @param spec The specification string to test.
-     * @return True if valid, false otherwise.
+     * Appends an aspect label directly into an existing Pokemon's genetic tracking matrix.
+     * Synchronizes visual and structural tags natively via forcedAspects lifecycle mutation.
+     * Provided by Nova Co. Core AI Project Companion.
+     *
+     * @param pokemon The targeted Pokemon object.
+     * @param aspectKey The property identifier key (e.g., "gmax").
+     */
+    fun appendAspectLabel(pokemon: Pokemon, aspectKey: String) {
+        try {
+            pokemon.forcedAspects = pokemon.forcedAspects + aspectKey
+        } catch (e: Exception) {
+            println("[LuxAPI] Failed to dynamically push aspect label '$aspectKey' to genetic matrix.")
+        }
+    }
+
+    /**
+     * Evaluates if a given specification string matches syntactic format conditions.
      */
     fun isValid(spec: String): Boolean {
         return try {
