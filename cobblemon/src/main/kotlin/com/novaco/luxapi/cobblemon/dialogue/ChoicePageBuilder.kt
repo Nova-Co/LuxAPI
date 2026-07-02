@@ -120,7 +120,6 @@ class ChoicePageBuilder(
         val inputComponent = if (isInputMode) {
             DialogueTextInput().apply {
                 // Attach placeholder text natively
-                placeholder = WrappedDialogueText(inputPlaceholder.text())
                 action = FunctionDialogueAction { dialogue, capturedString ->
                     // SECURE INJECTION CHECK: Strip away potential exploit characters
                     val sanitized = (capturedString ?: "").replace(Regex("[^a-zA-Z0-9_\\-\\s]"), "").trim()
