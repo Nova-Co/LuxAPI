@@ -16,39 +16,23 @@ import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 
 /**
- * A fluent builder pattern designed to configure and initiate Pokemon battles effortlessly.
- * Abstracts the complexities of the internal BattleRegistry for quick configuration.
+ * A fluent builder pattern designed to configure and initiate Pokemon battles effortlessly with active error mitigation.
  */
 class BattleBuilder(private val initiator: LuxPlayer) {
 
     private var isDoubleBattle: Boolean = false
     private var allowSpectators: Boolean = true
 
-    /**
-     * Sets whether the battle should be a double battle.
-     * @param isDouble True for a double battle, false for a single battle.
-     * @return This BattleBuilder instance for chaining.
-     */
     fun setDoubleBattle(isDouble: Boolean): BattleBuilder {
         this.isDoubleBattle = isDouble
         return this
     }
 
-    /**
-     * Sets whether spectators are allowed in the battle.
-     * @param allow True to allow spectators, false to disallow.
-     * @return This BattleBuilder instance for chaining.
-     */
     fun setSpectatorAllowed(allow: Boolean): BattleBuilder {
         this.allowSpectators = allow
         return this
     }
 
-    /**
-     * Retrieves a list of Pokemon from the player's party that are able to battle.
-     * @param player The server player whose party is to be checked.
-     * @return A list of BattlePokemon that are conscious and ready for battle.
-     */
     private fun getBattleReadyParty(player: ServerPlayer): List<BattlePokemon> {
         val party = player.party()
         val battleReadyList = mutableListOf<BattlePokemon>()
@@ -61,15 +45,9 @@ class BattleBuilder(private val initiator: LuxPlayer) {
         return battleReadyList
     }
 
-    /**
-     * Initiates a battle against a wild Pokemon.
-     * @param wildEntity The wild Pokemon entity to battle against.
-     * @return The created PokemonBattle instance, or null if the battle could not be started.
-     */
     fun startAgainstWild(wildEntity: PokemonEntity): PokemonBattle? {
         val serverPlayer = initiator.parent as ServerPlayer
         val battleParty = getBattleReadyParty(serverPlayer)
-
         if (battleParty.isEmpty()) return null
 
         val format = if (isDoubleBattle) BattleFormat.GEN_9_DOUBLES else BattleFormat.GEN_9_SINGLES
@@ -79,47 +57,42 @@ class BattleBuilder(private val initiator: LuxPlayer) {
 
         var activeBattle: PokemonBattle? = null
 
-        Cobblemon.battleRegistry.startBattle(format, p1Side, p2Side).ifSuccessful { battle ->
-            activeBattle = battle
+        try {
+            Cobblemon.battleRegistry.startBattle(format, p1Side, p2Side).ifSuccessful { battle ->
+                activeBattle = battle
+            }
+        } catch (e: Exception) {
+            println("[LuxAPI] Critical error intercepted during Wild Battle Initialization: ${e.message}")
         }
 
         return activeBattle
     }
 
-    /**
-     * Initiates a battle against another player.
-     * @param opponent The opposing player.
-     * @return The created PokemonBattle instance, or null if the battle could not be started.
-     */
     fun startAgainstPlayer(opponent: LuxPlayer): PokemonBattle? {
         val p1 = initiator.parent as ServerPlayer
         val p2 = opponent.parent as ServerPlayer
 
         val p1Party = getBattleReadyParty(p1)
         val p2Party = getBattleReadyParty(p2)
-
         if (p1Party.isEmpty() || p2Party.isEmpty()) return null
 
         val format = if (isDoubleBattle) BattleFormat.GEN_9_DOUBLES else BattleFormat.GEN_9_SINGLES
-
         val p1Side = BattleSide(PlayerBattleActor(p1.uuid, p1Party))
         val p2Side = BattleSide(PlayerBattleActor(p2.uuid, p2Party))
 
         var activeBattle: PokemonBattle? = null
 
-        Cobblemon.battleRegistry.startBattle(format, p1Side, p2Side).ifSuccessful { battle ->
-            activeBattle = battle
+        try {
+            Cobblemon.battleRegistry.startBattle(format, p1Side, p2Side).ifSuccessful { battle ->
+                activeBattle = battle
+            }
+        } catch (e: Exception) {
+            println("[LuxAPI] Critical error intercepted during PvP Battle Initialization: ${e.message}")
         }
 
         return activeBattle
     }
 
-    /**
-     * Executes a battle initialization against a custom NPC Entity.
-     * Uses Cobblemon's native Player VS NPC (PVN) builder for perfect state management.
-     * @param npcEntity The NPC entity to battle against.
-     * @return The created PokemonBattle instance, or null if the battle could not be started.
-     */
     fun startAgainstNPC(npcEntity: NPCEntity): PokemonBattle? {
         val serverPlayer = initiator.parent as ServerPlayer
 
@@ -128,7 +101,6 @@ class BattleBuilder(private val initiator: LuxPlayer) {
         }
 
         val p1Party = getBattleReadyParty(serverPlayer)
-
         if (p1Party.isEmpty()) {
             serverPlayer.sendSystemMessage(Component.literal("§cYou don't have any conscious Pokemon to battle with!"))
             return null
@@ -137,17 +109,22 @@ class BattleBuilder(private val initiator: LuxPlayer) {
         val format = if (isDoubleBattle) BattleFormat.GEN_9_DOUBLES else BattleFormat.GEN_9_SINGLES
         var activeBattle: PokemonBattle? = null
 
-        com.cobblemon.mod.common.battles.BattleBuilder.pvn(
-            player = serverPlayer,
-            npcEntity = npcEntity,
-            battleFormat = format,
-            cloneParties = false,
-            healFirst = false
-        ).ifSuccessful { battle ->
-            activeBattle = battle
-        }.ifErrored { error ->
-            val errorMsg = error.errors.joinToString(", ") { it.javaClass.simpleName }
-            serverPlayer.sendSystemMessage(Component.literal("§cFailed to start battle: $errorMsg"))
+        try {
+            com.cobblemon.mod.common.battles.BattleBuilder.pvn(
+                player = serverPlayer,
+                npcEntity = npcEntity,
+                battleFormat = format,
+                cloneParties = false,
+                healFirst = false
+            ).ifSuccessful { battle ->
+                activeBattle = battle
+            }.ifErrored { error ->
+                val errorMsg = error.errors.joinToString(", ") { it.javaClass.simpleName }
+                serverPlayer.sendSystemMessage(Component.literal("§cFailed to start battle: $errorMsg"))
+            }
+        } catch (e: Exception) {
+            println("[LuxAPI] Critical error intercepted during NPC Battle Initialization: ${e.message}")
+            serverPlayer.sendSystemMessage(Component.literal("§cAn internal engine error blocked this combat encounter."))
         }
 
         return activeBattle
