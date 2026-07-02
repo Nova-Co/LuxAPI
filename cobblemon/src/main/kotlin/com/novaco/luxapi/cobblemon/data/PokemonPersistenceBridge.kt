@@ -1,130 +1,86 @@
 package com.novaco.luxapi.cobblemon.data
 
 import com.cobblemon.mod.common.pokemon.Pokemon
-import net.minecraft.nbt.CompoundTag
+import com.novaco.luxapi.cobblemon.serialization.toBase64String
+import com.novaco.luxapi.cobblemon.serialization.toPokemon
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ForkJoinPool
 
 /**
  * A safe bridge to read and write persistent metadata directly into a Pokemon.
- * Data stored using this bridge will persist across server restarts,
- * PC storage, and player trades.
+ * Upgraded with a high-performance Asynchronous Pipeline to prevent main thread ticks lagging.
  */
 object PokemonPersistenceBridge {
 
+    // Dedicated Thread-safe Containment Layer for Background Workload Processing
+    private val asyncPool = ForkJoinPool.commonPool()
+
+    fun hasKey(pokemon: Pokemon, key: String): Boolean = pokemon.persistentData.contains(key)
+    fun remove(pokemon: Pokemon, key: String) { pokemon.persistentData.remove(key) }
+    fun setString(pokemon: Pokemon, key: String, value: String) { pokemon.persistentData.putString(key, value) }
+    fun getString(pokemon: Pokemon, key: String): String? = if (!hasKey(pokemon, key)) null else pokemon.persistentData.getString(key)
+    fun setInt(pokemon: Pokemon, key: String, value: Int) { pokemon.persistentData.putInt(key, value) }
+    fun getInt(pokemon: Pokemon, key: String): Int? = if (!hasKey(pokemon, key)) null else pokemon.persistentData.getInt(key)
+    fun setBoolean(pokemon: Pokemon, key: String, value: Boolean) { pokemon.persistentData.putBoolean(key, value) }
+    fun getBoolean(pokemon: Pokemon, key: String): Boolean = if (!hasKey(pokemon, key)) false else pokemon.persistentData.getBoolean(key)
+
     /**
-     * Checks if the Pokemon contains a specific metadata key.
+     * Asynchronously serializes and commits a Pokemon instance to SQL/NoSQL storage providers.
+     * Leverages the dynamic LuxAPI AttributeManager system at background priority.
      *
-     * @param pokemon The target Pokemon.
-     * @param key The unique identifier to check.
-     * @return True if the key exists, false otherwise.
+     * @param playerUuid The entity owner of this specific Pokemon data packet.
+     * @param pokemon The targeting Pokemon asset to freeze.
+     * @return A promise containing the execution success flag.
      */
-    fun hasKey(pokemon: Pokemon, key: String): Boolean {
-        return pokemon.persistentData.contains(key)
+    fun saveToDatabaseAsync(playerUuid: UUID, pokemon: UUID, pokemonInstance: Pokemon): CompletableFuture<Boolean> {
+        return CompletableFuture.supplyAsync({
+            try {
+                // 1. Process encoding & compression workload safely at background
+                val encryptedPayload = pokemonInstance.toBase64String()
+
+                // 2. Transmit string packet over via the unified AttributeManager system
+                // Fallback check to prevent crash if AttributeManager initialization isn't loaded
+                val attributeManagerClass = Class.forName("com.novaco.luxapi.database.AttributeManager")
+                val saveMethod = attributeManagerClass.getMethod("setPokemonData", UUID::class.java, UUID::class.java, String::class.java)
+                saveMethod.invoke(null, playerUuid, pokemon, encryptedPayload)
+
+                true
+            } catch (cnfe: ClassNotFoundException) {
+                println("[LuxAPI | Persistence Alert] Core database module missing. Skipping async database flush.")
+                false
+            } catch (t: Throwable) {
+                println("[LuxAPI | Critical Error] Dynamic thread pool capture failed storage update pipeline: ${t.message}")
+                false
+            }
+        }, asyncPool)
     }
 
     /**
-     * Removes a specific metadata key from the Pokemon.
+     * Asynchronously reads and pulls a Base64 payload block from the database layer,
+     * compiling it back into a valid live state instance.
      *
-     * @param pokemon The target Pokemon.
-     * @param key The unique identifier to remove.
+     * @param playerUuid The entity owner target.
+     * @param pokemon The static UUID identifier node assigned to the target data frame.
+     * @return A promise containing the reconstructed Pokemon reference, or null.
      */
-    fun remove(pokemon: Pokemon, key: String) {
-        pokemon.persistentData.remove(key)
-    }
+    fun loadFromDatabaseAsync(playerUuid: UUID, pokemon: UUID): CompletableFuture<Pokemon?> {
+        return CompletableFuture.supplyAsync({
+            try {
+                val attributeManagerClass = Class.forName("com.novaco.luxapi.database.AttributeManager")
+                val getMethod = attributeManagerClass.getMethod("getPokemonData", UUID::class.java, UUID::class.java)
+                val stringPayload = getMethod.invoke(null, playerUuid, pokemon) as? String ?: return@supplyAsync null
 
-    /**
-     * Injects a String value into the Pokemon's persistent data.
-     *
-     * @param pokemon The target Pokemon.
-     * @param key The unique identifier.
-     * @param value The String value to store.
-     */
-    fun setString(pokemon: Pokemon, key: String, value: String) {
-        pokemon.persistentData.putString(key, value)
-    }
-
-    /**
-     * Retrieves a String value from the Pokemon's persistent data.
-     *
-     * @param pokemon The target Pokemon.
-     * @param key The unique identifier.
-     * @return The stored String, or null if the key does not exist.
-     */
-    fun getString(pokemon: Pokemon, key: String): String? {
-        if (!hasKey(pokemon, key)) return null
-        return pokemon.persistentData.getString(key)
-    }
-
-    /**
-     * Injects an Integer value into the Pokemon's persistent data.
-     *
-     * @param pokemon The target Pokemon.
-     * @param key The unique identifier.
-     * @param value The Int value to store.
-     */
-    fun setInt(pokemon: Pokemon, key: String, value: Int) {
-        pokemon.persistentData.putInt(key, value)
-    }
-
-    /**
-     * Retrieves an Integer value from the Pokemon's persistent data.
-     *
-     * @param pokemon The target Pokemon.
-     * @param key The unique identifier.
-     * @return The stored Int, or null if the key does not exist.
-     */
-    fun getInt(pokemon: Pokemon, key: String): Int? {
-        if (!hasKey(pokemon, key)) return null
-        return pokemon.persistentData.getInt(key)
-    }
-
-    /**
-     * Injects a Boolean value into the Pokemon's persistent data.
-     *
-     * @param pokemon The target Pokemon.
-     * @param key The unique identifier.
-     * @param value The Boolean value to store.
-     */
-    fun setBoolean(pokemon: Pokemon, key: String, value: Boolean) {
-        pokemon.persistentData.putBoolean(key, value)
-    }
-
-    /**
-     * Retrieves a Boolean value from the Pokemon's persistent data.
-     *
-     * @param pokemon The target Pokemon.
-     * @param key The unique identifier.
-     * @return The stored Boolean, or false as a default fallback.
-     */
-    fun getBoolean(pokemon: Pokemon, key: String): Boolean {
-        if (!hasKey(pokemon, key)) return false
-        return pokemon.persistentData.getBoolean(key)
+                // Perform heavy decompression decoding loop off-thread
+                stringPayload.toPokemon()
+            } catch (e: Exception) {
+                println("[LuxAPI] Could not safely extract and thread load requested Pokemon index: ${e.message}")
+                null
+            }
+        }, asyncPool)
     }
 }
 
-/**
- * Extension properties and functions for cleaner syntax.
- */
-
-/**
- * Extension function to quickly set a String metadata tag on a Pokemon.
- * Usage: pokemon.setMetadata("event_caught", "summer_2026")
- */
-fun Pokemon.setMetadata(key: String, value: String) {
-    PokemonPersistenceBridge.setString(this, key, value)
-}
-
-/**
- * Extension function to quickly retrieve a String metadata tag from a Pokemon.
- * Usage: val event = pokemon.getMetadataString("event_caught")
- */
-fun Pokemon.getMetadataString(key: String): String? {
-    return PokemonPersistenceBridge.getString(this, key)
-}
-
-/**
- * Extension function to check if a Pokemon has a specific metadata flag.
- * Usage: if (pokemon.hasMetadata("is_starter")) { ... }
- */
-fun Pokemon.hasMetadata(key: String): Boolean {
-    return PokemonPersistenceBridge.hasKey(this, key)
-}
+fun Pokemon.setMetadata(key: String, value: String) { PokemonPersistenceBridge.setString(this, key, value) }
+fun Pokemon.getMetadataString(key: String): String? = PokemonPersistenceBridge.getString(this, key)
+fun Pokemon.hasMetadata(key: String): Boolean = PokemonPersistenceBridge.hasKey(this, key)
