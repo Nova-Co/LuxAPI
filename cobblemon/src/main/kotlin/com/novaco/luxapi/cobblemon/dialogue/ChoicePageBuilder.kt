@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.api.dialogue.FunctionDialogueAction
 import com.cobblemon.mod.common.api.dialogue.WrappedDialogueText
 import com.cobblemon.mod.common.api.dialogue.input.DialogueOption
 import com.cobblemon.mod.common.api.dialogue.input.DialogueOptionSetInput
+import com.cobblemon.mod.common.api.dialogue.input.DialogueTextInput
 import com.cobblemon.mod.common.api.text.text
 import net.minecraft.server.level.ServerPlayer
 import com.cobblemon.mod.common.api.dialogue.ActiveDialogue
@@ -26,17 +27,14 @@ class ChoicePageBuilder(
     private val text: String
 ) {
     private val options = mutableListOf<DialogueOption>()
+    private var isInputMode = false
+    private var inputPlaceholder: String = ""
+    private var inputCallback: ((ServerPlayer, ActiveDialogue, String) -> Unit)? = null
+    private var textInputNextPageId: String? = null
 
-    /** Whether the choice buttons should be stacked vertically. */
     var verticalLayout: Boolean = false
-
-    /** Optional hex color code or basic color string for the main text. */
     var textColor: String? = null
-
-    /** Optional specific sound effect properties for this page. */
     var gibber: DialogueGibber? = null
-
-    /** Optional specific background texture for this page. */
     var background: ResourceLocation? = null
 
     /**
@@ -57,9 +55,9 @@ class ChoicePageBuilder(
         isSelectable: (ActiveDialogue) -> Boolean = { true },
         action: ((ServerPlayer, ActiveDialogue) -> Unit)? = null
     ): ChoicePageBuilder {
+        if (isInputMode) throw IllegalStateException("Cannot bind standard choices on a page configured for Text Field input!")
 
         val optionValue = text.lowercase().replace(" ", "_")
-
         val dialogueOption = DialogueOption(
             text = WrappedDialogueText(text.text()),
             value = optionValue,
@@ -67,25 +65,34 @@ class ChoicePageBuilder(
             isSelectable = FunctionDialoguePredicate(isSelectable),
             action = FunctionDialogueAction { activeDialogue, _ ->
                 val nextPage = activeDialogue.dialogueReference.pages.find { it.id == targetPageId }
-
-                if (nextPage != null) {
-                    activeDialogue.setPage(nextPage)
-                } else {
-                    activeDialogue.close()
-                }
-
-                // Execute developer's custom action
+                if (nextPage != null) activeDialogue.setPage(nextPage) else activeDialogue.close()
                 action?.invoke(activeDialogue.playerEntity, activeDialogue)
             }
         )
-
         options.add(dialogueOption)
         return this
     }
 
     /**
-     * Helper function to safely parse color names into Hex strings expected by Cobblemon.
+     * Registers and embeds a direct TextInput box component safely inside this page.
+     * Complete with a built-in input text sanitizer layer.
+     *
+     * @param placeholder Text string showing inside the field beforehand.
+     * @param targetPageId Navigation destination following submission.
+     * @param onSubmit Callback process capturing the input value cleanly.
      */
+    fun appendInputField(
+        placeholder: String,
+        targetPageId: String? = null,
+        onSubmit: (ServerPlayer, ActiveDialogue, String) -> Unit
+    ): ChoicePageBuilder {
+        this.isInputMode = true
+        this.inputPlaceholder = placeholder
+        this.textInputNextPageId = targetPageId
+        this.inputCallback = onSubmit
+        return this
+    }
+
     private fun parseColorToHex(color: String?): String? {
         if (color == null) return null
         return when (color.lowercase()) {
@@ -109,19 +116,31 @@ class ChoicePageBuilder(
         }
     }
 
-    /**
-     * Internal function to construct the final [DialoguePage] from the configured options.
-     *
-     * @return The fully constructed [DialoguePage] with all its choices and properties.
-     */
     internal fun build(): DialoguePage {
-        val input = DialogueOptionSetInput(options, vertical = verticalLayout)
+        val inputComponent = if (isInputMode) {
+            DialogueTextInput().apply {
+                // Attach placeholder text natively
+                placeholder = WrappedDialogueText(inputPlaceholder.text())
+                action = FunctionDialogueAction { dialogue, capturedString ->
+                    // SECURE INJECTION CHECK: Strip away potential exploit characters
+                    val sanitized = (capturedString ?: "").replace(Regex("[^a-zA-Z0-9_\\-\\s]"), "").trim()
+
+                    inputCallback?.invoke(dialogue.playerEntity, dialogue, sanitized)
+
+                    val nextPage = dialogue.dialogueReference.pages.find { it.id == textInputNextPageId }
+                    if (nextPage != null) dialogue.setPage(nextPage) else dialogue.close()
+                }
+            }
+        } else {
+            DialogueOptionSetInput(options, vertical = verticalLayout)
+        }
+
         return DialoguePage.of(
             id = id,
             speaker = speakerId,
             lines = listOf(text.text()),
             textColor = parseColorToHex(textColor),
-            input = input,
+            input = inputComponent,
             gibber = gibber,
             background = background
         )
