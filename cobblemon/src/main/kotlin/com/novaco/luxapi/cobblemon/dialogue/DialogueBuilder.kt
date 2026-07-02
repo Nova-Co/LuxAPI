@@ -101,12 +101,10 @@ class DialogueBuilder {
                     dialogue.close()
                 }
             }
-
             if (timeoutSeconds != null && timeoutSeconds > 0) {
                 timeout = DialogueTimeout(duration = timeoutSeconds)
             }
         }
-
         pages.add(DialoguePage.of(id = id, speaker = speakerId, lines = listOf(text.text()), input = input))
         return this
     }
@@ -126,26 +124,13 @@ class DialogueBuilder {
         id: String,
         speakerId: String? = null,
         text: String,
+        placeholder: String = "Type here...",
         nextPageId: String? = null,
-        onInput: ((ServerPlayer, ActiveDialogue, String) -> Unit)? = null
+        onInput: (ServerPlayer, ActiveDialogue, String) -> Unit
     ): DialogueBuilder {
-        val input = DialogueTextInput().apply {
-            action = FunctionDialogueAction { dialogue, inputStr ->
-                // Process the developer's callback with the typed string
-                onInput?.invoke(dialogue.playerEntity, dialogue, inputStr ?: "")
-
-                // Route to the next page
-                val nextPage = dialogue.dialogueReference.pages.find { it.id == nextPageId }
-                if (nextPage != null) {
-                    dialogue.setPage(nextPage)
-                } else {
-                    dialogue.close()
-                }
-            }
+        return addChoicePage(id, speakerId, text) {
+            appendInputField(placeholder, nextPageId, onInput)
         }
-
-        pages.add(DialoguePage.of(id = id, speaker = speakerId, lines = listOf(text.text()), input = input))
-        return this
     }
 
     /**
@@ -215,14 +200,12 @@ class DialogueBuilder {
     @JvmOverloads
     fun buildAndOpen(player: LuxPlayer, npc: NPCEntity? = null): ActiveDialogue {
         val serverPlayer = player.parent as ServerPlayer
-
         val dialogue = Dialogue.of(
             pages = pages,
             background = defaultBackground,
             escapeAction = { activeDialogue -> activeDialogue.close() },
             speakers = speakers
         )
-
         return if (npc != null) {
             DialogueManager.startDialogue(serverPlayer, npc, dialogue)
         } else {
