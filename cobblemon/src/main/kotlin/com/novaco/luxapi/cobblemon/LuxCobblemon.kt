@@ -24,25 +24,46 @@ object LuxCobblemon {
         if (isInitialized) return
 
         LuxAPI.getScheduler().runRepeating(0L, 1L) {
-
-            // Fetch the server instance safely from Core manager
             val server = LuxServerManager.getServerOrNull()
-
             if (server != null) {
-                // Execute the math logic for all active stationary NPCs
                 NPCTracker.tick(server)
             }
         }
 
-        // Core Registrations
+        // Initialize Unified Event Bridge first
         CobblemonEventHandler.register()
+
+        // Core Registrations
         NPCInteractionManager.register()
 
         // Boss Framework Registrations
         BossDefeatListener.register()
         UncatchableManager.register()
 
+        // Dynamic check for optional ecosystems (e.g., Database or Economy)
+        checkOptionalModules()
+
         isInitialized = true
-        println("[LuxAPI] Cobblemon module and Boss Framework initialized successfully!")
+        println("[LuxAPI] Cobblemon module and Unified Event Bridge initialized successfully!")
+    }
+
+    /**
+     * Safely checks for the existence of external or optional modules at runtime
+     * to prevent ClassNotFoundException if they are absent.
+     */
+    private fun checkOptionalModules() {
+        try {
+            Class.forName("com.novaco.luxapi.database.LuxDatabase")
+            println("[LuxAPI] Optional database module detected and verified successfully.")
+        } catch (e: ClassNotFoundException) {
+            println("[LuxAPI] Optional database module not found. Skipping dynamic database features safely.")
+        }
+
+        try {
+            Class.forName("com.novaco.luxapi.economy.LuxEC")
+            println("[LuxAPI] Optional economy module detected and verified successfully.")
+        } catch (e: ClassNotFoundException) {
+            println("[LuxAPI] Optional economy module not found. Skipping dynamic economic features safely.")
+        }
     }
 }
