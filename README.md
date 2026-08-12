@@ -56,7 +56,13 @@ Not everything on the roadmap is finished — see [`TODO.md`](TODO.md) for the f
 
 ## Adding LuxAPI to your project
 
-Add the modules you need as project dependencies (this repo publishes to a local Maven repo by default — see [Building](#building--testing) if you need to consume it from elsewhere):
+LuxAPI is a **library mod**: at runtime, your mod depends on the LuxAPI mod jar being installed alongside it (like Fabric API or Cardinal Components) — it's not something you shade into your own jar.
+
+**⚠️ No remote Maven repo yet** (tracked in [`TODO.md`](TODO.md), Phase 11) — this repo's Gradle build only publishes to a local `build/repo` directory. Until that lands, to build against LuxAPI from a separate mod project you'll need to either:
+- build this repo yourself (`./gradlew build`) and point your project at the resulting jars in `*/build/libs/`, or
+- include this repo as a Gradle composite build / git submodule and depend on it via `project(":x")`, as shown below.
+
+**1. Compile-time dependency** (from within this repo, or a composite build that includes it):
 
 ```kotlin
 dependencies {
@@ -77,6 +83,35 @@ dependencies {
 
 If you publish LuxAPI artifacts yourself, use group `com.novaco.luxapi`, version `1.2.4`.
 
+**2. Runtime dependency** — declare LuxAPI as a required mod (modId `luxapi`) so the loader enforces it's installed:
+
+```json
+// fabric.mod.json
+"depends": { "luxapi": "*" }
+```
+
+```toml
+# neoforge.mods.toml
+[[dependencies.yourmodid]]
+modId = "luxapi"
+type = "required"
+versionRange = "[1.2.4,)"
+ordering = "AFTER"
+side = "BOTH"
+```
+
+Your own mod's entrypoint is registered the same way LuxAPI registers its own (see `fabric/src/main/resources/fabric.mod.json` and `neoforge/src/resources/META-INF/neoforge.mods.toml` in this repo for the real, working example) — LuxAPI's classes are then just on the classpath to call directly, no service-locator dance needed.
+
+## Core concept: `LuxPlayer`
+
+Almost every API surface in LuxAPI takes a `LuxPlayer`, not a raw `ServerPlayer` — it's the cross-platform player abstraction that lets the same call work identically on Fabric and NeoForge. You get one from `PlayerManager`:
+
+```kotlin
+val luxPlayer: LuxPlayer? = PlayerManager.getPlayer(uuid) // or getPlayer(name)
+```
+
+Command handlers and GUI callbacks hand you a `LuxPlayer` directly. If you need the underlying platform player back for a Minecraft-native API, `LuxPlayer.parent` holds it (cast to `ServerPlayer`).
+
 ## Quick start
 
 Initialize LuxAPI once during your mod's startup:
@@ -84,6 +119,13 @@ Initialize LuxAPI once during your mod's startup:
 ```kotlin
 LuxAPI.init()
 LuxCobblemon.init() // if you're using the cobblemon module
+```
+
+For manual in-game testing during development, both platform modules have run tasks:
+
+```bash
+./gradlew :fabric:runClient      # or :fabric:runServer
+./gradlew :neoforge:runClient    # or :neoforge:runServer
 ```
 
 From there, the scheduler is a good first thing to reach for:
