@@ -57,7 +57,6 @@ class BossPhaseTaskWrapper(
     /**
      * Creates a MoveToAttackTargetTask instance safely without exposing or accessing MoLang Expression classes directly.
      * Dynamically resolves internal MoLang factory nodes via runtime reflection.
-     * Provided by Nova Co. Core AI Project Companion.
      */
     fun safeCreateMoveTask(speedMultiplier: Float, closeEnoughDistance: Int): Any? {
         return try {
@@ -83,7 +82,6 @@ class BossPhaseTaskWrapper(
     /**
      * Creates a MeleeAttackTask instance safely without exposing or accessing MoLang Expression classes directly.
      * Dynamically resolves internal MoLang factory nodes via runtime reflection.
-     * Provided by Nova Co. Core AI Project Companion.
      */
     fun safeCreateAttackTask(range: Float, cooldownTicks: Int): Any? {
         return try {
