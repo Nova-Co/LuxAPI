@@ -1,77 +1,141 @@
 package com.novaco.luxapi.cobblemon.progression
 
+import com.cobblemon.mod.common.api.pokedex.AbstractPokedexManager
+import com.cobblemon.mod.common.api.pokedex.CaughtCount
+import com.cobblemon.mod.common.api.pokedex.CaughtPercent
+import com.cobblemon.mod.common.api.pokedex.Dexes
+import com.cobblemon.mod.common.api.pokedex.PokedexEntryProgress
+import com.cobblemon.mod.common.api.pokedex.SeenCount
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies
 import com.cobblemon.mod.common.util.pokedex
 import com.novaco.luxapi.commons.player.LuxPlayer
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 
 /**
- * A centralized manager for handling Pokédex-related progression.
- * This utility allows developers to easily check a player's Pokédex completion,
- * verify if specific Pokémon have been caught or seen, and build reward systems.
+ * A centralized manager for handling Pokédex-related progression. Wraps Cobblemon's real
+ * per-species knowledge tracking ([PokedexEntryProgress], not string-matched) and its built-in
+ * dex-relative/global calculators — no hardcoded species totals.
+ *
+ * Every function optionally accepts a [ResourceLocation] `dexId` (one of [getAvailableDexes])
+ * to scope the query to a specific regional dex (e.g. `cobblemon:kanto`). Omitting it (or
+ * passing `null`) queries across every species Cobblemon knows about.
  */
 object PokedexManager {
 
     /**
-     * Checks if the player has successfully caught a specific Pokémon species.
-     *
-     * @param player The target player.
-     * @param speciesName The name of the Pokémon species (e.g., "pikachu").
-     * @return True if the player has caught the species, false otherwise.
+     * Whether the player has actually caught (not just seen) [species].
      */
-    fun hasCaught(player: LuxPlayer, speciesName: String): Boolean {
-        val serverPlayer = player.parent as ServerPlayer
-        val species = PokemonSpecies.getByName(speciesName.lowercase()) ?: return false
-
-        // Fetch the specific record for this Pokémon species
-        val record = serverPlayer.pokedex().speciesRecords[species.resourceIdentifier] ?: return false
-
-        return record.getKnowledge().name.equals("CAUGHT", ignoreCase = true)
+    fun hasCaught(player: LuxPlayer, species: String): Boolean {
+        val speciesId = resolveSpeciesId(species) ?: return false
+        return hasCaughtCore((player.parent as ServerPlayer).pokedex(), speciesId)
     }
 
     /**
-     * Checks if the player has encountered (seen) a specific Pokémon species.
-     *
-     * @param player The target player.
-     * @param speciesName The name of the Pokémon species.
-     * @return True if the player has seen the species, false otherwise.
+     * Whether the player has encountered or caught [species] (any knowledge beyond none).
      */
-    fun hasSeen(player: LuxPlayer, speciesName: String): Boolean {
-        val serverPlayer = player.parent as ServerPlayer
-        val species = PokemonSpecies.getByName(speciesName.lowercase()) ?: return false
-
-        // Fetch the specific record for this Pokémon species
-        val record = serverPlayer.pokedex().speciesRecords[species.resourceIdentifier] ?: return false
-
-        return !record.getKnowledge().name.equals("NONE", ignoreCase = true)
+    fun hasSeen(player: LuxPlayer, species: String): Boolean {
+        val speciesId = resolveSpeciesId(species) ?: return false
+        return hasSeenCore((player.parent as ServerPlayer).pokedex(), speciesId)
     }
 
     /**
-     * Retrieves the total number of unique Pokémon species the player has caught.
-     * Useful for milestone rewards (e.g., "Catch 100 unique Pokémon").
-     *
-     * @param player The target player.
-     * @return The total count of registered caught species.
+     * The player's real knowledge level for [species]. Returns [PokedexEntryProgress.NONE] for
+     * an unresolvable species name.
      */
-    fun getCaughtCount(player: LuxPlayer): Int {
-        val serverPlayer = player.parent as ServerPlayer
-
-        return serverPlayer.pokedex().speciesRecords.values.count {
-            it.getKnowledge().name.equals("CAUGHT", ignoreCase = true)
-        }
+    fun getKnowledgeForSpecies(player: LuxPlayer, species: String): PokedexEntryProgress {
+        val speciesId = resolveSpeciesId(species) ?: return PokedexEntryProgress.NONE
+        return (player.parent as ServerPlayer).pokedex().getKnowledgeForSpecies(speciesId)
     }
 
     /**
-     * Calculates the player's overall Pokédex completion percentage.
-     *
-     * @param player The target player.
-     * @param totalAvailableSpecies The maximum number of species available on the server (default is 1025).
-     * @return A double representing the completion percentage (0.0 to 100.0).
+     * Number of unique species the player has caught, scoped to [dexId] if given, otherwise
+     * counted across every species Cobblemon knows about.
      */
-    fun getCompletionPercentage(player: LuxPlayer, totalAvailableSpecies: Int = 1025): Double {
-        val caughtCount = getCaughtCount(player)
-        if (caughtCount == 0 || totalAvailableSpecies <= 0) return 0.0
-
-        return (caughtCount.toDouble() / totalAvailableSpecies.toDouble()) * 100.0
+    fun getCaughtCount(player: LuxPlayer, dexId: ResourceLocation? = null): Int {
+        return getCaughtCountCore((player.parent as ServerPlayer).pokedex(), dexId)
     }
+
+    /**
+     * Number of unique species the player has encountered or caught, scoped to [dexId] if
+     * given, otherwise counted across every species Cobblemon knows about.
+     */
+    fun getSeenCount(player: LuxPlayer, dexId: ResourceLocation? = null): Int {
+        return getSeenCountCore((player.parent as ServerPlayer).pokedex(), dexId)
+    }
+
+    /**
+     * The player's real catch-completion percentage (`0.0`-`100.0`), scoped to [dexId] if
+     * given, otherwise measured against every species Cobblemon knows about. No hardcoded
+     * species total — this reads Cobblemon's own real entry count.
+     */
+    fun getCompletionPercentage(player: LuxPlayer, dexId: ResourceLocation? = null): Double {
+        return getCompletionPercentageCore((player.parent as ServerPlayer).pokedex(), dexId)
+    }
+
+    /**
+     * Every dex ID currently registered (e.g. `cobblemon:kanto`, `cobblemon:national`), usable
+     * as the `dexId` argument to every other function on this object.
+     */
+    fun getAvailableDexes(): List<ResourceLocation> {
+        return Dexes.dexEntryMap.keys.toList()
+    }
+
+    private fun resolveSpeciesId(species: String): ResourceLocation? {
+        return PokemonSpecies.getByName(species.lowercase())?.resourceIdentifier
+    }
+}
+
+/**
+ * Core knowledge-comparison logic operating directly on a resolved [AbstractPokedexManager],
+ * independent of [LuxPlayer]/[ServerPlayer] resolution so it's unit-testable without a running
+ * server. See [PokedexManager.hasCaught] for the public, [LuxPlayer]-facing entry point.
+ */
+internal fun hasCaughtCore(dexManager: AbstractPokedexManager, speciesId: ResourceLocation): Boolean {
+    return dexManager.getKnowledgeForSpecies(speciesId) == PokedexEntryProgress.CAUGHT
+}
+
+/**
+ * See [hasCaughtCore]; backs [PokedexManager.hasSeen].
+ */
+internal fun hasSeenCore(dexManager: AbstractPokedexManager, speciesId: ResourceLocation): Boolean {
+    return dexManager.getKnowledgeForSpecies(speciesId) != PokedexEntryProgress.NONE
+}
+
+/**
+ * Delegates to Cobblemon's own [CaughtCount] calculator — global scope when [dexId] is `null`,
+ * dex-scoped otherwise. Backs [PokedexManager.getCaughtCount].
+ */
+internal fun getCaughtCountCore(dexManager: AbstractPokedexManager, dexId: ResourceLocation?): Int {
+    return if (dexId == null) {
+        dexManager.getGlobalCalculatedValue(CaughtCount)
+    } else {
+        dexManager.getDexCalculatedValue(dexId, CaughtCount)
+    }
+}
+
+/**
+ * Delegates to Cobblemon's own [SeenCount] calculator — global scope when [dexId] is `null`,
+ * dex-scoped otherwise. Backs [PokedexManager.getSeenCount].
+ */
+internal fun getSeenCountCore(dexManager: AbstractPokedexManager, dexId: ResourceLocation?): Int {
+    return if (dexId == null) {
+        dexManager.getGlobalCalculatedValue(SeenCount)
+    } else {
+        dexManager.getDexCalculatedValue(dexId, SeenCount)
+    }
+}
+
+/**
+ * Delegates to Cobblemon's own [CaughtPercent] calculator (widened from `Float` to `Double`) —
+ * global scope when [dexId] is `null`, dex-scoped otherwise. Backs
+ * [PokedexManager.getCompletionPercentage].
+ */
+internal fun getCompletionPercentageCore(dexManager: AbstractPokedexManager, dexId: ResourceLocation?): Double {
+    val percent = if (dexId == null) {
+        dexManager.getGlobalCalculatedValue(CaughtPercent)
+    } else {
+        dexManager.getDexCalculatedValue(dexId, CaughtPercent)
+    }
+    return percent.toDouble()
 }
