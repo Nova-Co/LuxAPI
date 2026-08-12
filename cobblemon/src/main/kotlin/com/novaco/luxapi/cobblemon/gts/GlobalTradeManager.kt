@@ -1,43 +1,34 @@
 package com.novaco.luxapi.cobblemon.gts
 
+import com.cobblemon.mod.common.Cobblemon
+import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore
 import com.cobblemon.mod.common.pokemon.Pokemon
-import com.novaco.luxapi.commons.LuxAPI
+import com.novaco.luxapi.cobblemon.pokemon.getParty
+import com.novaco.luxapi.cobblemon.serialization.PokemonSerializer
 import com.novaco.luxapi.commons.player.LuxPlayer
 import java.util.UUID
 
 /**
- * Manages all operations for the Global Trade System (GTS), including listing and purchasing Pokémon.
- * This object is designed to be thread-safe and prevent common issues like duplication glitches
- * by ensuring transactional integrity (ACID principles).
+ * Manages all operations for the Global Trade System (GTS), including listing and purchasing
+ * Pokémon. Listing removes the Pokémon from the seller's party immediately (via real NBT
+ * serialization, not a placeholder), and purchasing grants the real deserialized Pokémon to
+ * the buyer — no duplication, no data loss.
  */
 object GlobalTradeManager {
 
     private val activeListings = mutableMapOf<UUID, TradeListing>()
 
     /**
-     * Creates a new listing for a Pokémon on the GTS.
+     * Creates a new listing for a Pokémon on the GTS. The Pokémon is serialized and immediately
+     * removed from [seller]'s party — it does not exist anywhere else until the listing is
+     * purchased ([purchaseListing]) or cancelled ([cancelListing]).
      *
-     * @param seller The player who is selling the Pokémon.
-     * @param pokemon The Pokémon to be listed.
-     * @param price The asking price for the Pokémon.
-     * @return `true` if the Pokémon was successfully listed, `false` otherwise.
+     * Fails (returns `false`, nothing is changed) if [pokemon] isn't actually in [seller]'s
+     * party, or if removing it would leave the server's `preventCompletePartyDeposit` config
+     * guard violated (same rule Phase 6's PC deposit already enforces).
      */
     fun listPokemon(seller: LuxPlayer, pokemon: Pokemon, price: Double): Boolean {
-        // In a real implementation, this would involve serializing the Pokemon object.
-        val base64Data = "mock_base64_data_for_now" // Placeholder for actual serialization
-
-        val listing = TradeListing(
-            sellerUuid = seller.uniqueId,
-            sellerName = seller.name,
-            pokemonBase64 = base64Data,
-            price = price
-        )
-        activeListings[listing.listingId] = listing
-
-        // Here you would also remove the Pokémon from the seller's party.
-        // This is a critical step to prevent duplication.
-
-        return true
+        return listPokemonCore(seller.getParty(), pokemon, seller.uniqueId, seller.name, price, activeListings)
     }
 
     /**
@@ -58,7 +49,7 @@ object GlobalTradeManager {
             return TradeResult.Failure("You cannot buy your own listing.")
         }
 
-        val economyService = LuxAPI.getEconomyService()
+        val economyService = com.novaco.luxapi.commons.LuxAPI.getEconomyService()
 
         // Check if the buyer has enough money.
         if (!economyService.hasEnough(buyer, listing.price)) {
@@ -84,4 +75,35 @@ object GlobalTradeManager {
 
         return TradeResult.Success(deserializedPokemon)
     }
+}
+
+/**
+ * Core listing logic operating directly on the party store, independent of [LuxPlayer]
+ * resolution so it can be unit tested without a running server. See
+ * [GlobalTradeManager.listPokemon] for the public, [LuxPlayer]-facing entry point.
+ */
+internal fun listPokemonCore(
+    party: PlayerPartyStore,
+    pokemon: Pokemon,
+    sellerUuid: UUID,
+    sellerName: String,
+    price: Double,
+    listings: MutableMap<UUID, TradeListing>,
+    serialize: (Pokemon) -> String = PokemonSerializer::serializeToBase64
+): Boolean {
+    if (party.get(pokemon.uuid) == null) return false
+    if (Cobblemon.config.preventCompletePartyDeposit && party.occupied() == 1) return false
+
+    val base64Data = serialize(pokemon)
+    party.remove(pokemon)
+
+    val listing = TradeListing(
+        sellerUuid = sellerUuid,
+        sellerName = sellerName,
+        pokemonBase64 = base64Data,
+        price = price
+    )
+    listings[listing.listingId] = listing
+
+    return true
 }
