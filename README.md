@@ -1,85 +1,150 @@
 # LuxAPI
 
-Cross-platform Kotlin API toolkit for Minecraft **1.21.1** mods on **Fabric** and **NeoForge**.
+**A Kotlin developer API for building Minecraft mods and sidemods on top of [Cobblemon](https://cobblemon.com/), across Fabric and NeoForge.**
 
-- Version: `1.1.1`
-- Java: `21`
+LuxAPI wraps Cobblemon's internals — storage, spawning, battles, dialogue, NPCs — behind a small, ergonomic surface, so you can build features without reverse-engineering Cobblemon's source every time. It's modeled loosely on [EnvyWare/API](https://github.com/EnvyWare/API) (the equivalent dev API for Pixelmon Reforged) — not a fork or port, just the same idea: give third-party mod developers a stable, well-documented layer instead of raw mod internals.
 
-## What You Get
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Java 21](https://img.shields.io/badge/Java-21-orange)
+![Minecraft 1.21.1](https://img.shields.io/badge/Minecraft-1.21.1-green)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.1.10-blueviolet)
 
-- Unified command framework (annotation-based)
-- GUI and paginated GUI builders
-- Scheduler (sync/async/repeating tasks)
-- Event bus and service registry
-- Optional modules for database and Cobblemon integration
+---
 
-## Modules (Quick View)
+## Who this is for
 
-- `commons` - Core API (`LuxAPI`, events, services, scheduler, GUI abstractions)
-- `core` - Brigadier/Minecraft command bridge
-- `database` - Database layer (`LuxDatabase.init()`)
-- `cobblemon` - Cobblemon hooks (`LuxCobblemon.init()`)
-- `fabric` - Fabric platform bootstrap (`LuxFabricInitializer`)
-- `neoforge` - NeoForge platform bootstrap (`LuxNeoForgeInitializer`)ฟ
+You're building a Minecraft mod or a Cobblemon sidemod and don't want to write yet another command framework, GUI builder, or Cobblemon storage-sync workaround from scratch. LuxAPI is a `compileOnly`/`implementation` dependency you build against — not a standalone mod players install by itself.
+
+## Modules
+
+| Module | Purpose |
+|---|---|
+| `commons` | Platform-agnostic core: command engine, scheduler, GUI builders, database service, Discord webhooks, text/chat utilities, math helpers. No Minecraft classes. |
+| `core` | Brigadier/Minecraft command bridge shared by both loaders. |
+| `fabric` | Fabric platform bootstrap (`LuxFabricInitializer`). |
+| `neoforge` | NeoForge platform bootstrap (`LuxNeoForgeInitializer`). |
+| `cobblemon` | The main event — Cobblemon-specific hooks: world bosses, dialogue/NPCs, battle scripting, PC/party storage, dynamic spawning, economy hooks, cinematic FX. Entry point: `LuxCobblemon`. |
+| `database` | Optional async database layer (`LuxDatabase`), auto-detected by `cobblemon` at runtime if present. |
+| `economy` | Optional standalone economy plugin layer (`LuxEconomy`), separate from the Cobblemon-integrated appraisal system in `cobblemon`. |
+| `bukkit` | Early Bukkit/Spigot platform command layer — not part of the Fabric/NeoForge/Cobblemon story above; still maturing. |
+| `discord` | Currently an empty stub (tracked for re-scope or removal). |
+
+Everything is optional except `commons` — pull in only what you need.
+
+## What's in the box
+
+The `cobblemon` module is where most of the API surface lives:
+
+- **World Boss Framework** — custom wild Pokémon builder, boss bar/scoreboard sync, aggro/DPS tracking, phase and minion management, event hooks for loot/quests.
+- **Dialogue & NPCs** — fluent multi-page dialogue trees (text/choice/input pages, custom speakers, dynamic per-render text), NPC battle animations and initiation helpers.
+- **Battle Scripting** — force wild/player/NPC battles, species/level battle rules, health-threshold interceptors for cutscenes.
+- **Safe Storage & Transactions** — PC box moves and Party↔PC transfers that go through Cobblemon's real sync path (no client desync), plus a validated IV/EV/nature/held-item property editor.
+- **Dynamic Spawning** — timed swarm/outbreak events, region-scoped spawn rate & species control (`AreaSpawnManager`), and a hook into Cobblemon's natural spawn event (`SpawnInterceptor`).
+- **Economy Hooks** — pluggable Pokémon appraisal/pricing chain.
+- **Cinematic & FX** — Snowstorm particle effects, move particles, sounds, pre-built animation triggers.
+
+The `commons`/`core` modules give you the cross-platform foundation everything else is built on: a Brigadier command wrapper, tick-based scheduler, chest GUI + pagination builders, player abstraction, attribute/metadata storage, Discord webhooks, i18n, and math/cooldown utilities.
+
+Not everything on the roadmap is finished — see [`TODO.md`](TODO.md) for the full phase-by-phase status, including one **known critical gap**: the GTS listing/purchase system in `cobblemon` is currently a non-functional stub with a real dupe risk. Don't ship that part yet.
 
 ## Requirements
 
 - Java 21
 - Minecraft 1.21.1
-- Fabric Loader or NeoForge (based on your target platform)
+- Fabric Loader or NeoForge, depending on your target platform
+- Kotlin 2.1.10 (pulled in automatically via the Gradle plugin)
 
-## Add Dependencies
+## Adding LuxAPI to your project
 
-Use only what your project needs.
+Add the modules you need as project dependencies (this repo publishes to a local Maven repo by default — see [Building](#building--testing) if you need to consume it from elsewhere):
 
 ```kotlin
 dependencies {
-	implementation(project(":commons"))
-	implementation(project(":core"))
+    implementation(project(":commons"))
+    implementation(project(":core"))
 
-	// Optional
-	implementation(project(":database"))
-	implementation(project(":cobblemon"))
+    // Cobblemon integration — pulls in Cobblemon 1.7.3+1.21.1 as compileOnly
+    implementation(project(":cobblemon"))
 
-	// Pick one platform module for platform-specific code
-	implementation(project(":fabric"))
-	// implementation(project(":neoforge"))
+    // Optional
+    implementation(project(":database"))
+
+    // Pick one platform module
+    implementation(project(":fabric"))
+    // implementation(project(":neoforge"))
 }
 ```
 
-If you publish artifacts yourself, use group `com.novaco.luxapi` and version `1.1.1`.
+If you publish LuxAPI artifacts yourself, use group `com.novaco.luxapi`, version `1.2.4`.
 
-## Quick Start
+## Quick start
 
-Initialize LuxAPI during your mod startup:
+Initialize LuxAPI once during your mod's startup:
 
 ```kotlin
 LuxAPI.init()
+LuxCobblemon.init() // if you're using the cobblemon module
 ```
 
-Enable optional modules only when needed:
-
-```kotlin
-LuxCobblemon.init() // Optional
-LuxDatabase.init()  // Optional
-```
-
-After platform setup is complete, use the API:
+From there, the scheduler is a good first thing to reach for:
 
 ```kotlin
 LuxAPI.getScheduler().runLater(20L) {
-	println("Run after 1 second")
+    println("Runs 1 second later")
 }
 ```
 
-## Build
+### A taste of the Cobblemon layer
 
-```powershell
+Editing a caught Pokémon's properties safely (validated, packet-synced, no manual sync code):
+
+```kotlin
+PokemonPropertyManager.setIV(pokemon, Stats.SPEED, 31)
+pokemon.setNature("adamant")
+```
+
+Restricting spawns in a region — say, a safe zone with no wild Pokémon:
+
+```kotlin
+AreaSpawnManager.registerArea(
+    SpawnArea(
+        dimension = Level.OVERWORLD,
+        region = Cuboid(Vector3D(0.0, 64.0, 0.0), Vector3D(50.0, 80.0, 50.0)),
+        weightMultiplier = 0.0F
+    )
+)
+```
+
+Hooking natural spawns:
+
+```kotlin
+SpawnInterceptor.onPokemonSpawn { event ->
+    if (event.species == "Mewtwo") event.cancel()
+}
+```
+
+## Building & testing
+
+```bash
 ./gradlew build
 ```
 
+To run a single module's tests (the `cobblemon` module requires **JDK 21** specifically — point `JAVA_HOME` at a JDK 21 install if your default is older):
+
+```bash
+./gradlew :cobblemon:test
+```
+
+There's no CI build/test gate yet (see `TODO.md`, Phase 11) — run tests locally before opening a PR.
+
+## Project status
+
+LuxAPI is under active development. Phases 1–7 and 9 of the roadmap are complete; Phase 8 (Economy & Trade) has a known critical gap flagged above, and Phases 10–11 (deeper Cobblemon feature coverage, publishing/CI polish) are open. See [`TODO.md`](TODO.md) for the authoritative, up-to-date breakdown — it's kept current after every session, including honest notes on scope corrections and known limitations.
+
+## Contributing
+
+No formal contribution process yet. If you're interested in contributing, open an issue or PR and we'll figure it out from there.
+
 ## License
 
-See `LICENSE`.
-
-
+MIT — see [`LICENSE`](LICENSE).
