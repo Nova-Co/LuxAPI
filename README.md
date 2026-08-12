@@ -56,13 +56,11 @@ Not everything on the roadmap is finished — see [`TODO.md`](TODO.md) for the f
 
 ## Adding LuxAPI to your project
 
-LuxAPI is a **library mod**: at runtime, your mod depends on the LuxAPI mod jar being installed alongside it (like Fabric API or Cardinal Components) — it's not something you shade into your own jar.
+LuxAPI is a **compile-time library, not a separately-installed mod**. Players don't download a `LuxAPI.jar` and drop it in `/mods` next to your mod — you pull LuxAPI in at build time and shade/embed the modules you use directly into your own mod's final jar, the same way you'd embed any other library. (Note that `fabric/build.gradle.kts` and `neoforge/build.gradle.kts` in this repo only shade `commons` into LuxAPI's own built platform jars — `core` and `cobblemon` are compile-time-only there too, which is exactly why this repo can't currently produce one complete standalone artifact for you to install separately even if you wanted to.)
 
 **⚠️ No remote Maven repo yet** (tracked in [`TODO.md`](TODO.md), Phase 11) — this repo's Gradle build only publishes to a local `build/repo` directory. Until that lands, to build against LuxAPI from a separate mod project you'll need to either:
 - build this repo yourself (`./gradlew build`) and point your project at the resulting jars in `*/build/libs/`, or
 - include this repo as a Gradle composite build / git submodule and depend on it via `project(":x")`, as shown below.
-
-**1. Compile-time dependency** (from within this repo, or a composite build that includes it):
 
 ```kotlin
 dependencies {
@@ -81,26 +79,9 @@ dependencies {
 }
 ```
 
-If you publish LuxAPI artifacts yourself, use group `com.novaco.luxapi`, version `1.2.4`.
+Then shade all of those into your own mod's jar (e.g. via the `com.gradleup.shadow` plugin, same as this repo uses internally) so the classes ship inside your single distributed jar. If you publish LuxAPI artifacts yourself in the meantime, use group `com.novaco.luxapi`, version `1.2.4`.
 
-**2. Runtime dependency** — declare LuxAPI as a required mod (modId `luxapi`) so the loader enforces it's installed:
-
-```json
-// fabric.mod.json
-"depends": { "luxapi": "*" }
-```
-
-```toml
-# neoforge.mods.toml
-[[dependencies.yourmodid]]
-modId = "luxapi"
-type = "required"
-versionRange = "[1.2.4,)"
-ordering = "AFTER"
-side = "BOTH"
-```
-
-Your own mod's entrypoint is registered the same way LuxAPI registers its own (see `fabric/src/main/resources/fabric.mod.json` and `neoforge/src/resources/META-INF/neoforge.mods.toml` in this repo for the real, working example) — LuxAPI's classes are then just on the classpath to call directly, no service-locator dance needed.
+This repo's own `fabric.mod.json`/`neoforge.mods.toml` and the `:fabric:runClient`/`:neoforge:runClient` tasks below exist so LuxAPI can be booted standalone *for developing and testing LuxAPI itself* — they aren't a template for how your mod should depend on it.
 
 ## Core concept: `LuxPlayer`
 
