@@ -7,6 +7,7 @@ import com.cobblemon.mod.common.api.storage.pc.PCStore
 import com.cobblemon.mod.common.pokemon.Pokemon
 import com.novaco.luxapi.commons.player.LuxPlayer
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.item.ItemStack
 
 /**
  * Extension functions providing a high-level bridge between LuxAPI and Cobblemon.
@@ -84,4 +85,18 @@ fun Pokemon.isPerfect(): Boolean {
  */
 fun Pokemon.getStatValue(stat: Stats): Int {
     return this.getStat(stat)
+}
+
+/**
+ * Sets this Pokémon's nature by its Cobblemon identifier (e.g. "adamant").
+ */
+fun Pokemon.setNature(natureId: String): Boolean {
+    return PokemonPropertyManager.setNature(this, natureId)
+}
+
+/**
+ * Assigns [item] as this Pokémon's held item, returning whatever it was previously holding.
+ */
+fun Pokemon.setHeldItem(item: ItemStack, decrement: Boolean = false): ItemStack {
+    return PokemonPropertyManager.setHeldItem(this, item, decrement)
 }
