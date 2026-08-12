@@ -1,10 +1,14 @@
 package com.novaco.luxapi.cobblemon.storage
 
 import com.cobblemon.mod.common.Cobblemon
+import com.cobblemon.mod.common.api.storage.party.PartyPosition
+import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore
 import com.cobblemon.mod.common.api.storage.pc.PCPosition
 import com.cobblemon.mod.common.api.storage.pc.PCStore
+import com.cobblemon.mod.common.api.storage.pc.POKEMON_PER_BOX
 import com.cobblemon.mod.common.pokemon.Pokemon
 import com.novaco.luxapi.cobblemon.pokemon.getIVPercentage
+import com.novaco.luxapi.cobblemon.pokemon.getParty
 import com.novaco.luxapi.cobblemon.util.PokemonInfoUtils
 import com.novaco.luxapi.commons.player.LuxPlayer
 import net.minecraft.server.level.ServerPlayer
@@ -186,4 +190,48 @@ object PCStorageManager {
 
         return true
     }
+
+    /**
+     * Deposits the Pokémon in [partySlot] into the PC. If [toBox]/[toSlot] are both
+     * given, deposits there specifically and fails (returns false, nothing is moved)
+     * if that slot is already occupied — this deliberately does not fall back to the
+     * first available slot the way Cobblemon's own PC screen does, since a caller who
+     * specified coordinates should get either exactly that result or a clear failure.
+     * If omitted, deposits into the first available PC slot.
+     *
+     * Respects the server's `preventCompletePartyDeposit` config option: if enabled,
+     * this fails when [partySlot] holds the player's last remaining party Pokémon.
+     *
+     * @return True if the deposit succeeded.
+     */
+    fun depositToPC(player: LuxPlayer, partySlot: Int, toBox: Int? = null, toSlot: Int? = null): Boolean {
+        return depositToPCCore(player.getParty(), getPC(player), partySlot, toBox, toSlot)
+    }
+}
+
+/**
+ * Core deposit logic operating directly on the stores, independent of [LuxPlayer]
+ * resolution so it can be unit tested without a running server. See
+ * [PCStorageManager.depositToPC] for the public, [LuxPlayer]-facing entry point.
+ */
+internal fun depositToPCCore(party: PlayerPartyStore, pc: PCStore, partySlot: Int, toBox: Int?, toSlot: Int?): Boolean {
+    val pokemon = party.get(partySlot) ?: return false
+
+    if (Cobblemon.config.preventCompletePartyDeposit && party.occupied() == 1) {
+        return false
+    }
+
+    val position: PCPosition
+    if (toBox != null && toSlot != null) {
+        if (toBox !in pc.boxes.indices || toSlot !in 0 until POKEMON_PER_BOX) return false
+        val candidate = PCPosition(toBox, toSlot)
+        if (pc[candidate] != null) return false
+        position = candidate
+    } else {
+        position = pc.getFirstAvailablePosition() ?: return false
+    }
+
+    party.remove(pokemon)
+    pc[position] = pokemon
+    return true
 }
