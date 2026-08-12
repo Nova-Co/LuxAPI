@@ -18,17 +18,17 @@ import net.minecraft.server.level.ServerPlayer
 /**
  * A fluent builder pattern designed to configure and initiate Pokemon battles effortlessly with active error mitigation.
  */
-class BattleBuilder(private val initiator: LuxPlayer) {
+class LuxBattleBuilder(private val initiator: LuxPlayer) {
 
     private var isDoubleBattle: Boolean = false
     private var allowSpectators: Boolean = true
 
-    fun setDoubleBattle(isDouble: Boolean): BattleBuilder {
+    fun setDoubleBattle(isDouble: Boolean): LuxBattleBuilder {
         this.isDoubleBattle = isDouble
         return this
     }
 
-    fun setSpectatorAllowed(allow: Boolean): BattleBuilder {
+    fun setSpectatorAllowed(allow: Boolean): LuxBattleBuilder {
         this.allowSpectators = allow
         return this
     }

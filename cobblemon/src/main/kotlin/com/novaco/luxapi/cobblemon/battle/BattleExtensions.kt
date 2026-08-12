@@ -14,7 +14,7 @@ import com.novaco.luxapi.commons.player.LuxPlayer
  * @param wildEntity The target wild Pokemon.
  */
 fun LuxPlayer.forceBattleWild(wildEntity: PokemonEntity) {
-    BattleBuilder(this).startAgainstWild(wildEntity)
+    LuxBattleBuilder(this).startAgainstWild(wildEntity)
 }
 
 /**
@@ -23,7 +23,7 @@ fun LuxPlayer.forceBattleWild(wildEntity: PokemonEntity) {
  * @param opponent The targeted opponent player.
  */
 fun LuxPlayer.forceBattlePlayer(opponent: LuxPlayer) {
-    BattleBuilder(this).startAgainstPlayer(opponent)
+    LuxBattleBuilder(this).startAgainstPlayer(opponent)
 }
 
 /**
@@ -32,7 +32,7 @@ fun LuxPlayer.forceBattlePlayer(opponent: LuxPlayer) {
  * @param npcEntity The targeted NPC Trainer.
  */
 fun LuxPlayer.forceBattleNPC(npcEntity: NPCEntity) {
-    BattleBuilder(this).startAgainstNPC(npcEntity)
+    LuxBattleBuilder(this).startAgainstNPC(npcEntity)
 }
 
 /**
