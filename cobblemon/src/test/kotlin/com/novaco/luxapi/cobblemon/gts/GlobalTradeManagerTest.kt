@@ -1,7 +1,9 @@
 package com.novaco.luxapi.cobblemon.gts
 
 import com.cobblemon.mod.common.Cobblemon
+import com.cobblemon.mod.common.api.storage.party.PartyPosition
 import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore
+import com.cobblemon.mod.common.api.storage.pc.PCStore
 import com.cobblemon.mod.common.config.CobblemonConfig
 import com.cobblemon.mod.common.pokemon.Pokemon
 import net.minecraft.SharedConstants
@@ -102,5 +104,48 @@ class GlobalTradeManagerTest {
         assertFalse(result)
         verify(party, never()).remove(pokemon)
         assertTrue(listings.isEmpty())
+    }
+
+    @Test
+    fun `grantPokemon prefers the party when it has space`() {
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        val pokemon = mock<Pokemon>()
+        whenever(party.getFirstAvailablePosition()).thenReturn(PartyPosition(0))
+        whenever(party.add(pokemon)).thenReturn(true)
+
+        val result = grantPokemon(party, pc, pokemon)
+
+        assertTrue(result)
+        verify(party).add(pokemon)
+        verify(pc, never()).add(pokemon)
+    }
+
+    @Test
+    fun `grantPokemon falls back to the pc when the party is full`() {
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        val pokemon = mock<Pokemon>()
+        whenever(party.getFirstAvailablePosition()).thenReturn(null)
+        whenever(pc.add(pokemon)).thenReturn(true)
+
+        val result = grantPokemon(party, pc, pokemon)
+
+        assertTrue(result)
+        verify(party, never()).add(pokemon)
+        verify(pc).add(pokemon)
+    }
+
+    @Test
+    fun `grantPokemon fails when both party and pc are full`() {
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        val pokemon = mock<Pokemon>()
+        whenever(party.getFirstAvailablePosition()).thenReturn(null)
+        whenever(pc.add(pokemon)).thenReturn(false)
+
+        val result = grantPokemon(party, pc, pokemon)
+
+        assertFalse(result)
     }
 }

@@ -2,6 +2,7 @@ package com.novaco.luxapi.cobblemon.gts
 
 import com.cobblemon.mod.common.Cobblemon
 import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore
+import com.cobblemon.mod.common.api.storage.pc.PCStore
 import com.cobblemon.mod.common.pokemon.Pokemon
 import com.novaco.luxapi.cobblemon.pokemon.getParty
 import com.novaco.luxapi.cobblemon.serialization.PokemonSerializer
@@ -106,4 +107,16 @@ internal fun listPokemonCore(
     listings[listing.listingId] = listing
 
     return true
+}
+
+/**
+ * Places [pokemon] into [party] if it has room, otherwise falls back to [pc]. Returns `false`
+ * only if both are full. Used by [GlobalTradeManager.purchaseListing] and
+ * [GlobalTradeManager.cancelListing] to hand a deserialized Pokémon back to a player.
+ */
+internal fun grantPokemon(party: PlayerPartyStore, pc: PCStore, pokemon: Pokemon): Boolean {
+    if (party.getFirstAvailablePosition() != null) {
+        return party.add(pokemon)
+    }
+    return pc.add(pokemon)
 }
