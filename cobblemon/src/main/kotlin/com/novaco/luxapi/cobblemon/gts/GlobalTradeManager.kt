@@ -48,6 +48,16 @@ object GlobalTradeManager {
             buyer, buyer.getParty(), PCStorageManager.getPC(buyer), listingId, activeListings, LuxAPI.getEconomyService()
         )
     }
+
+    /**
+     * Cancels an active listing and returns the Pokémon to [seller] (party, falling back to
+     * PC). Fails if the listing doesn't exist, [seller] isn't the original lister, or the
+     * seller has no room to receive it back — the listing is only removed once the Pokémon
+     * has actually been handed back, never before.
+     */
+    fun cancelListing(seller: LuxPlayer, listingId: UUID): Boolean {
+        return cancelListingCore(seller, seller.getParty(), PCStorageManager.getPC(seller), listingId, activeListings)
+    }
 }
 
 /**
@@ -137,4 +147,28 @@ internal fun purchaseListingCore(
     grantPokemon(party, pc, pokemon)
 
     return TradeResult.Success(pokemon)
+}
+
+/**
+ * Core cancellation logic operating directly on the seller's stores, independent of platform
+ * resolution so it can be unit tested without a running server. See
+ * [GlobalTradeManager.cancelListing] for the public, [LuxPlayer]-facing entry point.
+ */
+internal fun cancelListingCore(
+    seller: LuxPlayer,
+    party: PlayerPartyStore,
+    pc: PCStore,
+    listingId: UUID,
+    listings: MutableMap<UUID, TradeListing>,
+    deserialize: (String) -> Pokemon? = PokemonSerializer::deserializeFromBase64
+): Boolean {
+    val listing = listings[listingId] ?: return false
+    if (listing.sellerUuid != seller.uniqueId) return false
+
+    val pokemon = deserialize(listing.pokemonBase64) ?: return false
+
+    if (!grantPokemon(party, pc, pokemon)) return false
+
+    listings.remove(listingId)
+    return true
 }

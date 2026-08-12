@@ -321,4 +321,65 @@ class GlobalTradeManagerTest {
         assertTrue(result is TradeResult.Failure)
         assertEquals(1, listings.size)
     }
+
+    @Test
+    fun `cancelListingCore returns the pokemon to the seller and removes the listing`() {
+        val sellerUuid = UUID.randomUUID()
+        val listingId = UUID.randomUUID()
+        val listings = mutableMapOf(
+            listingId to TradeListing(listingId, sellerUuid, "Merchant", "serialized_data", 100.0)
+        )
+        val seller = mock<LuxPlayer>()
+        whenever(seller.uniqueId).thenReturn(sellerUuid)
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        val realPokemon = mock<Pokemon>()
+        whenever(party.getFirstAvailablePosition()).thenReturn(PartyPosition(0))
+        whenever(party.add(realPokemon)).thenReturn(true)
+
+        val result = cancelListingCore(seller, party, pc, listingId, listings, deserialize = { realPokemon })
+
+        assertTrue(result)
+        verify(party).add(realPokemon)
+        assertTrue(listings.isEmpty())
+    }
+
+    @Test
+    fun `cancelListingCore fails when the caller does not own the listing`() {
+        val sellerUuid = UUID.randomUUID()
+        val listingId = UUID.randomUUID()
+        val listings = mutableMapOf(
+            listingId to TradeListing(listingId, sellerUuid, "Merchant", "serialized_data", 100.0)
+        )
+        val notSeller = mock<LuxPlayer>()
+        whenever(notSeller.uniqueId).thenReturn(UUID.randomUUID())
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+
+        val result = cancelListingCore(notSeller, party, pc, listingId, listings, deserialize = { mock<Pokemon>() })
+
+        assertFalse(result)
+        assertEquals(1, listings.size)
+    }
+
+    @Test
+    fun `cancelListingCore leaves the listing intact when grant fails`() {
+        val sellerUuid = UUID.randomUUID()
+        val listingId = UUID.randomUUID()
+        val listings = mutableMapOf(
+            listingId to TradeListing(listingId, sellerUuid, "Merchant", "serialized_data", 100.0)
+        )
+        val seller = mock<LuxPlayer>()
+        whenever(seller.uniqueId).thenReturn(sellerUuid)
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        val realPokemon = mock<Pokemon>()
+        whenever(party.getFirstAvailablePosition()).thenReturn(null)
+        whenever(pc.add(realPokemon)).thenReturn(false)
+
+        val result = cancelListingCore(seller, party, pc, listingId, listings, deserialize = { realPokemon })
+
+        assertFalse(result)
+        assertEquals(1, listings.size)
+    }
 }
