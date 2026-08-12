@@ -30,9 +30,16 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
 
     // --- Mocking Framework ---
-    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito:mockito-core:5.23.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:2.0.20")
+
+    // Cobblemon's `mod` artifact is deliberately non-transitive (isTransitive = false, see above),
+    // so MoLang isn't on the compile classpath. That's fine for compilation, but merely loading
+    // com.cobblemon.mod.common.pokemon.Pokemon at test runtime (e.g. to mock it) triggers its
+    // MoLang-backed `struct` field init, which needs the real classes. Test-scope only — does not
+    // affect the shipped mod jar's dependency graph.
+    testImplementation("com.bedrockk:molang:1.1.20")
 
     testImplementation(files(sourceSets.main.get().compileClasspath))
     testRuntimeOnly(files(sourceSets.main.get().runtimeClasspath))
