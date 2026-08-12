@@ -207,6 +207,19 @@ object PCStorageManager {
     fun depositToPC(player: LuxPlayer, partySlot: Int, toBox: Int? = null, toSlot: Int? = null): Boolean {
         return depositToPCCore(player.getParty(), getPC(player), partySlot, toBox, toSlot)
     }
+
+    /**
+     * Withdraws the Pokémon at PC ([box], [slot]) into the player's party. If
+     * [toPartySlot] is given, withdraws there specifically and fails (returns false,
+     * nothing is moved) if that slot is already occupied — same fail-loud contract as
+     * [depositToPC]. If omitted, withdraws into the first available party slot, and
+     * fails if the party is full.
+     *
+     * @return True if the withdrawal succeeded.
+     */
+    fun withdrawFromPC(player: LuxPlayer, box: Int, slot: Int, toPartySlot: Int? = null): Boolean {
+        return withdrawFromPCCore(player.getParty(), getPC(player), box, slot, toPartySlot)
+    }
 }
 
 /**
@@ -233,5 +246,29 @@ internal fun depositToPCCore(party: PlayerPartyStore, pc: PCStore, partySlot: In
 
     party.remove(pokemon)
     pc[position] = pokemon
+    return true
+}
+
+/**
+ * Core withdraw logic operating directly on the stores, independent of [LuxPlayer]
+ * resolution so it can be unit tested without a running server. See
+ * [PCStorageManager.withdrawFromPC] for the public, [LuxPlayer]-facing entry point.
+ */
+internal fun withdrawFromPCCore(party: PlayerPartyStore, pc: PCStore, box: Int, slot: Int, toPartySlot: Int?): Boolean {
+    if (box !in pc.boxes.indices || slot !in 0 until POKEMON_PER_BOX) return false
+    val source = PCPosition(box, slot)
+    val pokemon = pc[source] ?: return false
+
+    val position: PartyPosition
+    if (toPartySlot != null) {
+        if (toPartySlot !in 0 until party.size()) return false
+        if (party.get(toPartySlot) != null) return false
+        position = PartyPosition(toPartySlot)
+    } else {
+        position = party.getFirstAvailablePosition() ?: return false
+    }
+
+    pc.remove(source)
+    party[position] = pokemon
     return true
 }

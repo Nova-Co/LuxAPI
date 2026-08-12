@@ -123,4 +123,81 @@ class PCStorageManagerTest {
         assertFalse(result)
         verify(party, never()).remove(pokemon)
     }
+
+    @Test
+    fun `withdraw to first available party slot removes from pc and adds to party`() {
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        val pokemon = mock<Pokemon>()
+        val source = PCPosition(1, 2)
+        val target = PartyPosition(3)
+        whenever(pc.boxes).thenReturn(mutableListOf(mock<PCBox>(), mock()))
+        whenever(pc[source]).thenReturn(pokemon)
+        whenever(party.getFirstAvailablePosition()).thenReturn(target)
+
+        val result = withdrawFromPCCore(party, pc, 1, 2, null)
+
+        assertTrue(result)
+        verify(pc).remove(source)
+        verify(party).set(target, pokemon)
+    }
+
+    @Test
+    fun `withdraw returns false when the pc slot is empty`() {
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        whenever(pc.boxes).thenReturn(mutableListOf(mock<PCBox>()))
+        whenever(pc[PCPosition(0, 0)]).thenReturn(null)
+
+        val result = withdrawFromPCCore(party, pc, 0, 0, null)
+
+        assertFalse(result)
+        verifyNoInteractions(party)
+    }
+
+    @Test
+    fun `withdraw returns false when the pc box is out of bounds`() {
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        whenever(pc.boxes).thenReturn(mutableListOf<PCBox>())
+
+        val result = withdrawFromPCCore(party, pc, 5, 0, null)
+
+        assertFalse(result)
+        verifyNoInteractions(party)
+    }
+
+    @Test
+    fun `withdraw to an explicit occupied party slot fails loud`() {
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        val pokemon = mock<Pokemon>()
+        val occupant = mock<Pokemon>()
+        val source = PCPosition(0, 0)
+        whenever(pc.boxes).thenReturn(mutableListOf(mock<PCBox>()))
+        whenever(pc[source]).thenReturn(pokemon)
+        whenever(party.size()).thenReturn(6)
+        whenever(party.get(2)).thenReturn(occupant)
+
+        val result = withdrawFromPCCore(party, pc, 0, 0, 2)
+
+        assertFalse(result)
+        verify(pc, never()).remove(source)
+    }
+
+    @Test
+    fun `withdraw returns false when party is full and no slot is available`() {
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        val pokemon = mock<Pokemon>()
+        val source = PCPosition(0, 0)
+        whenever(pc.boxes).thenReturn(mutableListOf(mock<PCBox>()))
+        whenever(pc[source]).thenReturn(pokemon)
+        whenever(party.getFirstAvailablePosition()).thenReturn(null)
+
+        val result = withdrawFromPCCore(party, pc, 0, 0, null)
+
+        assertFalse(result)
+        verify(pc, never()).remove(source)
+    }
 }
