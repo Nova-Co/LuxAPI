@@ -61,7 +61,7 @@ fun LuxPlayer.getPokemonInSlot(slot: Int): Pokemon? {
  * @return The percentage value (0.0 - 100.0).
  */
 fun Pokemon.getIVPercentage(): Double {
-    val totalIv = Stats.values().sumOf { stat -> (this.ivs.get(stat) ?: 0).toDouble() }
+    val totalIv = Stats.PERMANENT.sumOf { stat -> (this.ivs.get(stat) ?: 0).toDouble() }
     val maxPossibleIv = 31.0 * 6
     return (totalIv / maxPossibleIv) * 100.0
 }
@@ -72,7 +72,7 @@ fun Pokemon.getIVPercentage(): Double {
  * @return True if Level 100 and all IVs are 31.
  */
 fun Pokemon.isPerfect(): Boolean {
-    val hasMaxIvs = Stats.values().all { stat -> (this.ivs.get(stat) ?: 0) >= 31 }
+    val hasMaxIvs = Stats.PERMANENT.all { stat -> (this.ivs.get(stat) ?: 0) >= 31 }
     return this.level >= 100 && hasMaxIvs
 }
 
