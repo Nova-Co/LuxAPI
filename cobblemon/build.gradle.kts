@@ -25,6 +25,14 @@ dependencies {
         isTransitive = false
     }
 
+    // Cobblemon's own ActionEffectTimeline/MoLangRuntime classes reference com.bedrockk.molang.*
+    // directly in their public signatures. Since `mod` is isTransitive = false (see above), those
+    // classes aren't otherwise on the compile classpath, which produces a "may be forbidden soon"
+    // compiler warning wherever LuxAPI code touches them (see MoLangCinematicAPI.kt). compileOnly
+    // here silences that cleanly: the real classes are supplied by Cobblemon's own jar at runtime,
+    // so nothing ships or changes at runtime — this only satisfies the compiler.
+    compileOnly("com.bedrockk:molang:1.1.20")
+
     // --- Unit Testing Framework ---
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
