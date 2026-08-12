@@ -2,7 +2,7 @@ package com.novaco.luxapi.cobblemon.manager
 
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
-import com.cobblemon.mod.common.CobblemonEntities // 🌟 Import เพิ่มเติมสำหรับเสกร่าง
+import com.cobblemon.mod.common.CobblemonEntities
 import com.novaco.luxapi.commons.player.LuxPlayer
 import net.minecraft.server.level.ServerPlayer
 
