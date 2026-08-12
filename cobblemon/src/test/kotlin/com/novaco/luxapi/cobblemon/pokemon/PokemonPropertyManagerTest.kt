@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
@@ -35,6 +36,10 @@ class PokemonPropertyManagerTest {
         val pokemon = mock<Pokemon>()
         val ivs = IVs()
         whenever(pokemon.ivs).thenReturn(ivs)
+        // Pokemon.setIV is a real Cobblemon member, but calling it on a mock is a
+        // no-op unless stubbed — simulate its real side effect (mutating ivs) so we
+        // can verify PokemonPropertyManager's readback-based success detection.
+        doAnswer { ivs[Stats.SPEED] = 31 }.whenever(pokemon).setIV(Stats.SPEED, 31)
 
         val result = PokemonPropertyManager.setIV(pokemon, Stats.SPEED, 31)
 
@@ -59,6 +64,10 @@ class PokemonPropertyManagerTest {
         val pokemon = mock<Pokemon>()
         val evs = EVs()
         whenever(pokemon.evs).thenReturn(evs)
+        // Pokemon.setEV is a real Cobblemon member, but calling it on a mock is a
+        // no-op unless stubbed — simulate its real side effect (mutating evs) so we
+        // can verify PokemonPropertyManager's readback-based success detection.
+        doAnswer { evs[Stats.ATTACK] = 252 }.whenever(pokemon).setEV(Stats.ATTACK, 252)
 
         val result = PokemonPropertyManager.setEV(pokemon, Stats.ATTACK, 252)
 

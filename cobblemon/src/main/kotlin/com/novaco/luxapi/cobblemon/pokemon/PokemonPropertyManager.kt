@@ -8,28 +8,32 @@ import net.minecraft.world.item.ItemStack
 /**
  * Safe, sync-aware mutation of a caught Pokémon's IVs/EVs/nature/held item.
  * Every setter here delegates to Cobblemon's own public mutation points
- * (the [Pokemon.ivs]/[Pokemon.evs] operator setters, the [Pokemon.nature] setter,
- * and [Pokemon.swapHeldItem]), so client sync and persistence-dirty marking are
- * handled by Cobblemon itself regardless of which store the Pokémon currently lives in.
+ * ([Pokemon.setIV]/[Pokemon.setEV], the [Pokemon.nature] setter, and
+ * [Pokemon.swapHeldItem]), so client sync, persistence-dirty marking, and (for
+ * IV/EV) the max-HP recalculation when the HP stat itself changes are all
+ * handled by Cobblemon itself, regardless of which store the Pokémon currently lives in.
  */
 object PokemonPropertyManager {
 
     /**
-     * Sets a single IV stat (0-31). Rejected out-of-range values are a silent no-op
-     * on Cobblemon's side, so success is confirmed by reading the value back.
+     * Sets a single IV stat (0-31) via Cobblemon's own [Pokemon.setIV] (which also
+     * recalculates max HP if [stat] is HP). Rejected out-of-range values are a
+     * silent no-op on Cobblemon's side, so success is confirmed by reading the
+     * value back.
      */
     fun setIV(pokemon: Pokemon, stat: Stats, value: Int): Boolean {
-        pokemon.ivs[stat] = value
+        pokemon.setIV(stat, value)
         return pokemon.ivs.getOrDefault(stat) == value
     }
 
     /**
-     * Sets a single EV stat (0-252 per stat, 510 total across all stats). Rejected
-     * values are a silent no-op on Cobblemon's side, so success is confirmed by
-     * reading the value back.
+     * Sets a single EV stat (0-252 per stat, 510 total across all stats) via
+     * Cobblemon's own [Pokemon.setEV] (which also recalculates max HP if [stat]
+     * is HP). Rejected values are a silent no-op on Cobblemon's side, so success
+     * is confirmed by reading the value back.
      */
     fun setEV(pokemon: Pokemon, stat: Stats, value: Int): Boolean {
-        pokemon.evs[stat] = value
+        pokemon.setEV(stat, value)
         return pokemon.evs.getOrDefault(stat) == value
     }
 
