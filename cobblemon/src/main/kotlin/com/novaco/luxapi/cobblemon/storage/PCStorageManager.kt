@@ -1,6 +1,7 @@
 package com.novaco.luxapi.cobblemon.storage
 
 import com.cobblemon.mod.common.Cobblemon
+import com.cobblemon.mod.common.api.storage.pc.PCPosition
 import com.cobblemon.mod.common.api.storage.pc.PCStore
 import com.cobblemon.mod.common.pokemon.Pokemon
 import com.novaco.luxapi.cobblemon.pokemon.getIVPercentage
@@ -180,13 +181,8 @@ object PCStorageManager {
         val slotsPerBox = 30
         if (fromSlot !in 0 until slotsPerBox || toSlot !in 0 until slotsPerBox) return false
 
-        val sourceBox = boxes[fromBox]
-        val targetBox = boxes[toBox]
-
-        // Execute the swap
-        val temp = sourceBox.get(fromSlot)
-        sourceBox.set(fromSlot, targetBox.get(toSlot))
-        targetBox.set(toSlot, temp)
+        // Delegate to PCStore.swap so the client is properly synced via packets
+        pc.swap(PCPosition(fromBox, fromSlot), PCPosition(toBox, toSlot))
 
         return true
     }
