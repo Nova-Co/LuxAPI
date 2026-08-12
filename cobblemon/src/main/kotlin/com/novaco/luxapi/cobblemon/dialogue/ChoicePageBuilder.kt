@@ -36,6 +36,7 @@ class ChoicePageBuilder(
     var textColor: String? = null
     var gibber: DialogueGibber? = null
     var background: ResourceLocation? = null
+    var escapeAction: ((ActiveDialogue) -> Unit)? = null
 
     /**
      * Adds a clickable choice (an option button) to the dialogue page with full predicate support.
@@ -141,7 +142,8 @@ class ChoicePageBuilder(
             textColor = parseColorToHex(textColor),
             input = inputComponent,
             gibber = gibber,
-            background = background
+            background = background,
+            escapeAction = escapeAction
         )
     }
 }
