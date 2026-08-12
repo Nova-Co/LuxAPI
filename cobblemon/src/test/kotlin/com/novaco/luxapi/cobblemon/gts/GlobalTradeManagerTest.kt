@@ -6,6 +6,9 @@ import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore
 import com.cobblemon.mod.common.api.storage.pc.PCStore
 import com.cobblemon.mod.common.config.CobblemonConfig
 import com.cobblemon.mod.common.pokemon.Pokemon
+import com.novaco.luxapi.cobblemon.economy.TradeTaxManager
+import com.novaco.luxapi.commons.economy.EconomyService
+import com.novaco.luxapi.commons.player.LuxPlayer
 import net.minecraft.SharedConstants
 import net.minecraft.server.Bootstrap
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -19,6 +22,22 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.util.UUID
+
+private class FakeEconomyService : EconomyService {
+    val balances = mutableMapOf<UUID, Double>()
+
+    override fun getBalance(player: LuxPlayer): Double = balances.getOrDefault(player.uniqueId, 0.0)
+    override fun hasEnough(player: LuxPlayer, amount: Double): Boolean = getBalance(player) >= amount
+    override fun deposit(uuid: UUID, amount: Double): Boolean {
+        balances[uuid] = balances.getOrDefault(uuid, 0.0) + amount
+        return true
+    }
+    override fun withdraw(player: LuxPlayer, amount: Double): Boolean {
+        if (!hasEnough(player, amount)) return false
+        balances[player.uniqueId] = getBalance(player) - amount
+        return true
+    }
+}
 
 class GlobalTradeManagerTest {
 
@@ -38,6 +57,16 @@ class GlobalTradeManagerTest {
         val configField = Cobblemon::class.java.getDeclaredField("config")
         configField.isAccessible = true
         configField.set(Cobblemon, CobblemonConfig())
+    }
+
+    @BeforeEach
+    fun clearTradeTaxCalculators() {
+        val field = TradeTaxManager::class.java.getDeclaredField("calculators")
+        field.isAccessible = true
+
+        @Suppress("UNCHECKED_CAST")
+        val list = field.get(TradeTaxManager) as MutableList<Any>
+        list.clear()
     }
 
     @Test
@@ -147,5 +176,149 @@ class GlobalTradeManagerTest {
         val result = grantPokemon(party, pc, pokemon)
 
         assertFalse(result)
+    }
+
+    @Test
+    fun `purchaseListingCore grants the real pokemon and pays the seller`() {
+        val sellerUuid = UUID.randomUUID()
+        val listingId = UUID.randomUUID()
+        val listings = mutableMapOf(
+            listingId to TradeListing(listingId, sellerUuid, "Merchant", "serialized_data", 100.0)
+        )
+        val buyer = mock<LuxPlayer>()
+        val buyerUuid = UUID.randomUUID()
+        whenever(buyer.uniqueId).thenReturn(buyerUuid)
+        val economy = FakeEconomyService()
+        economy.balances[buyerUuid] = 200.0
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        val realPokemon = mock<Pokemon>()
+        whenever(party.getFirstAvailablePosition()).thenReturn(PartyPosition(0))
+        whenever(party.add(realPokemon)).thenReturn(true)
+
+        val result = purchaseListingCore(
+            buyer, party, pc, listingId, listings, economy,
+            deserialize = { data -> if (data == "serialized_data") realPokemon else null }
+        )
+
+        assertTrue(result is TradeResult.Success)
+        assertEquals(realPokemon, (result as TradeResult.Success).pokemon)
+        assertEquals(100.0, economy.balances[buyerUuid])
+        assertEquals(100.0, economy.balances[sellerUuid])
+        assertTrue(listings.isEmpty())
+        verify(party).add(realPokemon)
+    }
+
+    @Test
+    fun `purchaseListingCore deducts tax from the seller payout`() {
+        TradeTaxManager.registerTaxCalculator { _, price, _ -> price * 0.20 }
+        val sellerUuid = UUID.randomUUID()
+        val listingId = UUID.randomUUID()
+        val listings = mutableMapOf(
+            listingId to TradeListing(listingId, sellerUuid, "Merchant", "serialized_data", 100.0)
+        )
+        val buyer = mock<LuxPlayer>()
+        val buyerUuid = UUID.randomUUID()
+        whenever(buyer.uniqueId).thenReturn(buyerUuid)
+        val economy = FakeEconomyService()
+        economy.balances[buyerUuid] = 200.0
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        val realPokemon = mock<Pokemon>()
+        whenever(party.getFirstAvailablePosition()).thenReturn(PartyPosition(0))
+        whenever(party.add(realPokemon)).thenReturn(true)
+
+        purchaseListingCore(buyer, party, pc, listingId, listings, economy, deserialize = { realPokemon })
+
+        assertEquals(100.0, economy.balances[buyerUuid]) // paid full 100
+        assertEquals(80.0, economy.balances[sellerUuid])  // received 100 - 20% tax
+    }
+
+    @Test
+    fun `purchaseListingCore fails without touching funds when the listing is corrupt`() {
+        val sellerUuid = UUID.randomUUID()
+        val listingId = UUID.randomUUID()
+        val listings = mutableMapOf(
+            listingId to TradeListing(listingId, sellerUuid, "Merchant", "corrupt_data", 100.0)
+        )
+        val buyer = mock<LuxPlayer>()
+        val buyerUuid = UUID.randomUUID()
+        whenever(buyer.uniqueId).thenReturn(buyerUuid)
+        val economy = FakeEconomyService()
+        economy.balances[buyerUuid] = 200.0
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+
+        val result = purchaseListingCore(buyer, party, pc, listingId, listings, economy, deserialize = { null })
+
+        assertTrue(result is TradeResult.Failure)
+        assertEquals(200.0, economy.balances[buyerUuid])
+        assertEquals(1, listings.size) // listing left intact, not silently dropped
+    }
+
+    @Test
+    fun `purchaseListingCore fails without charging when buyer has no space`() {
+        val sellerUuid = UUID.randomUUID()
+        val listingId = UUID.randomUUID()
+        val listings = mutableMapOf(
+            listingId to TradeListing(listingId, sellerUuid, "Merchant", "serialized_data", 100.0)
+        )
+        val buyer = mock<LuxPlayer>()
+        val buyerUuid = UUID.randomUUID()
+        whenever(buyer.uniqueId).thenReturn(buyerUuid)
+        val economy = FakeEconomyService()
+        economy.balances[buyerUuid] = 200.0
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        val realPokemon = mock<Pokemon>()
+        whenever(party.getFirstAvailablePosition()).thenReturn(null)
+        whenever(pc.getFirstAvailablePosition()).thenReturn(null)
+
+        val result = purchaseListingCore(buyer, party, pc, listingId, listings, economy, deserialize = { realPokemon })
+
+        assertTrue(result is TradeResult.Failure)
+        assertEquals(200.0, economy.balances[buyerUuid])
+        assertEquals(1, listings.size)
+    }
+
+    @Test
+    fun `purchaseListingCore fails on self-purchase`() {
+        val sellerUuid = UUID.randomUUID()
+        val listingId = UUID.randomUUID()
+        val listings = mutableMapOf(
+            listingId to TradeListing(listingId, sellerUuid, "Merchant", "serialized_data", 100.0)
+        )
+        val buyer = mock<LuxPlayer>()
+        whenever(buyer.uniqueId).thenReturn(sellerUuid)
+        val economy = FakeEconomyService()
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+
+        val result = purchaseListingCore(buyer, party, pc, listingId, listings, economy, deserialize = { mock<Pokemon>() })
+
+        assertTrue(result is TradeResult.Failure)
+        assertEquals(1, listings.size)
+    }
+
+    @Test
+    fun `purchaseListingCore fails on insufficient funds without removing the listing`() {
+        val sellerUuid = UUID.randomUUID()
+        val listingId = UUID.randomUUID()
+        val listings = mutableMapOf(
+            listingId to TradeListing(listingId, sellerUuid, "Merchant", "serialized_data", 100.0)
+        )
+        val buyer = mock<LuxPlayer>()
+        val buyerUuid = UUID.randomUUID()
+        whenever(buyer.uniqueId).thenReturn(buyerUuid)
+        val economy = FakeEconomyService()
+        economy.balances[buyerUuid] = 10.0
+        val party = mock<PlayerPartyStore>()
+        val pc = mock<PCStore>()
+        whenever(party.getFirstAvailablePosition()).thenReturn(PartyPosition(0))
+
+        val result = purchaseListingCore(buyer, party, pc, listingId, listings, economy, deserialize = { mock<Pokemon>() })
+
+        assertTrue(result is TradeResult.Failure)
+        assertEquals(1, listings.size)
     }
 }

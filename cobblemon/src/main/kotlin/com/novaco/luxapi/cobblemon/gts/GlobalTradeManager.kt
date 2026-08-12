@@ -4,8 +4,12 @@ import com.cobblemon.mod.common.Cobblemon
 import com.cobblemon.mod.common.api.storage.party.PlayerPartyStore
 import com.cobblemon.mod.common.api.storage.pc.PCStore
 import com.cobblemon.mod.common.pokemon.Pokemon
+import com.novaco.luxapi.cobblemon.economy.TradeTaxManager
 import com.novaco.luxapi.cobblemon.pokemon.getParty
 import com.novaco.luxapi.cobblemon.serialization.PokemonSerializer
+import com.novaco.luxapi.cobblemon.storage.PCStorageManager
+import com.novaco.luxapi.commons.LuxAPI
+import com.novaco.luxapi.commons.economy.EconomyService
 import com.novaco.luxapi.commons.player.LuxPlayer
 import java.util.UUID
 
@@ -33,48 +37,16 @@ object GlobalTradeManager {
     }
 
     /**
-     * Executes the purchase of a Pokémon listing.
-     * This function handles the transaction in a safe manner, preventing race conditions and ensuring
-     * that the buyer has sufficient funds and the seller receives payment.
-     *
-     * @param buyer The player purchasing the Pokémon.
-     * @param listingId The unique ID of the listing to be purchased.
-     * @return A [TradeResult] indicating the outcome of the transaction.
+     * Executes the purchase of a Pokémon listing. Deserializes the real listed Pokémon and
+     * verifies the buyer has room for it *before* any funds move, so a buyer is never charged
+     * for a trade that can't complete. On success, the seller receives the price minus
+     * [TradeTaxManager]'s computed tax, and the buyer receives the actual listed Pokémon
+     * (not a blank placeholder).
      */
     fun purchaseListing(buyer: LuxPlayer, listingId: UUID): TradeResult {
-        val listing = activeListings[listingId]
-            ?: return TradeResult.Failure("This listing no longer exists or was already sold.")
-
-        // Prevent a player from buying their own Pokémon.
-        if (buyer.uniqueId == listing.sellerUuid) {
-            return TradeResult.Failure("You cannot buy your own listing.")
-        }
-
-        val economyService = com.novaco.luxapi.commons.LuxAPI.getEconomyService()
-
-        // Check if the buyer has enough money.
-        if (!economyService.hasEnough(buyer, listing.price)) {
-            return TradeResult.Failure("Insufficient funds.")
-        }
-
-        // Attempt to withdraw the funds from the buyer.
-        val withdrawSuccess = economyService.withdraw(buyer, listing.price)
-        if (!withdrawSuccess) {
-            // If withdrawal fails, abort the transaction to prevent money loss.
-            return TradeResult.Failure("Failed to process payment. Transaction aborted.")
-        }
-
-        // The transaction is now committed. Remove the listing.
-        activeListings.remove(listingId)
-
-        // Deposit the funds into the seller's account.
-        economyService.deposit(listing.sellerUuid, listing.price)
-
-        // Deserialize the Pokémon from the listing and give it to the buyer.
-        // This is a placeholder for the actual deserialization logic.
-        val deserializedPokemon = Pokemon()
-
-        return TradeResult.Success(deserializedPokemon)
+        return purchaseListingCore(
+            buyer, buyer.getParty(), PCStorageManager.getPC(buyer), listingId, activeListings, LuxAPI.getEconomyService()
+        )
     }
 }
 
@@ -119,4 +91,50 @@ internal fun grantPokemon(party: PlayerPartyStore, pc: PCStore, pokemon: Pokemon
         return party.add(pokemon)
     }
     return pc.add(pokemon)
+}
+
+/**
+ * Core purchase logic operating directly on the buyer's stores and the economy service,
+ * independent of platform resolution so it can be unit tested without a running server. See
+ * [GlobalTradeManager.purchaseListing] for the public, [LuxPlayer]-facing entry point.
+ */
+internal fun purchaseListingCore(
+    buyer: LuxPlayer,
+    party: PlayerPartyStore,
+    pc: PCStore,
+    listingId: UUID,
+    listings: MutableMap<UUID, TradeListing>,
+    economyService: EconomyService,
+    deserialize: (String) -> Pokemon? = PokemonSerializer::deserializeFromBase64
+): TradeResult {
+    val listing = listings[listingId]
+        ?: return TradeResult.Failure("This listing no longer exists or was already sold.")
+
+    if (buyer.uniqueId == listing.sellerUuid) {
+        return TradeResult.Failure("You cannot buy your own listing.")
+    }
+
+    val pokemon = deserialize(listing.pokemonBase64)
+        ?: return TradeResult.Failure("This listing's data is corrupted and cannot be purchased.")
+
+    if (party.getFirstAvailablePosition() == null && pc.getFirstAvailablePosition() == null) {
+        return TradeResult.Failure("Your party and PC are both full.")
+    }
+
+    if (!economyService.hasEnough(buyer, listing.price)) {
+        return TradeResult.Failure("Insufficient funds.")
+    }
+
+    if (!economyService.withdraw(buyer, listing.price)) {
+        return TradeResult.Failure("Failed to process payment. Transaction aborted.")
+    }
+
+    listings.remove(listingId)
+
+    val tax = TradeTaxManager.calculateTax(listing.sellerUuid, listing.price)
+    economyService.deposit(listing.sellerUuid, listing.price - tax)
+
+    grantPokemon(party, pc, pokemon)
+
+    return TradeResult.Success(pokemon)
 }
