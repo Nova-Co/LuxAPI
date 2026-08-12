@@ -3,11 +3,24 @@ package com.novaco.luxapi.cobblemon.spawning
 import com.novaco.luxapi.commons.math.Cuboid
 import com.novaco.luxapi.commons.math.Vector3D
 import net.minecraft.world.level.Level
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.UUID
 
 class AreaSpawnManagerTest {
+
+    // AreaSpawnManager is a shared singleton across the whole test JVM — leftover
+    // areas here would otherwise pollute LuxAreaSpawningInfluenceTest's assertions
+    // when the full suite runs together.
+    private val registeredIds = mutableListOf<UUID>()
+
+    @AfterEach
+    fun cleanupAreas() {
+        registeredIds.forEach { AreaSpawnManager.unregisterArea(it) }
+        registeredIds.clear()
+    }
 
     private fun area(dimension: net.minecraft.resources.ResourceKey<Level> = Level.OVERWORLD) = SpawnArea(
         dimension = dimension,
@@ -16,11 +29,17 @@ class AreaSpawnManagerTest {
         bannedSpecies = setOf("pikachu")
     )
 
+    private fun registerAndTrack(a: SpawnArea): UUID {
+        val id = AreaSpawnManager.registerArea(a)
+        registeredIds.add(id)
+        return id
+    }
+
     @Test
     fun `registerArea then getAreas returns it for the matching dimension`() {
         val a = area()
 
-        val id = AreaSpawnManager.registerArea(a)
+        val id = registerAndTrack(a)
 
         assertEquals(a.id, id)
         assertTrue(AreaSpawnManager.getAreas(Level.OVERWORLD).any { it.id == id })
@@ -29,7 +48,7 @@ class AreaSpawnManagerTest {
     @Test
     fun `getAreas does not return areas registered for a different dimension`() {
         val a = area(dimension = Level.NETHER)
-        AreaSpawnManager.registerArea(a)
+        registerAndTrack(a)
 
         val result = AreaSpawnManager.getAreas(Level.OVERWORLD)
 
@@ -39,7 +58,7 @@ class AreaSpawnManagerTest {
     @Test
     fun `unregisterArea removes it from future getAreas calls`() {
         val a = area()
-        AreaSpawnManager.registerArea(a)
+        registerAndTrack(a)
 
         AreaSpawnManager.unregisterArea(a.id)
 
