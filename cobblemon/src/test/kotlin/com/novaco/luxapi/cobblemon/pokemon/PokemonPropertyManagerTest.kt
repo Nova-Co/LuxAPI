@@ -1,17 +1,22 @@
 package com.novaco.luxapi.cobblemon.pokemon
 
+import com.cobblemon.mod.common.api.pokemon.Natures
 import com.cobblemon.mod.common.api.pokemon.stats.Stats
 import com.cobblemon.mod.common.pokemon.EVs
 import com.cobblemon.mod.common.pokemon.IVs
 import com.cobblemon.mod.common.pokemon.Pokemon
 import net.minecraft.SharedConstants
 import net.minecraft.server.Bootstrap
+import net.minecraft.world.item.ItemStack
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
 class PokemonPropertyManagerTest {
@@ -74,5 +79,37 @@ class PokemonPropertyManagerTest {
 
         assertFalse(result)
         assertEquals(0, evs.getOrDefault(Stats.SPEED))
+    }
+
+    @Test
+    fun `setNature applies a valid nature id`() {
+        val pokemon = mock<Pokemon>()
+
+        val result = PokemonPropertyManager.setNature(pokemon, "adamant")
+
+        assertTrue(result)
+        verify(pokemon).nature = Natures.getNature("adamant")!!
+    }
+
+    @Test
+    fun `setNature rejects an unknown nature id`() {
+        val pokemon = mock<Pokemon>()
+
+        val result = PokemonPropertyManager.setNature(pokemon, "not_a_real_nature")
+
+        assertFalse(result)
+        verify(pokemon, never()).nature = any()
+    }
+
+    @Test
+    fun `setHeldItem defaults decrement to false`() {
+        val pokemon = mock<Pokemon>()
+        val newItem = mock<ItemStack>()
+        val oldItem = mock<ItemStack>()
+        whenever(pokemon.swapHeldItem(newItem, false, true)).thenReturn(oldItem)
+
+        val result = PokemonPropertyManager.setHeldItem(pokemon, newItem)
+
+        assertEquals(oldItem, result)
     }
 }
