@@ -66,3 +66,22 @@ fun LuxPlayer.getPCAverageIVs(): Double {
 fun LuxPlayer.movePokemonInPC(fromBox: Int, fromSlot: Int, toBox: Int, toSlot: Int): Boolean {
     return PCStorageManager.move(this, fromBox, fromSlot, toBox, toSlot)
 }
+
+/**
+ * Deposits the Pokémon in the given party slot into the player's PC.
+ * See [PCStorageManager.depositToPC] for the full contract, including the
+ * fail-loud behavior on an occupied explicit target and the
+ * `preventCompletePartyDeposit` server config guard.
+ */
+fun LuxPlayer.depositPokemonToPC(partySlot: Int, toBox: Int? = null, toSlot: Int? = null): Boolean {
+    return PCStorageManager.depositToPC(this, partySlot, toBox, toSlot)
+}
+
+/**
+ * Withdraws the Pokémon at the given PC box/slot into the player's party.
+ * See [PCStorageManager.withdrawFromPC] for the full contract, including the
+ * fail-loud behavior on an occupied explicit target.
+ */
+fun LuxPlayer.withdrawPokemonFromPC(box: Int, slot: Int, toPartySlot: Int? = null): Boolean {
+    return PCStorageManager.withdrawFromPC(this, box, slot, toPartySlot)
+}
