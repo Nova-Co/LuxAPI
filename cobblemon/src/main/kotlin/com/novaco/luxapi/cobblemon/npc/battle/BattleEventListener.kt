@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.api.events.CobblemonEvents
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
 import com.cobblemon.mod.common.entity.npc.NPCBattleActor
 import com.cobblemon.mod.common.entity.npc.NPCEntity
+import com.novaco.luxapi.cobblemon.battle.BattleInterceptor
 import net.minecraft.server.level.ServerPlayer
 
 /**
@@ -17,6 +18,7 @@ object BattleEventListener {
      */
     fun register() {
         CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL) { event ->
+            BattleInterceptor.unregister(event.battle)
             handleBattleEnd(event.winners.toList(), event.losers.toList(), BattleResult.VICTORY)
         }
 
