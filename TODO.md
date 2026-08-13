@@ -78,9 +78,7 @@
 - [ ] `tms` — TM/TR item system wrapper
 - [ ] `starter` — starter-Pokémon-selection hook
 - [ ] `cooking` / `berry` / `mulch` — curry/farming loop; natural fit to extend the existing `economy` module rather than a standalone one
-- [ ] `abilities` — custom ability API (zero coverage; same tier as `moves`/`types` below — core custom-content extension point, not a cosmetic system)
-- [ ] `moves` — custom move API (zero coverage)
-- [ ] `types` — custom Pokémon type API (zero coverage)
+- [x] ~~`abilities` / `moves` / `types` — core custom-content extension point trio~~ **Implemented 2026-08-13, verified against Cobblemon 1.7.3 source (`api/abilities`, `api/moves`, `api/types`):** `ability/AbilityManager.kt` (query + runtime `register()` of new `AbilityTemplate`s + `setAbility()` assignment via `Pokemon.updateAbility`) and `types/ElementalTypeManager.kt` (query + runtime `register()` of new `ElementalType`s + `setTeraType()` via `Pokemon.teraType`) both close real gaps — Cobblemon's own registries support runtime registration for these two. `move/MoveManager.kt` is query + Pokémon-side learn/unlearn/swap only, **not** runtime move registration — verified `Moves.register` is `private` in Cobblemon (data loads from bundled Showdown JS only), so "custom move API" as originally worded isn't achievable without forking Cobblemon itself; documented as a scope note directly on the wrapper rather than silently doing less than promised. Also verified: a Pokémon's primary/secondary type is derived from its species form and has no per-instance mutation point in vanilla Cobblemon (only `teraType` does) — `ElementalTypeManager` doesn't invent one. All three ship with unit tests (`cobblemon/src/test/kotlin/.../ability`, `.../move`, `.../types`).
 - [ ] `pokeball` — custom pokeball API (zero coverage; distinct from `apricorn` crafting below)
 - [ ] `apricorn` — apricorn/pokeball crafting mechanic
 - [ ] `drop` — fainting/catch drop-table rules
