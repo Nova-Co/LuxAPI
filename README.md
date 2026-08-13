@@ -2,7 +2,7 @@
 
 **A Kotlin developer API for building Minecraft mods and sidemods on top of [Cobblemon](https://cobblemon.com/), across Fabric and NeoForge.**
 
-LuxAPI wraps Cobblemon's internals — storage, spawning, battles, dialogue, NPCs — behind a small, ergonomic surface, so you can build features without reverse-engineering Cobblemon's source every time.: give third-party mod developers a stable, well-documented layer instead of raw mod internals.
+LuxAPI wraps Cobblemon's internals — storage, spawning, battles, dialogue, NPCs — behind a small, ergonomic surface, so you can build features without reverse-engineering Cobblemon's source every time. The goal: give third-party mod developers a stable, well-documented layer instead of raw mod internals.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Java 21](https://img.shields.io/badge/Java-21-orange)
@@ -17,18 +17,17 @@ You're building a Minecraft mod or a Cobblemon sidemod and don't want to write y
 
 ## Modules
 
-
-| Module      | Purpose                                                                                                                                                                                 |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `commons`   | Platform-agnostic core: command engine, scheduler, GUI builders, database service, Discord webhooks, text/chat utilities, math helpers. No Minecraft classes.                           |
-| `core`      | Brigadier/Minecraft command bridge shared by both loaders.                                                                                                                              |
-| `fabric`    | Fabric platform bootstrap (`LuxFabricInitializer`).                                                                                                                                     |
-| `neoforge`  | NeoForge platform bootstrap (`LuxNeoForgeInitializer`).                                                                                                                                 |
-| `cobblemon` | The main event — Cobblemon-specific hooks: world bosses, dialogue/NPCs, battle scripting, PC/party storage, dynamic spawning, economy hooks, cinematic FX. Entry point:`LuxCobblemon`. |
-| `database`  | Optional async database layer (`LuxDatabase`), auto-detected by `cobblemon` at runtime if present.                                                                                      |
-| `economy`   | Optional standalone economy plugin layer (`LuxEconomy`), separate from the Cobblemon-integrated appraisal system in `cobblemon`.                                                        |
-| `bukkit`    | Early Bukkit/Spigot platform command layer — not part of the Fabric/NeoForge/Cobblemon story above; still maturing.                                                                    |
-| `discord`   | Currently an empty stub (tracked for re-scope or removal).                                                                                                                              |
+| Module | Purpose |
+|---|---|
+| `commons` | Platform-agnostic core: command engine, scheduler, GUI builders, database service, Discord webhooks, text/chat utilities, math helpers. No Minecraft classes. |
+| `core` | Brigadier/Minecraft command bridge shared by both loaders. |
+| `fabric` | Fabric platform bootstrap (`LuxFabricInitializer`). |
+| `neoforge` | NeoForge platform bootstrap (`LuxNeoForgeInitializer`). |
+| `cobblemon` | The main event — Cobblemon-specific hooks: world bosses, dialogue/NPCs, battle scripting, PC/party storage, dynamic spawning, economy hooks, cinematic FX. Entry point: `LuxCobblemon`. |
+| `database` | Optional async database layer (`LuxDatabase`), auto-detected by `cobblemon` at runtime if present. |
+| `economy` | Optional standalone economy plugin layer (`LuxEconomy`), separate from the Cobblemon-integrated appraisal system in `cobblemon`. |
+| `bukkit` | Early Bukkit/Spigot platform command layer — not part of the Fabric/NeoForge/Cobblemon story above; still maturing. |
+| `discord` | Currently an empty stub (tracked for re-scope or removal). |
 
 Everything is optional except `commons` — pull in only what you need.
 
@@ -60,7 +59,6 @@ Not everything on the roadmap is finished — see [`TODO.md`](TODO.md) for the f
 LuxAPI is a **compile-time library, not a separately-installed mod**. Players don't download a `LuxAPI.jar` and drop it in `/mods` next to your mod — you pull LuxAPI in at build time and shade/embed the modules you use directly into your own mod's final jar, the same way you'd embed any other library. (Note that `fabric/build.gradle.kts` and `neoforge/build.gradle.kts` in this repo only shade `commons` into LuxAPI's own built platform jars — `core` and `cobblemon` are compile-time-only there too, which is exactly why this repo can't currently produce one complete standalone artifact for you to install separately even if you wanted to.)
 
 **⚠️ No remote Maven repo yet** (tracked in [`TODO.md`](TODO.md), Phase 11) — this repo's Gradle build only publishes to a local `build/repo` directory. Until that lands, to build against LuxAPI from a separate mod project you'll need to either:
-
 - build this repo yourself (`./gradlew build`) and point your project at the resulting jars in `*/build/libs/`, or
 - include this repo as a Gradle composite build / git submodule and depend on it via `project(":x")`, as shown below.
 
