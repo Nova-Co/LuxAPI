@@ -42,8 +42,7 @@ class NeoForgeLuxPlayer(private var serverPlayer: ServerPlayer) : LuxPlayer {
     }
 
     override fun hasPermission(permission: String): Boolean {
-        // TODO: Map to NeoForge PermissionAPI later if needed
-        return true
+        return serverPlayer.createCommandSourceStack().hasPermission(4)
     }
 
     override fun sendTitle(title: String, subtitle: String) {

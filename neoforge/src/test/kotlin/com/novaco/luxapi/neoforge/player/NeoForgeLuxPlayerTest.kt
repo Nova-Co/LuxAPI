@@ -1,6 +1,7 @@
 package com.novaco.luxapi.neoforge.player
 
 import net.minecraft.SharedConstants
+import net.minecraft.commands.CommandSourceStack
 import net.minecraft.network.chat.Component
 import net.minecraft.server.Bootstrap
 import net.minecraft.server.level.ClientInformation
@@ -52,7 +53,39 @@ class NeoForgeLuxPlayerTest {
         assertEquals(150.5, luxPlayer.position.x)
         assertEquals(64.0, luxPlayer.position.y)
         assertEquals(-300.2, luxPlayer.position.z)
-        assertTrue(luxPlayer.hasPermission("any.node"), "Implementation defaults to true pending NeoForge API injection.")
+    }
+
+    /**
+     * Verifies hasPermission grants access via the vanilla op-level check.
+     */
+    @Test
+    fun `test hasPermission grants access via vanilla op-level check`() {
+        val mockPlayer = mock<ServerPlayer>()
+        val mockSource = mock<CommandSourceStack>()
+
+        whenever(mockPlayer.createCommandSourceStack()).thenReturn(mockSource)
+        whenever(mockSource.hasPermission(4)).thenReturn(true)
+
+        val luxPlayer = NeoForgeLuxPlayer(mockPlayer)
+
+        assertTrue(luxPlayer.hasPermission("luxapi.admin.reload"))
+    }
+
+    /**
+     * Verifies hasPermission denies access via the vanilla op-level check.
+     * This is the denial path that was previously impossible to produce (hardcoded true bug).
+     */
+    @Test
+    fun `test hasPermission denies access via vanilla op-level check`() {
+        val mockPlayer = mock<ServerPlayer>()
+        val mockSource = mock<CommandSourceStack>()
+
+        whenever(mockPlayer.createCommandSourceStack()).thenReturn(mockSource)
+        whenever(mockSource.hasPermission(4)).thenReturn(false)
+
+        val luxPlayer = NeoForgeLuxPlayer(mockPlayer)
+
+        assertFalse(luxPlayer.hasPermission("luxapi.admin.reload"))
     }
 
     @Test
