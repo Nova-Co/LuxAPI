@@ -1,6 +1,8 @@
 package com.novaco.luxapi.commons.event
 
 import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * The central dispatcher for the cross-platform event system.
@@ -8,7 +10,7 @@ import java.lang.reflect.Method
  */
 object EventBus {
 
-    private val listeners = mutableMapOf<Class<out LuxEvent>, MutableList<Pair<Any, Method>>>()
+    private val listeners = ConcurrentHashMap<Class<out LuxEvent>, MutableList<Pair<Any, Method>>>()
 
     /**
      * Registers an object containing methods annotated with @Subscribe.
@@ -22,7 +24,7 @@ object EventBus {
                     val eventClass = eventType as Class<out LuxEvent>
 
                     method.isAccessible = true
-                    listeners.computeIfAbsent(eventClass) { mutableListOf() }.add(Pair(listener, method))
+                    listeners.computeIfAbsent(eventClass) { CopyOnWriteArrayList() }.add(Pair(listener, method))
                 }
             }
         }
