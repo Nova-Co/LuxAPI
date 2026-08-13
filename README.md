@@ -5,6 +5,7 @@
 LuxAPI wraps Cobblemon's internals — storage, spawning, battles, dialogue, NPCs — behind a small, ergonomic surface, so you can build features without reverse-engineering Cobblemon's source every time. The goal: give third-party mod developers a stable, well-documented layer instead of raw mod internals.
 
 [![Build](https://github.com/Nova-Co/LuxAPI/actions/workflows/build.yml/badge.svg)](https://github.com/Nova-Co/LuxAPI/actions/workflows/build.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/4b03f29fdb4f4e278523332a0861fef8)](https://app.codacy.com/gh/Nova-Co/LuxAPI/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Java 21](https://img.shields.io/badge/Java-21-orange)
 ![Minecraft 1.21.1](https://img.shields.io/badge/Minecraft-1.21.1-green)
