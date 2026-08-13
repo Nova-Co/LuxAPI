@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.world.item.ItemStack
 
 /**
- * A builder class inspired by EnvyAPI's SpriteBuilder, adapted for Minecraft 1.21.1 Data Components.
+ * A builder class, adapted for Minecraft 1.21.1 Data Components.
  * Transforms a Cobblemon [Pokemon] into a visual UI [ItemStack] with custom lore and display names.
  *
  */
