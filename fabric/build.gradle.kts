@@ -21,7 +21,7 @@ dependencies {
     modImplementation("me.lucko:fabric-permissions-api:0.3.3")
 
     implementation(project(":commons"))
-    implementation(project(":core"))
+    implementation(project(path = ":core", configuration = "namedElements"))
     implementation(project(":cobblemon"))
 
     shadeFiles(project(":commons")) {
