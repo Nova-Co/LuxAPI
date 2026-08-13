@@ -14,6 +14,7 @@ import com.novaco.luxapi.commons.command.tab.TabRegistry
 import com.novaco.luxapi.core.server.LuxServerManager
 import com.novaco.luxapi.fabric.command.FabricCommandManager
 import com.novaco.luxapi.fabric.event.FabricEventBridge
+import com.novaco.luxapi.fabric.init.FabricInitializerRunner
 import com.novaco.luxapi.fabric.gui.FabricGuiBuilder
 import com.novaco.luxapi.fabric.gui.FabricPaginatedGuiBuilder
 import com.novaco.luxapi.fabric.player.FabricPlayerManager
@@ -63,6 +64,9 @@ class LuxFabricInitializer : ModInitializer {
         LuxAPI.paginatedGuiProvider = { FabricPaginatedGuiBuilder() }
 
         FabricEventBridge.register()
+
+        val initializedCount = FabricInitializerRunner.runAll()
+        logger.info("LuxAPI ran $initializedCount auto-discovered init task(s) via the 'luxapi:init' entrypoint.")
 
         UseEntityCallback.EVENT.register { player, world, hand, target, hitResult ->
             if (!world.isClientSide && player is ServerPlayer) {

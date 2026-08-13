@@ -7,6 +7,7 @@ import com.novaco.luxapi.bukkit.gui.BukkitPaginatedGuiBuilder
 import com.novaco.luxapi.bukkit.player.BukkitPlayerManager
 import com.novaco.luxapi.bukkit.scheduler.BukkitLuxScheduler
 import com.novaco.luxapi.commons.LuxAPI
+import com.novaco.luxapi.commons.init.ClasspathInitScanner
 import org.bukkit.plugin.Plugin
 
 /**
@@ -24,9 +25,13 @@ object LuxBukkitBridge {
      * Initializes all Bukkit platform bridges and registers them with LuxAPI's `commons` layer.
      *
      * @param plugin The consuming plugin instance.
+     * @param initPackage If set, [com.novaco.luxapi.commons.init.InitializationTask] classes
+     * under this package are auto-discovered and run (via [ClasspathInitScanner], the
+     * classpath-walking backend — appropriate here since a Bukkit plugin jar is a plain
+     * flat classpath, unlike Fabric/NeoForge's isolated mod classloaders). Left null to skip.
      * @return The [BukkitPlayerManager] backing this bridge, for direct use by the caller.
      */
-    fun initialize(plugin: Plugin): BukkitPlayerManager {
+    fun initialize(plugin: Plugin, initPackage: String? = null): BukkitPlayerManager {
         LuxAPI.init()
 
         val playerManager = BukkitPlayerManager()
@@ -39,6 +44,11 @@ object LuxBukkitBridge {
 
         BukkitEventBridge(plugin, playerManager).register()
         BukkitGuiListener(plugin).register()
+
+        if (initPackage != null) {
+            val ranCount = ClasspathInitScanner.scanAndRun(initPackage, plugin.javaClass.classLoader)
+            plugin.logger.info("LuxAPI ran $ranCount auto-discovered init task(s) under '$initPackage'.")
+        }
 
         return playerManager
     }

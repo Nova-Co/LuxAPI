@@ -14,6 +14,7 @@ import com.novaco.luxapi.commons.command.tab.TabRegistry
 import com.novaco.luxapi.core.server.LuxServerManager
 import com.novaco.luxapi.neoforge.command.NeoForgeCommandManager
 import com.novaco.luxapi.neoforge.event.NeoForgeEventBridge
+import com.novaco.luxapi.neoforge.init.NeoForgeInitScanner
 import com.novaco.luxapi.neoforge.gui.NeoForgeGuiBuilder
 import com.novaco.luxapi.neoforge.gui.NeoForgePaginatedGuiBuilder
 import com.novaco.luxapi.neoforge.player.NeoForgePlayerManager
@@ -68,6 +69,10 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
         LuxAPI.paginatedGuiProvider = { NeoForgePaginatedGuiBuilder() }
 
         NeoForgeEventBridge.register()
+
+        val initializedCount = NeoForgeInitScanner.scanAndRun()
+        logger.info("LuxAPI ran $initializedCount auto-discovered init task(s) across all loaded mods.")
+
         NeoForge.EVENT_BUS.register(this)
 
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands)
