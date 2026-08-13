@@ -38,6 +38,13 @@ class MinecraftCommandSender(val source: CommandSourceStack) : CommandSender {
     /**
      * Checks if the sender has the required permission.
      *
+     * Deliberate coarse floor, not a gap: the Brigadier-native path this
+     * class serves (BrigadierCommandAdapter) has no per-node permission
+     * concept to delegate to, so this checks vanilla op-level 2 and ignores
+     * the specific [permission] string. This fails closed by construction —
+     * worst case is over-restrictive (a non-op with a real granted
+     * permission still gets denied here), never over-permissive.
+     *
      * @param permission The permission node string to check.
      * @return True if the sender has permission, false otherwise.
      */
