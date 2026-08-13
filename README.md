@@ -4,6 +4,7 @@
 
 LuxAPI wraps Cobblemon's internals — storage, spawning, battles, dialogue, NPCs — behind a small, ergonomic surface, so you can build features without reverse-engineering Cobblemon's source every time. The goal: give third-party mod developers a stable, well-documented layer instead of raw mod internals.
 
+[![Build](https://github.com/Nova-Co/LuxAPI/actions/workflows/build.yml/badge.svg)](https://github.com/Nova-Co/LuxAPI/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Java 21](https://img.shields.io/badge/Java-21-orange)
 ![Minecraft 1.21.1](https://img.shields.io/badge/Minecraft-1.21.1-green)
@@ -157,7 +158,7 @@ To run a single module's tests (the `cobblemon` module requires **JDK 21** speci
 ./gradlew :cobblemon:test
 ```
 
-There's no CI build/test gate yet (see `TODO.md`, Phase 14) — run tests locally before opening a PR.
+CI (`.github/workflows/build.yml`) runs `./gradlew build` on every push to `main` and every PR — still run tests locally before opening one, CI is a backstop, not a substitute.
 
 ## Project status
 
