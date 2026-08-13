@@ -1,6 +1,7 @@
 package com.novaco.luxapi.commons.config
 
 import java.io.File
+import java.lang.reflect.Modifier
 
 /**
  * The base blueprint for all configuration objects within the LuxAPI framework.
@@ -36,6 +37,11 @@ abstract class LuxConfig {
     /**
      * Synchronizes the current object state with the data stored in the file.
      * It updates the fields of THIS instance automatically.
+     *
+     * Skips any field marked `@Transient` (or JVM `transient`) instead of the
+     * `configFile` field alone, so a subclass can declare a non-persisted or
+     * computed field without it being silently overwritten by `null`/default
+     * on every reload.
      */
     fun reload() {
         val file = configFile ?: return
@@ -43,7 +49,9 @@ abstract class LuxConfig {
         val freshInstance = ConfigService.load(this::class.java, folder)
 
         this::class.java.declaredFields.forEach { field ->
-            if (field.name != "configFile") {
+            val isTransient = Modifier.isTransient(field.modifiers) ||
+                field.isAnnotationPresent(Transient::class.java)
+            if (!isTransient) {
                 field.isAccessible = true
                 val freshValue = field.get(freshInstance)
                 field.set(this, freshValue)

@@ -38,12 +38,12 @@ tasks {
     }
 
     shadowJar {
-        archiveBaseName.set("LuxEcoCore")
+        archiveBaseName.set("LuxAPI-Bukkit")
         archiveClassifier.set("")
         archiveVersion.set(project.version.toString())
     }
 
     jar {
-        archiveBaseName.set("LuxEcoCore")
+        archiveBaseName.set("LuxAPI-Bukkit")
     }
 }

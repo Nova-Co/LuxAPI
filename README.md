@@ -25,9 +25,8 @@ You're building a Minecraft mod or a Cobblemon sidemod and don't want to write y
 | `neoforge` | NeoForge platform bootstrap (`LuxNeoForgeInitializer`). |
 | `cobblemon` | The main event — Cobblemon-specific hooks: world bosses, dialogue/NPCs, battle scripting, PC/party storage, dynamic spawning, economy hooks, cinematic FX. Entry point: `LuxCobblemon`. |
 | `database` | Optional async database layer (`LuxDatabase`), auto-detected by `cobblemon` at runtime if present. |
-| `economy` | Optional standalone economy plugin layer (`LuxEconomy`), separate from the Cobblemon-integrated appraisal system in `cobblemon`. |
-| `bukkit` | Early Bukkit/Spigot platform command layer — not part of the Fabric/NeoForge/Cobblemon story above; still maturing. |
-| `discord` | Currently an empty stub (tracked for re-scope or removal). |
+| `economy` | The Bukkit-side core-dependency plugin (`LuxEconomy`/`LuxEconomyManager`, ships as the standalone `LuxEcoCore` jar) that a bridge plugin installs alongside to connect Vault to a Cobblemon-adjacent currency source — separate from the Cobblemon-integrated appraisal system in `cobblemon`, and with no `commons`/`core`/Cobblemon coupling by design. |
+| `bukkit` | Bukkit/Spigot platform layer (`LuxBukkitBridge`) — player/GUI/event/scheduler wrappers plus the annotation-driven command engine, mirroring what `fabric`/`neoforge` provide on those loaders. A library module (no `plugin.yml` of its own), meant to be shaded into a consumer plugin. |
 
 Everything is optional except `commons` — pull in only what you need.
 
@@ -45,7 +44,7 @@ The `cobblemon` module is where most of the API surface lives:
 
 The `commons`/`core` modules give you the cross-platform foundation everything else is built on: a Brigadier command wrapper, tick-based scheduler, chest GUI + pagination builders, player abstraction, attribute/metadata storage, Discord webhooks, i18n, and math/cooldown utilities.
 
-Not everything on the roadmap is finished — see [`TODO.md`](TODO.md) for the full phase-by-phase status, including one **known critical gap**: the GTS listing/purchase system in `cobblemon` is currently a non-functional stub with a real dupe risk. Don't ship that part yet.
+Not everything on the roadmap is finished — see [`TODO.md`](TODO.md) for the full phase-by-phase status. No known critical gaps are currently open; the prior GTS listing/purchase dupe risk and the Fabric/NeoForge permission-bypass bug have both been fixed (see `TODO.md`'s CRITICAL section for the incident writeups).
 
 ## Requirements
 
@@ -58,7 +57,7 @@ Not everything on the roadmap is finished — see [`TODO.md`](TODO.md) for the f
 
 LuxAPI is a **compile-time library, not a separately-installed mod**. Players don't download a `LuxAPI.jar` and drop it in `/mods` next to your mod — you pull LuxAPI in at build time and shade/embed the modules you use directly into your own mod's final jar, the same way you'd embed any other library. (Note that `fabric/build.gradle.kts` and `neoforge/build.gradle.kts` in this repo only shade `commons` into LuxAPI's own built platform jars — `core` and `cobblemon` are compile-time-only there too, which is exactly why this repo can't currently produce one complete standalone artifact for you to install separately even if you wanted to.)
 
-**⚠️ No remote Maven repo yet** (tracked in [`TODO.md`](TODO.md), Phase 11) — this repo's Gradle build only publishes to a local `build/repo` directory. Until that lands, to build against LuxAPI from a separate mod project you'll need to either:
+**⚠️ No remote Maven repo yet** (tracked in [`TODO.md`](TODO.md), Phase 15) — this repo's Gradle build only publishes to a local `build/repo` directory. Until that lands, to build against LuxAPI from a separate mod project you'll need to either:
 - build this repo yourself (`./gradlew build`) and point your project at the resulting jars in `*/build/libs/`, or
 - include this repo as a Gradle composite build / git submodule and depend on it via `project(":x")`, as shown below.
 
@@ -79,7 +78,7 @@ dependencies {
 }
 ```
 
-Then shade all of those into your own mod's jar (e.g. via the `com.gradleup.shadow` plugin, same as this repo uses internally) so the classes ship inside your single distributed jar. If you publish LuxAPI artifacts yourself in the meantime, use group `com.novaco.luxapi`, version `1.2.4`.
+Then shade all of those into your own mod's jar (e.g. via the `com.gradleup.shadow` plugin, same as this repo uses internally) so the classes ship inside your single distributed jar. If you publish LuxAPI artifacts yourself in the meantime, use group `com.novaco.luxapi`, version `1.2.5`.
 
 This repo's own `fabric.mod.json`/`neoforge.mods.toml` and the `:fabric:runClient`/`:neoforge:runClient` tasks below exist so LuxAPI can be booted standalone *for developing and testing LuxAPI itself* — they aren't a template for how your mod should depend on it.
 
@@ -158,11 +157,11 @@ To run a single module's tests (the `cobblemon` module requires **JDK 21** speci
 ./gradlew :cobblemon:test
 ```
 
-There's no CI build/test gate yet (see `TODO.md`, Phase 11) — run tests locally before opening a PR.
+There's no CI build/test gate yet (see `TODO.md`, Phase 14) — run tests locally before opening a PR.
 
 ## Project status
 
-LuxAPI is under active development. Phases 1–7 and 9 of the roadmap are complete; Phase 8 (Economy & Trade) has a known critical gap flagged above, and Phases 10–11 (deeper Cobblemon feature coverage, publishing/CI polish) are open. See [`TODO.md`](TODO.md) for the authoritative, up-to-date breakdown — it's kept current after every session, including honest notes on scope corrections and known limitations.
+LuxAPI is under active development. Phases 1–12 of the roadmap are complete. Phase 13 (module fixes & process cleanup) is in progress; Phases 14 (test coverage) and 15 (distribution) are open. See [`TODO.md`](TODO.md) for the authoritative, up-to-date breakdown — it's kept current after every session, including honest notes on scope corrections and known limitations.
 
 ## Contributing
 

@@ -2,6 +2,7 @@ package com.novaco.luxapi.core.loot
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
+import org.slf4j.LoggerFactory
 
 /**
  * Centralized manager for handling reward distributions.
@@ -9,6 +10,7 @@ import net.minecraft.world.item.ItemStack
  */
 object LootManager {
 
+    private val logger = LoggerFactory.getLogger(LootManager::class.java)
     private val lootTables = mutableMapOf<String, (List<ServerPlayer>) -> Unit>()
 
     /**
@@ -23,7 +25,11 @@ object LootManager {
      */
     fun distribute(lootId: String, players: List<ServerPlayer>) {
         val logic = lootTables[lootId]
-        logic?.invoke(players)
+        if (logic == null) {
+            logger.warn("LootManager.distribute() called with unregistered lootId '{}' — no-op.", lootId)
+            return
+        }
+        logic.invoke(players)
     }
 
     /**
