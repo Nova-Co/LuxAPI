@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher
 import com.novaco.luxapi.commons.command.CommandProcessor
 import com.novaco.luxapi.commons.command.annotation.Command
 import com.novaco.luxapi.commons.command.sender.CommandSender
+import com.novaco.luxapi.core.command.MinecraftCommandSender
 import net.minecraft.SharedConstants
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.server.Bootstrap
@@ -113,10 +114,11 @@ class NeoForgeCommandManagerTest {
     }
 
     /**
-     * Tests that command executions from non-player sources are safely ignored.
+     * Tests that command executions from non-player sources (console, command blocks)
+     * are routed through a MinecraftCommandSender instead of being silently dropped.
      */
     @Test
-    fun `test non player sources are safely ignored by default`() {
+    fun `test non player sources are routed through MinecraftCommandSender`() {
         val dispatcher = CommandDispatcher<CommandSourceStack>()
         val manager = NeoForgeCommandManager()
         manager.setDispatcher(dispatcher)
@@ -129,6 +131,8 @@ class NeoForgeCommandManagerTest {
 
         dispatcher.execute("luxforge", mockSource)
 
-        verify(processorSpy, never()).process(any(), any())
+        val senderCaptor = argumentCaptor<CommandSender>()
+        verify(processorSpy).process(senderCaptor.capture(), any())
+        assertTrue(senderCaptor.firstValue is MinecraftCommandSender)
     }
 }

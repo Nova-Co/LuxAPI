@@ -2,6 +2,7 @@ package com.novaco.luxapi.fabric.player
 
 import com.novaco.luxapi.commons.math.Vector3D
 import com.novaco.luxapi.commons.player.LuxPlayer
+import me.lucko.fabric.api.permissions.v0.Permissions
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 import java.util.UUID
@@ -40,7 +41,7 @@ class FabricLuxPlayer(private var serverPlayer: ServerPlayer) : LuxPlayer {
     }
 
     override fun hasPermission(permission: String): Boolean {
-        return true
+        return Permissions.check(serverPlayer.createCommandSourceStack(), permission, 4)
     }
 
     override fun sendTitle(title: String, subtitle: String) {

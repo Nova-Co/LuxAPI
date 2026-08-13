@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import com.novaco.luxapi.commons.command.AbstractCommandManager
 import com.novaco.luxapi.commons.command.CommandProcessor
+import com.novaco.luxapi.core.command.MinecraftCommandSender
 import com.novaco.luxapi.neoforge.player.NeoForgeLuxPlayer
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
@@ -101,11 +102,11 @@ class NeoForgeCommandManager : AbstractCommandManager() {
         val source = context.source
         val sender = if (source.isPlayer) {
             NeoForgeLuxPlayer(source.playerOrException)
-        } else null
-
-        if (sender != null) {
-            processor.process(sender, args)
+        } else {
+            MinecraftCommandSender(source)
         }
+
+        processor.process(sender, args)
         return 1
     }
 }
