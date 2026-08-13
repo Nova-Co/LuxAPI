@@ -1,6 +1,7 @@
 package com.novaco.luxapi.fabric.player
 
 import net.minecraft.SharedConstants
+import net.minecraft.commands.CommandSourceStack
 import net.minecraft.network.chat.Component
 import net.minecraft.server.Bootstrap
 import net.minecraft.server.level.ClientInformation
@@ -57,7 +58,40 @@ class FabricLuxPlayerTest {
         assertEquals(150.5, luxPlayer.position.x)
         assertEquals(64.0, luxPlayer.position.y)
         assertEquals(-300.2, luxPlayer.position.z)
-        assertTrue(luxPlayer.hasPermission("any.node"))
+    }
+
+    /**
+     * Verifies hasPermission grants access when the vanilla op-level fallback allows it
+     * (simulates no permission provider being installed, falling back to op-level).
+     */
+    @Test
+    fun `test hasPermission grants access via vanilla op-level fallback`() {
+        val mockPlayer = mock<ServerPlayer>()
+        val mockSource = mock<CommandSourceStack>()
+
+        whenever(mockPlayer.createCommandSourceStack()).thenReturn(mockSource)
+        whenever(mockSource.hasPermission(4)).thenReturn(true)
+
+        val luxPlayer = FabricLuxPlayer(mockPlayer)
+
+        assertTrue(luxPlayer.hasPermission("luxapi.admin.reload"))
+    }
+
+    /**
+     * Verifies hasPermission denies access when the vanilla op-level fallback denies it.
+     * This is the denial path that was previously impossible to produce (hardcoded true bug).
+     */
+    @Test
+    fun `test hasPermission denies access when op-level fallback denies`() {
+        val mockPlayer = mock<ServerPlayer>()
+        val mockSource = mock<CommandSourceStack>()
+
+        whenever(mockPlayer.createCommandSourceStack()).thenReturn(mockSource)
+        whenever(mockSource.hasPermission(4)).thenReturn(false)
+
+        val luxPlayer = FabricLuxPlayer(mockPlayer)
+
+        assertFalse(luxPlayer.hasPermission("luxapi.admin.reload"))
     }
 
     /**
