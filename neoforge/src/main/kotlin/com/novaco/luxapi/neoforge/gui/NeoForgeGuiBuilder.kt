@@ -9,6 +9,8 @@ import com.novaco.luxapi.commons.gui.GuiBuilder
 class NeoForgeGuiBuilder : GuiBuilder() {
 
     override fun build(): Gui {
-        return NeoForgeGui(title, rows, items)
+        val gui = NeoForgeGui(title, rows, items)
+        startAnimations(gui)
+        return gui
     }
 }

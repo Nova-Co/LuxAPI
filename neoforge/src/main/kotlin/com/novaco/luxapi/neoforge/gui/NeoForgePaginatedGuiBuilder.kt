@@ -9,6 +9,8 @@ import com.novaco.luxapi.commons.gui.PaginatedGuiBuilder
 class NeoForgePaginatedGuiBuilder : PaginatedGuiBuilder() {
 
     override fun build(): PaginatedGui {
-        return NeoForgePaginatedGui(title, rows, items, globalItemList, contentSlotList)
+        val gui = NeoForgePaginatedGui(title, rows, items, globalItemList, contentSlotList)
+        startAnimations(gui)
+        return gui
     }
 }

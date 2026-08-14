@@ -18,6 +18,8 @@ import com.novaco.luxapi.neoforge.init.NeoForgeInitScanner
 import com.novaco.luxapi.neoforge.gui.NeoForgeGuiBuilder
 import com.novaco.luxapi.neoforge.gui.NeoForgePaginatedGuiBuilder
 import com.novaco.luxapi.neoforge.player.NeoForgePlayerManager
+import com.novaco.luxapi.commons.player.InMemoryPlayerLookupService
+import com.novaco.luxapi.commons.player.PlayerLookupService
 import com.novaco.luxapi.neoforge.scheduler.NeoForgeLuxScheduler
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionResult
@@ -53,6 +55,8 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
 
         var playerManager: NeoForgePlayerManager? = null
             private set
+
+        val playerLookupService: PlayerLookupService = InMemoryPlayerLookupService()
     }
 
     init {
@@ -92,7 +96,8 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
 
         val manager = NeoForgePlayerManager(server)
         playerManager = manager
-        InjectorRegistry.registerPlayerInjector(manager)
+        InjectorRegistry.registerPlayerInjector(manager, playerLookupService)
+        InjectorRegistry.registerOfflinePlayerInjector(manager, playerLookupService)
 
         InjectorRegistry.register<ServerPlayer> { _, args, index ->
             if (args.size > index) server.playerList.getPlayerByName(args[index]) else null

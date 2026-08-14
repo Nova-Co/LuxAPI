@@ -52,6 +52,16 @@ class NeoForgeMenu(
         super.clicked(slotId, button, clickType, player)
     }
 
+    /**
+     * Fired by vanilla when this menu closes for [player], whether via [NeoForgeGui.close] or a
+     * client-initiated close (ESC, inventory swap, disconnect). Keeps [NeoForgeGui]'s viewer
+     * tracking accurate without requiring [NeoForgeGui.close] to have been the one that closed it.
+     */
+    override fun removed(player: Player) {
+        super.removed(player)
+        (player as? net.minecraft.server.level.ServerPlayer)?.let { gui.onViewerRemoved(it) }
+    }
+
     companion object {
         fun getMenuType(rows: Int): MenuType<ChestMenu> {
             return when (rows) {
