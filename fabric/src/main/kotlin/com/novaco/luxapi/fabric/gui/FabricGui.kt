@@ -12,6 +12,7 @@ import net.minecraft.world.SimpleContainer
 import net.minecraft.world.SimpleMenuProvider
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.ItemLore
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Represents a functional Fabric-based graphical user interface.
@@ -26,6 +27,16 @@ open class FabricGui(
     val container = SimpleContainer(rows * 9)
     private val itemsMap = mutableMapOf<Int, GuiItem>()
 
+    /**
+     * Players who currently have this GUI open. Vanilla gives no reverse lookup from a
+     * container back to its viewers (each player only knows its own `containerMenu`), and
+     * multiple players can have this same [FabricGui] open simultaneously via separate
+     * [LuxMenu] instances sharing [container] — so this is tracked by hand. Kept in sync by
+     * [open]/[close] and by [LuxMenu.removed] calling [onViewerRemoved] for client-initiated
+     * closes (ESC, inventory swap, disconnect).
+     */
+    private val viewers: MutableSet<ServerPlayer> = ConcurrentHashMap.newKeySet()
+
     init {
         initialItems.forEach { (slot, item) ->
             setItem(slot, item)
@@ -34,6 +45,7 @@ open class FabricGui(
 
     override fun open(player: LuxPlayer) {
         val serverPlayer = player.parent as? ServerPlayer ?: return
+        viewers.add(serverPlayer)
         val provider = SimpleMenuProvider(
             { id, inventory, _ -> LuxMenu(id, inventory, this) },
             Component.literal(title)
@@ -43,7 +55,16 @@ open class FabricGui(
 
     override fun close(player: LuxPlayer) {
         val serverPlayer = player.parent as? ServerPlayer ?: return
+        viewers.remove(serverPlayer)
         serverPlayer.closeContainer()
+    }
+
+    /**
+     * Called by [LuxMenu.removed] when a viewer's client closes this GUI without going through
+     * [close] (ESC, inventory swap, disconnect), so [viewers] doesn't go stale.
+     */
+    internal fun onViewerRemoved(serverPlayer: ServerPlayer) {
+        viewers.remove(serverPlayer)
     }
 
     override fun setItem(slot: Int, item: GuiItem) {
@@ -83,13 +104,27 @@ open class FabricGui(
      */
     override fun refresh(player: LuxPlayer) {
         val serverPlayer = player.parent as? ServerPlayer ?: return
+        syncContainer()
+        serverPlayer.containerMenu.sendAllDataToRemote()
+    }
 
-        // Update native container slots based on the current LuxAPI itemsMap
+    /**
+     * Refreshes every currently-tracked viewer, not just one.
+     */
+    override fun refreshAll() {
+        syncContainer()
+        viewers.forEach { it.containerMenu.sendAllDataToRemote() }
+    }
+
+    override fun hasViewers(): Boolean = viewers.isNotEmpty()
+
+    /**
+     * Writes the current LuxAPI itemsMap into the native container. Shared by [refresh] and
+     * [refreshAll] so a multi-viewer refresh doesn't redo this once per viewer.
+     */
+    private fun syncContainer() {
         itemsMap.forEach { (slot, guiItem) ->
             container.setItem(slot, buildItemStack(guiItem))
         }
-
-        // Minecraft 1.21.1: This triggers packet synchronization for the open menu
-        serverPlayer.containerMenu.sendAllDataToRemote()
     }
 }

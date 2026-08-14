@@ -13,6 +13,8 @@ class FabricGuiBuilder : GuiBuilder() {
      * Constructs and returns the fully built FabricLuxGui instance.
      */
     override fun build(): Gui {
-        return FabricGui(title, rows, items)
+        val gui = FabricGui(title, rows, items)
+        startAnimations(gui)
+        return gui
     }
 }

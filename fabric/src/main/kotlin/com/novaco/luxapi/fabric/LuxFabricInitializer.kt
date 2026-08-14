@@ -18,6 +18,8 @@ import com.novaco.luxapi.fabric.init.FabricInitializerRunner
 import com.novaco.luxapi.fabric.gui.FabricGuiBuilder
 import com.novaco.luxapi.fabric.gui.FabricPaginatedGuiBuilder
 import com.novaco.luxapi.fabric.player.FabricPlayerManager
+import com.novaco.luxapi.commons.player.InMemoryPlayerLookupService
+import com.novaco.luxapi.commons.player.PlayerLookupService
 import com.novaco.luxapi.fabric.scheduler.FabricLuxScheduler
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
@@ -48,6 +50,8 @@ class LuxFabricInitializer : ModInitializer {
 
         var playerManager: FabricPlayerManager? = null
             private set
+
+        val playerLookupService: PlayerLookupService = InMemoryPlayerLookupService()
     }
 
     override fun onInitialize() {
@@ -92,7 +96,8 @@ class LuxFabricInitializer : ModInitializer {
 
             val manager = FabricPlayerManager(server)
             playerManager = manager
-            InjectorRegistry.registerPlayerInjector(manager)
+            InjectorRegistry.registerPlayerInjector(manager, playerLookupService)
+            InjectorRegistry.registerOfflinePlayerInjector(manager, playerLookupService)
 
             InjectorRegistry.register<ServerPlayer> { _, args, index ->
                 if (args.size > index) server.playerList.getPlayerByName(args[index]) else null

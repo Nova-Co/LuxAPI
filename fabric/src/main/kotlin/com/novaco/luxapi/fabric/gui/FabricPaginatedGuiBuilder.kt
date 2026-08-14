@@ -13,6 +13,8 @@ class FabricPaginatedGuiBuilder : PaginatedGuiBuilder() {
      * Constructs and returns the fully built FabricPaginatedGui instance.
      */
     override fun build(): PaginatedGui {
-        return FabricPaginatedGui(title, rows, items, globalItemList, contentSlotList)
+        val gui = FabricPaginatedGui(title, rows, items, globalItemList, contentSlotList)
+        startAnimations(gui)
+        return gui
     }
 }

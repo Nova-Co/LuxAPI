@@ -55,6 +55,16 @@ class LuxMenu(
         super.clicked(slotId, button, clickType, player)
     }
 
+    /**
+     * Fired by vanilla when this menu closes for [player], whether via [FabricGui.close] or a
+     * client-initiated close (ESC, inventory swap, disconnect). Keeps [FabricGui]'s viewer
+     * tracking accurate without requiring [FabricGui.close] to have been the one that closed it.
+     */
+    override fun removed(player: Player) {
+        super.removed(player)
+        (player as? net.minecraft.server.level.ServerPlayer)?.let { gui.onViewerRemoved(it) }
+    }
+
     companion object {
         /**
          * Resolves the appropriate native MenuType based on the required row count.
