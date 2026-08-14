@@ -21,28 +21,45 @@ class ChatPaginator(
         get() = maxOf(1, ceil(items.size.toDouble() / linesPerPage).toInt())
 
     /**
+     * Computes the content lines for a specific page (header + item lines, or the
+     * empty-state line) without sending anything anywhere. Decoupled from [LuxPlayer.sendMessage]
+     * so non-chat surfaces (GUI lore, books) can reuse the same page-slicing logic.
+     *
+     * @param pageNumber The page number to compute (1-based index, coerced into range).
+     */
+    fun getPageLines(pageNumber: Int): List<String> {
+        val validPage = pageNumber.coerceIn(1, totalPages)
+        val startIndex = (validPage - 1) * linesPerPage
+        val endIndex = minOf(startIndex + linesPerPage, items.size)
+
+        val lines = mutableListOf(header)
+        if (items.isEmpty()) {
+            lines.add("<gray><i>No entries found.</i></gray>")
+        } else {
+            for (i in startIndex until endIndex) {
+                lines.add(items[i])
+            }
+        }
+        return lines
+    }
+
+    /**
+     * Computes the interactive MiniMessage footer (page indicator + prev/next buttons)
+     * for a specific page, without sending it anywhere.
+     *
+     * @param pageNumber The page number to build the footer for (1-based index, coerced into range).
+     */
+    fun getFooterLine(pageNumber: Int): String = buildFooter(pageNumber.coerceIn(1, totalPages))
+
+    /**
      * Sends a specific page of text to the player, complete with header and interactive footer.
      *
      * @param player The target player to receive the messages.
      * @param pageNumber The page number to display (1-based index).
      */
     fun sendPage(player: LuxPlayer, pageNumber: Int) {
-        val validPage = pageNumber.coerceIn(1, totalPages)
-
-        val startIndex = (validPage - 1) * linesPerPage
-        val endIndex = minOf(startIndex + linesPerPage, items.size)
-
-        player.sendMessage(header)
-
-        if (items.isEmpty()) {
-            player.sendMessage("<gray><i>No entries found.</i></gray>")
-        } else {
-            for (i in startIndex until endIndex) {
-                player.sendMessage(items[i])
-            }
-        }
-
-        player.sendMessage(buildFooter(validPage))
+        getPageLines(pageNumber).forEach(player::sendMessage)
+        player.sendMessage(getFooterLine(pageNumber))
     }
 
     /**
