@@ -1,6 +1,7 @@
 package com.novaco.luxapi.commons.chat.placeholder
 
 import com.novaco.luxapi.commons.player.LuxPlayer
+import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 
 /**
@@ -9,8 +10,11 @@ import java.util.regex.Pattern
  */
 object PlaceholderManager {
 
-    private val providers = mutableMapOf<String, PlaceholderProvider>()
+    // ConcurrentHashMap since register() can be called from multiple platform init paths
+    // while replace()/replaceLines() are already being read from on the command/chat thread.
+    private val providers = ConcurrentHashMap<String, PlaceholderProvider>()
     private val PATTERN = Pattern.compile("%([^%]+)%")
+    private val FULL_LINE_PATTERN = Pattern.compile("^%([^%]+)%$")
 
     /**
      * Registers a new placeholder provider into the system.
@@ -45,5 +49,38 @@ object PlaceholderManager {
         }
         sb.append(text.substring(lastEnd))
         return sb.toString()
+    }
+
+    /**
+     * Expands a list of lines, resolving placeholders in each. A line that is *entirely* a
+     * single placeholder token (e.g. "%player_stats%") is handed to that provider's
+     * [MultiLinePlaceholderProvider.onMultiLinePlaceholderRequest] if it implements that
+     * interface, and can expand into any number of output lines. Every other line — including
+     * a full-line placeholder whose provider isn't multi-line-aware — goes through the
+     * existing single-line [replace] unchanged.
+     *
+     * Useful for GUI lore or book pages, where one placeholder can stand in for a whole block.
+     *
+     * @param player The context player requesting the replacement.
+     * @param lines The raw lines, each possibly containing placeholders.
+     * @return The expanded lines.
+     */
+    fun replaceLines(player: LuxPlayer?, lines: List<String>): List<String> {
+        return lines.flatMap { line ->
+            val matcher = FULL_LINE_PATTERN.matcher(line.trim())
+            if (matcher.matches()) {
+                val content = matcher.group(1)
+                val parts = content.split("_", limit = 2)
+                val identifier = parts[0].lowercase()
+                val params = parts.getOrNull(1) ?: ""
+
+                val multiLine = (providers[identifier] as? MultiLinePlaceholderProvider)
+                    ?.onMultiLinePlaceholderRequest(player, params)
+
+                multiLine ?: listOf(replace(player, line))
+            } else {
+                listOf(replace(player, line))
+            }
+        }
     }
 }
