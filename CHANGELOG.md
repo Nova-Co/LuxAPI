@@ -4,6 +4,11 @@ All notable changes to LuxAPI are tracked here, in-repo, so version history is d
 
 Per-release detail (when a release warrants more than a summary line) lives in `changelogs/<version>.md`. Day-to-day development history and in-progress work is tracked in [`TODO.md`](TODO.md) — this file is the release-facing summary, not a duplicate of it.
 
+## [1.4.0] - Unreleased
+
+- Added the `discord` module: a JDA-based bot API (lifecycle wrapper, slash command framework, button/modal registry, JDA→`EventBus` bridge, role/user helpers). Primitives only — no bundled linking/role-sync/notification features.
+- See `changelogs/1.4.0.md` for the full detail.
+
 ## [1.2.5] - Unreleased
 
 - Module cleanup pass (Phase 13): removed the empty `discord` module stub, fixed `bukkit`'s shaded-jar artifact name colliding with `economy`'s real `LuxEcoCore` product name, guarded `LuxConfig.reload()` against clobbering non-persisted subclass fields, added a log warning for `LootManager.distribute()` on an unregistered loot ID, and synced this file's/README's version references.
