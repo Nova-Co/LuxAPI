@@ -1,5 +1,7 @@
 package com.novaco.luxapi.database.service
 
+import com.novaco.luxapi.database.migration.Migration
+import com.novaco.luxapi.database.migration.MigrationRunner
 import java.sql.Connection
 import java.util.concurrent.CompletableFuture
 
@@ -39,4 +41,12 @@ interface DatabaseService {
      * Starts a fluent INSERT/UPDATE/DELETE statement against this service's connection pool.
      */
     fun update(sql: String): UpdateBuilder = UpdateBuilder(this, sql)
+
+    /**
+     * Registers migrations for [module]. Call before [com.novaco.luxapi.database.LuxDatabase.init]
+     * runs so they're picked up on startup.
+     */
+    fun registerMigrations(module: String, vararg migrations: Migration) {
+        MigrationRunner.register(module, *migrations)
+    }
 }
