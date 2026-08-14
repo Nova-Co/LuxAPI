@@ -5,6 +5,7 @@ import com.novaco.luxapi.database.config.DatabaseConfig
 import com.novaco.luxapi.database.service.DatabaseService
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.sql.Connection
 import java.util.concurrent.CompletableFuture
@@ -18,6 +19,7 @@ class HikariDatabaseProvider(
     private val dataFolder: File
 ) : DatabaseService {
 
+    private val logger = LoggerFactory.getLogger(HikariDatabaseProvider::class.java)
     private val dataSource: HikariDataSource
 
     init {
@@ -95,8 +97,7 @@ class HikariDatabaseProvider(
                 }
                 future.complete(null)
             } catch (e: Exception) {
-                println("[LuxAPI] An error occurred during an asynchronous database operation:")
-                e.printStackTrace()
+                logger.error("An error occurred during an asynchronous database operation", e)
                 future.completeExceptionally(e)
             }
         }
