@@ -4,6 +4,7 @@ import com.novaco.luxapi.commons.command.annotation.Command
 import com.novaco.luxapi.commons.command.annotation.SubCommand
 import com.novaco.luxapi.commons.command.annotation.TabComplete
 import com.novaco.luxapi.commons.command.exception.CommandParseException
+import com.novaco.luxapi.commons.command.injector.CompletingInjector
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import com.novaco.luxapi.commons.command.sender.CommandSender
 import com.novaco.luxapi.commons.command.tab.TabHandler
@@ -217,10 +218,10 @@ class CommandProcessor(private val commandInstance: Any) {
             return handler.getSuggestions(sender, args)
         }
 
-        if (targetParam == LuxPlayer::class.java) {
-            TabRegistry.getHandler(LuxPlayer::class.java)?.let { luxHandler ->
-                return luxHandler.getSuggestions(sender, args)
-            }
+        // Fallback: an injector that also knows how to complete its own type gets used
+        // here, so command authors don't have to write a dedicated TabHandler for it.
+        (InjectorRegistry.getInjector(targetParam) as? CompletingInjector<*>)?.let { injector ->
+            return injector.getSuggestions(sender, args, args.size - 1)
         }
 
         return emptyList()
