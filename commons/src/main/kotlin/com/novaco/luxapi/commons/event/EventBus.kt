@@ -1,5 +1,6 @@
 package com.novaco.luxapi.commons.event
 
+import org.slf4j.LoggerFactory
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -10,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 object EventBus {
 
+    private val logger = LoggerFactory.getLogger(EventBus::class.java)
     private val listeners = ConcurrentHashMap<Class<out LuxEvent>, MutableList<Pair<Any, Method>>>()
 
     /**
@@ -48,7 +50,7 @@ object EventBus {
             try {
                 method.invoke(instance, event)
             } catch (e: Exception) {
-                e.printStackTrace()
+                logger.error("Listener '{}.{}' threw while handling {}", instance::class.simpleName, method.name, eventClass.simpleName, e)
             }
         }
     }

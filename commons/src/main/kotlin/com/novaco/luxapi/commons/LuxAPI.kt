@@ -16,6 +16,11 @@ import com.novaco.luxapi.commons.service.ServiceManager
  */
 object LuxAPI {
 
+    /**
+     * Registers LuxAPI's built-in placeholder providers (currently just [DefaultPlayerProvider]).
+     * Already called by [init] — only call this directly if you need placeholders registered
+     * before the rest of [init] runs.
+     */
     fun initDefaultPlaceholders() {
         PlaceholderManager.register(DefaultPlayerProvider())
     }
@@ -99,6 +104,6 @@ object LuxAPI {
      */
     fun init() {
         EventBus.register(PlayerMetadataManager)
-        PlaceholderManager.register(DefaultPlayerProvider())
+        initDefaultPlaceholders()
     }
 }

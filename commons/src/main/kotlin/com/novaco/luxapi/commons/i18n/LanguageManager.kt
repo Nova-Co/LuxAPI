@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.novaco.luxapi.commons.chat.placeholder.PlaceholderManager
 import com.novaco.luxapi.commons.player.LuxPlayer
+import org.slf4j.LoggerFactory
 import java.io.File
 
 /**
@@ -12,6 +13,7 @@ import java.io.File
  */
 object LanguageManager {
 
+    private val logger = LoggerFactory.getLogger(LanguageManager::class.java)
     private val gson = Gson()
     private val translations = mutableMapOf<String, Map<String, String>>()
     private var defaultLanguage = "en_us"
@@ -38,8 +40,7 @@ object LanguageManager {
                 val map: Map<String, String> = gson.fromJson(file.readText(Charsets.UTF_8), type)
                 translations[langCode] = map
             } catch (e: Exception) {
-                println("[LuxAPI] Failed to load language file: ${file.name}")
-                e.printStackTrace()
+                logger.error("Failed to load language file: {}", file.name, e)
             }
         }
     }

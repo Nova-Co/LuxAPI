@@ -3,6 +3,7 @@ package com.novaco.luxapi.commons.discord
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.novaco.luxapi.commons.concurrency.AsyncUtils
+import org.slf4j.LoggerFactory
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
@@ -25,6 +26,7 @@ class DiscordWebHook(private val webhookUrl: String) {
         private const val READ_TIMEOUT_MS = 5_000
         /** Shared, isolated executor for every [DiscordWebHook] request across the JVM. */
         private val EXECUTOR = AsyncUtils.newExecutor("LuxAPI-Discord")
+        private val logger = LoggerFactory.getLogger(DiscordWebHook::class.java)
     }
 
     private var content: String? = null
@@ -75,7 +77,7 @@ class DiscordWebHook(private val webhookUrl: String) {
 
     /**
      * Executes the HTTP POST request to Discord asynchronously.
-     * Prints an error to the console if the connection or payload fails.
+     * Logs an error (via slf4j) if the connection or payload fails.
      */
     fun executeAsync() {
         AsyncUtils.runAsync(EXECUTOR) {
@@ -99,13 +101,12 @@ class DiscordWebHook(private val webhookUrl: String) {
 
                 val responseCode = connection.responseCode
                 if (responseCode < 200 || responseCode >= 300) {
-                    println("[LuxAPI] Failed to send Discord Webhook! Response Code: $responseCode")
+                    logger.warn("Failed to send Discord Webhook! Response Code: {}", responseCode)
                 }
 
                 connection.disconnect()
             } catch (e: Exception) {
-                println("[LuxAPI] Exception occurred while sending Discord Webhook:")
-                e.printStackTrace()
+                logger.error("Exception occurred while sending Discord Webhook", e)
             }
         }
     }

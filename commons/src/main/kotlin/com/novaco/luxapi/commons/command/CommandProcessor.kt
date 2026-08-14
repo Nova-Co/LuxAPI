@@ -9,6 +9,7 @@ import com.novaco.luxapi.commons.command.sender.CommandSender
 import com.novaco.luxapi.commons.command.tab.TabHandler
 import com.novaco.luxapi.commons.command.tab.TabRegistry
 import com.novaco.luxapi.commons.player.LuxPlayer
+import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
@@ -20,6 +21,10 @@ import java.util.concurrent.ConcurrentHashMap
  * @param commandInstance The object instance annotated with @Command.
  */
 class CommandProcessor(private val commandInstance: Any) {
+
+    private companion object {
+        val logger = LoggerFactory.getLogger(CommandProcessor::class.java)
+    }
 
     val subCommands = mutableMapOf<String, Method>()
 
@@ -83,13 +88,13 @@ class CommandProcessor(private val commandInstance: Any) {
             if (cause is CommandParseException) {
                 sender.sendMessage(cause.errorMessage)
             } else {
-                cause?.printStackTrace()
+                logger.error("Unhandled exception while executing command '{}'", commandInfo.name, cause)
                 sender.sendMessage("§cAn internal error occurred while executing this command.")
             }
         } catch (e: CommandParseException) {
             sender.sendMessage(e.errorMessage)
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.error("Unexpected exception while executing command '{}'", commandInfo.name, e)
             sender.sendMessage("§cAn unexpected error occurred.")
         }
     }
@@ -202,7 +207,7 @@ class CommandProcessor(private val commandInstance: Any) {
                 }
                 return handler.getSuggestions(sender, args)
             } catch (e: Exception) {
-                e.printStackTrace()
+                logger.error("Failed to resolve TabHandler '{}'", tabAnnotation.value.simpleName, e)
                 return emptyList()
             }
         }
