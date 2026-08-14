@@ -28,4 +28,10 @@ interface DatabaseService {
      * Shuts down the database connection pool safely.
      */
     fun close()
+
+    /**
+     * Starts a fluent, typed SELECT query against this service's connection pool.
+     * Call `.map { rs -> ... }` before `.execute()`/`.executeAsync()`.
+     */
+    fun query(sql: String): QueryBuilder<Nothing> = QueryBuilder(this, sql)
 }
