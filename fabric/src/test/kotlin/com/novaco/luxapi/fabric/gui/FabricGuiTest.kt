@@ -96,4 +96,72 @@ class FabricGuiTest {
         // Verify native packet sync is triggered
         verify(mockContainerMenu).sendAllDataToRemote()
     }
+
+    /**
+     * Sets a mock's public `containerMenu` field (Minecraft 1.21.1) to a fresh mock
+     * [AbstractContainerMenu] and returns it, for asserting on packet-sync calls.
+     */
+    private fun stubContainerMenu(serverPlayer: ServerPlayer): AbstractContainerMenu {
+        val mockContainerMenu = mock<AbstractContainerMenu>()
+        val menuField = ServerPlayer::class.java.getField("containerMenu")
+        menuField.isAccessible = true
+        menuField.set(serverPlayer, mockContainerMenu)
+        return mockContainerMenu
+    }
+
+    @Test
+    fun `test hasViewers reflects open and close`() {
+        val mockServerPlayer = mock<ServerPlayer>()
+        val mockLuxPlayer = mock<FabricLuxPlayer>()
+        whenever(mockLuxPlayer.parent).thenReturn(mockServerPlayer)
+        stubContainerMenu(mockServerPlayer)
+
+        val gui = FabricGui("Viewer Test", 1, emptyMap())
+        assertFalse(gui.hasViewers(), "A freshly built GUI should have no viewers.")
+
+        gui.open(mockLuxPlayer)
+        assertTrue(gui.hasViewers(), "Opening should register the player as a viewer.")
+
+        gui.close(mockLuxPlayer)
+        assertFalse(gui.hasViewers(), "Closing should untrack the player.")
+    }
+
+    @Test
+    fun `test onViewerRemoved untracks a client-initiated close without calling close`() {
+        val mockServerPlayer = mock<ServerPlayer>()
+        val mockLuxPlayer = mock<FabricLuxPlayer>()
+        whenever(mockLuxPlayer.parent).thenReturn(mockServerPlayer)
+        stubContainerMenu(mockServerPlayer)
+
+        val gui = FabricGui("Viewer Test", 1, emptyMap())
+        gui.open(mockLuxPlayer)
+        assertTrue(gui.hasViewers())
+
+        // Simulates LuxMenu.removed() firing for an ESC/inventory-swap/disconnect close.
+        gui.onViewerRemoved(mockServerPlayer)
+
+        assertFalse(gui.hasViewers(), "A client-initiated close should untrack the viewer too.")
+    }
+
+    @Test
+    fun `test refreshAll synchronizes every tracked viewer`() {
+        val firstServerPlayer = mock<ServerPlayer>()
+        val firstLuxPlayer = mock<FabricLuxPlayer>()
+        whenever(firstLuxPlayer.parent).thenReturn(firstServerPlayer)
+        val firstContainerMenu = stubContainerMenu(firstServerPlayer)
+
+        val secondServerPlayer = mock<ServerPlayer>()
+        val secondLuxPlayer = mock<FabricLuxPlayer>()
+        whenever(secondLuxPlayer.parent).thenReturn(secondServerPlayer)
+        val secondContainerMenu = stubContainerMenu(secondServerPlayer)
+
+        val gui = FabricGui("Refresh All Test", 1, emptyMap())
+        gui.open(firstLuxPlayer)
+        gui.open(secondLuxPlayer)
+
+        gui.refreshAll()
+
+        verify(firstContainerMenu).sendAllDataToRemote()
+        verify(secondContainerMenu).sendAllDataToRemote()
+    }
 }
