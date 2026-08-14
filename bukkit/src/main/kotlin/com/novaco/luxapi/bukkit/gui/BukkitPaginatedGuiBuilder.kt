@@ -8,5 +8,9 @@ import com.novaco.luxapi.commons.gui.PaginatedGuiBuilder
  */
 class BukkitPaginatedGuiBuilder : PaginatedGuiBuilder() {
 
-    override fun build(): PaginatedGui = BukkitPaginatedGui(title, rows, items, globalItemList, contentSlotList)
+    override fun build(): PaginatedGui {
+        val gui = BukkitPaginatedGui(title, rows, items, globalItemList, contentSlotList)
+        startAnimations(gui)
+        return gui
+    }
 }

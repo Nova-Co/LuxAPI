@@ -74,4 +74,16 @@ open class BukkitGui(
         itemsMap.forEach { (slot, guiItem) -> inventory.setItem(slot, buildItemStack(guiItem)) }
         (player.parent as? Player)?.updateInventory()
     }
+
+    /**
+     * Refreshes every currently-tracked viewer, not just one. Unlike Fabric/NeoForge, Bukkit's
+     * [Inventory] already tracks its own viewers ([Inventory.getViewers]) — one shared
+     * [inventory] backs every player who has this GUI open, so no separate tracking is needed.
+     */
+    override fun refreshAll() {
+        itemsMap.forEach { (slot, guiItem) -> inventory.setItem(slot, buildItemStack(guiItem)) }
+        inventory.viewers.forEach { (it as? Player)?.updateInventory() }
+    }
+
+    override fun hasViewers(): Boolean = inventory.viewers.isNotEmpty()
 }

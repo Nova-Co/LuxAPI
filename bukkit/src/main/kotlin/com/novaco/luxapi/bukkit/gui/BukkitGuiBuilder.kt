@@ -8,5 +8,9 @@ import com.novaco.luxapi.commons.gui.GuiBuilder
  */
 class BukkitGuiBuilder : GuiBuilder() {
 
-    override fun build(): Gui = BukkitGui(title, rows, items)
+    override fun build(): Gui {
+        val gui = BukkitGui(title, rows, items)
+        startAnimations(gui)
+        return gui
+    }
 }
