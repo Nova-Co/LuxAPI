@@ -32,4 +32,16 @@ interface Gui {
      * Useful for real-time data updates or animations.
      */
     fun refresh(player: LuxPlayer)
+
+    /**
+     * Refreshes the items currently displayed for every player currently viewing this GUI,
+     * without the caller needing to know who they are. Used by [GuiBuilder]'s animated slots.
+     */
+    fun refreshAll()
+
+    /**
+     * True if at least one player currently has this GUI open. Used by animated slots to stop
+     * their repeating scheduler task once nobody's watching anymore.
+     */
+    fun hasViewers(): Boolean
 }
