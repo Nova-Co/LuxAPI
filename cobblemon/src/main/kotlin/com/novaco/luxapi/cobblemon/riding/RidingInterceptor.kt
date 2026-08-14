@@ -1,6 +1,8 @@
 package com.novaco.luxapi.cobblemon.riding
 
 import com.cobblemon.mod.common.api.events.CobblemonEvents
+import com.cobblemon.mod.common.api.events.pokemon.RidePokemonEvent
+import com.cobblemon.mod.common.api.reactive.ObservableSubscription
 
 /**
  * A hook into Cobblemon's native riding lifecycle — ride attempts, completed mounts, and
@@ -16,8 +18,8 @@ object RidingInterceptor {
      *
      * @param listener Runs once per ride attempt.
      */
-    fun onRideAttempt(listener: (RideAttemptEvent) -> Unit) {
-        CobblemonEvents.RIDE_EVENT_PRE.subscribe { event ->
+    fun onRideAttempt(listener: (RideAttemptEvent) -> Unit): ObservableSubscription<RidePokemonEvent.Pre> {
+        return CobblemonEvents.RIDE_EVENT_PRE.subscribe { event ->
             listener(RideAttemptEvent(event.player, event.pokemon, event))
         }
     }
@@ -27,8 +29,8 @@ object RidingInterceptor {
      *
      * @param listener Runs once per completed ride start.
      */
-    fun onRideCompleted(listener: (RideCompletedEvent) -> Unit) {
-        CobblemonEvents.RIDE_EVENT_POST.subscribe { event ->
+    fun onRideCompleted(listener: (RideCompletedEvent) -> Unit): ObservableSubscription<RidePokemonEvent.Post> {
+        return CobblemonEvents.RIDE_EVENT_POST.subscribe { event ->
             listener(RideCompletedEvent(event.player, event.pokemon))
         }
     }
@@ -40,8 +42,8 @@ object RidingInterceptor {
      *
      * @param listener Runs once per stamina-consuming tick.
      */
-    fun onStaminaApply(listener: (RideStaminaEvent) -> Unit) {
-        CobblemonEvents.RIDE_EVENT_APPLY_STAMINA.subscribe { event ->
+    fun onStaminaApply(listener: (RideStaminaEvent) -> Unit): ObservableSubscription<RidePokemonEvent.ApplyStamina> {
+        return CobblemonEvents.RIDE_EVENT_APPLY_STAMINA.subscribe { event ->
             listener(RideStaminaEvent(event.player, event.pokemon, event))
         }
     }

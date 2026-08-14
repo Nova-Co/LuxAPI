@@ -1,6 +1,9 @@
 package com.novaco.luxapi.cobblemon.spawning
 
 import com.cobblemon.mod.common.api.events.CobblemonEvents
+import com.cobblemon.mod.common.api.events.entity.SpawnEvent
+import com.cobblemon.mod.common.api.reactive.ObservableSubscription
+import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 
 /**
  * A hook into Cobblemon's natural Pokémon spawning, as opposed to [com.novaco.luxapi.cobblemon.manager.PokemonSpawner]'s
@@ -17,8 +20,8 @@ object SpawnInterceptor {
      *
      * @param listener Runs once per spawn attempt.
      */
-    fun onPokemonSpawn(listener: (SpawnInterceptEvent) -> Unit) {
-        CobblemonEvents.POKEMON_ENTITY_SPAWN.subscribe { event ->
+    fun onPokemonSpawn(listener: (SpawnInterceptEvent) -> Unit): ObservableSubscription<SpawnEvent<PokemonEntity>> {
+        return CobblemonEvents.POKEMON_ENTITY_SPAWN.subscribe { event ->
             listener(
                 SpawnInterceptEvent(
                     entity = event.entity,

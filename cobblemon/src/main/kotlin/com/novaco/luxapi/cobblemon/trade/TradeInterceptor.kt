@@ -1,6 +1,8 @@
 package com.novaco.luxapi.cobblemon.trade
 
 import com.cobblemon.mod.common.api.events.CobblemonEvents
+import com.cobblemon.mod.common.api.events.pokemon.TradeEvent
+import com.cobblemon.mod.common.api.reactive.ObservableSubscription
 
 /**
  * A hook into Cobblemon's native player-to-player trade system (`TradeManager`), as opposed to
@@ -17,8 +19,8 @@ object TradeInterceptor {
      *
      * @param listener Runs once per trade attempt.
      */
-    fun onTradeAttempt(listener: (TradeInterceptEvent) -> Unit) {
-        CobblemonEvents.TRADE_EVENT_PRE.subscribe { event ->
+    fun onTradeAttempt(listener: (TradeInterceptEvent) -> Unit): ObservableSubscription<TradeEvent.Pre> {
+        return CobblemonEvents.TRADE_EVENT_PRE.subscribe { event ->
             listener(
                 TradeInterceptEvent(
                     participant1Uuid = event.tradeParticipant1.uuid,
@@ -36,8 +38,8 @@ object TradeInterceptor {
      *
      * @param listener Runs once per completed trade.
      */
-    fun onTradeCompleted(listener: (TradeCompletedEvent) -> Unit) {
-        CobblemonEvents.TRADE_EVENT_POST.subscribe { event ->
+    fun onTradeCompleted(listener: (TradeCompletedEvent) -> Unit): ObservableSubscription<TradeEvent.Post> {
+        return CobblemonEvents.TRADE_EVENT_POST.subscribe { event ->
             listener(
                 TradeCompletedEvent(
                     participant1Uuid = event.tradeParticipant1.uuid,
