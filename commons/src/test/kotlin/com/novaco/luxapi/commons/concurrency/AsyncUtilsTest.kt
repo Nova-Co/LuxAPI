@@ -88,4 +88,28 @@ class AsyncUtilsTest {
         assertTrue(latch.await(2, TimeUnit.SECONDS))
         assertEquals(99, capturedResult)
     }
+
+    @Test
+    fun `test newExecutor threads use the given name prefix`() {
+        val executor = AsyncUtils.newExecutor("Lux-Test")
+        try {
+            val threadName = AsyncUtils.supplyAsync(executor) { Thread.currentThread().name }
+                .get(2, TimeUnit.SECONDS)
+
+            assertTrue(threadName.startsWith("Lux-Test-"), "Expected a Lux-Test- prefixed name, got $threadName")
+        } finally {
+            executor.shutdown()
+        }
+    }
+
+    @Test
+    fun `test supplyAsync and runAsync with an explicit executor complete normally`() {
+        val executor = AsyncUtils.newExecutor("Lux-Test-Explicit")
+        try {
+            assertEquals(42, AsyncUtils.supplyAsync(executor) { 42 }.get(2, TimeUnit.SECONDS))
+            AsyncUtils.runAsync(executor) { }.get(2, TimeUnit.SECONDS)
+        } finally {
+            executor.shutdown()
+        }
+    }
 }

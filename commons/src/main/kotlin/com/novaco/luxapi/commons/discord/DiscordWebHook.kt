@@ -2,16 +2,17 @@ package com.novaco.luxapi.commons.discord
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.novaco.luxapi.commons.concurrency.AsyncUtils
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.concurrent.CompletableFuture
 
 /**
  * Handles the construction and asynchronous execution of Discord Webhook payloads.
- * Ensures that HTTP requests do not block the main server thread. The connection
- * uses a bounded connect/read timeout so a stalled or unreachable Discord endpoint
- * cannot hang the shared thread pool the request runs on.
+ * Ensures that HTTP requests do not block the main server thread. Requests run on a
+ * small dedicated executor (not the JVM-wide common pool) with a bounded connect/read
+ * timeout, so a stalled or unreachable Discord endpoint can only ever tie up this
+ * module's own thread, never contend with unrelated work elsewhere in the process.
  *
  * @param webhookUrl The destination URL provided by Discord.
  */
@@ -22,6 +23,8 @@ class DiscordWebHook(private val webhookUrl: String) {
         private const val CONNECT_TIMEOUT_MS = 5_000
         /** Max time to wait for Discord's response after the request is sent, in milliseconds. */
         private const val READ_TIMEOUT_MS = 5_000
+        /** Shared, isolated executor for every [DiscordWebHook] request across the JVM. */
+        private val EXECUTOR = AsyncUtils.newExecutor("LuxAPI-Discord")
     }
 
     private var content: String? = null
@@ -75,7 +78,7 @@ class DiscordWebHook(private val webhookUrl: String) {
      * Prints an error to the console if the connection or payload fails.
      */
     fun executeAsync() {
-        CompletableFuture.runAsync {
+        AsyncUtils.runAsync(EXECUTOR) {
             try {
                 val url = URL(webhookUrl)
                 val connection = url.openConnection() as HttpURLConnection

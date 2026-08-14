@@ -1,6 +1,6 @@
 package com.novaco.luxapi.commons.data
 
-import java.util.concurrent.ConcurrentHashMap
+import com.novaco.luxapi.commons.type.ExpiringMap
 
 /**
  * A generic, thread-safe manager for handling cooldowns.
@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class CooldownManager<T> {
 
-    private val cooldowns = ConcurrentHashMap<T, Long>()
+    private val cooldowns = ExpiringMap<T>()
 
     /**
      * Sets a cooldown for the specified key.
@@ -19,7 +19,7 @@ class CooldownManager<T> {
      * @param durationMillis The duration of the cooldown in milliseconds.
      */
     fun setCooldown(key: T, durationMillis: Long) {
-        cooldowns[key] = System.currentTimeMillis() + durationMillis
+        cooldowns.set(key, durationMillis)
     }
 
     /**
@@ -28,14 +28,7 @@ class CooldownManager<T> {
      * @param key The identifier to check.
      * @return True if the cooldown is still active, false otherwise.
      */
-    fun isOnCooldown(key: T): Boolean {
-        val expiryTime = cooldowns[key] ?: return false
-        if (System.currentTimeMillis() >= expiryTime) {
-            cooldowns.remove(key)
-            return false
-        }
-        return true
-    }
+    fun isOnCooldown(key: T): Boolean = cooldowns.isActive(key)
 
     /**
      * Calculates the remaining cooldown time for the specified key.
@@ -43,16 +36,7 @@ class CooldownManager<T> {
      * @param key The identifier to check.
      * @return The remaining time in milliseconds, or 0 if the cooldown has expired.
      */
-    fun getRemainingTime(key: T): Long {
-        val expiryTime = cooldowns[key] ?: return 0L
-        val remaining = expiryTime - System.currentTimeMillis()
-
-        if (remaining <= 0) {
-            cooldowns.remove(key)
-            return 0L
-        }
-        return remaining
-    }
+    fun getRemainingTime(key: T): Long = cooldowns.remaining(key)
 
     /**
      * Clears the cooldown for a specific key manually.
@@ -60,6 +44,6 @@ class CooldownManager<T> {
      * @param key The identifier to clear.
      */
     fun clearCooldown(key: T) {
-        cooldowns.remove(key)
+        cooldowns.clear(key)
     }
 }

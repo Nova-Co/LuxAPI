@@ -1,5 +1,6 @@
 package com.novaco.luxapi.commons.data
 
+import com.novaco.luxapi.commons.type.ExpiringMap
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -10,13 +11,13 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class TimeGateManager<T> {
 
-    private val gates = ConcurrentHashMap<String, ConcurrentHashMap<T, Long>>()
+    private val gates = ConcurrentHashMap<String, ExpiringMap<T>>()
 
     /**
-     * Retrieves or creates a concurrent map for a specific cooldown category.
+     * Retrieves or creates the [ExpiringMap] for a specific cooldown category.
      */
-    private fun getCategoryMap(category: String): ConcurrentHashMap<T, Long> {
-        return gates.getOrPut(category) { ConcurrentHashMap() }
+    private fun getCategoryMap(category: String): ExpiringMap<T> {
+        return gates.getOrPut(category) { ExpiringMap() }
     }
 
     /**
@@ -27,7 +28,7 @@ class TimeGateManager<T> {
      * @param durationMillis The duration of the cooldown in milliseconds.
      */
     fun setCooldown(category: String, key: T, durationMillis: Long) {
-        getCategoryMap(category)[key] = System.currentTimeMillis() + durationMillis
+        getCategoryMap(category).set(key, durationMillis)
     }
 
     /**
@@ -38,16 +39,7 @@ class TimeGateManager<T> {
      * @param key The identifier to check.
      * @return True if the cooldown is still active, false otherwise.
      */
-    fun isOnCooldown(category: String, key: T): Boolean {
-        val categoryMap = getCategoryMap(category)
-        val expiryTime = categoryMap[key] ?: return false
-
-        if (System.currentTimeMillis() >= expiryTime) {
-            categoryMap.remove(key)
-            return false
-        }
-        return true
-    }
+    fun isOnCooldown(category: String, key: T): Boolean = getCategoryMap(category).isActive(key)
 
     /**
      * Calculates the remaining cooldown time for the specified key.
@@ -56,17 +48,7 @@ class TimeGateManager<T> {
      * @param key The identifier to check.
      * @return The remaining time in milliseconds, or 0 if the cooldown has expired.
      */
-    fun getRemainingTime(category: String, key: T): Long {
-        val categoryMap = getCategoryMap(category)
-        val expiryTime = categoryMap[key] ?: return 0L
-        val remaining = expiryTime - System.currentTimeMillis()
-
-        if (remaining <= 0) {
-            categoryMap.remove(key)
-            return 0L
-        }
-        return remaining
-    }
+    fun getRemainingTime(category: String, key: T): Long = getCategoryMap(category).remaining(key)
 
     /**
      * Clears the cooldown for a specific key manually.
@@ -75,7 +57,7 @@ class TimeGateManager<T> {
      * @param key The identifier to clear.
      */
     fun clearCooldown(category: String, key: T) {
-        gates[category]?.remove(key)
+        gates[category]?.clear(key)
     }
 
     /**
@@ -83,9 +65,6 @@ class TimeGateManager<T> {
      * Recommended to be called periodically via a scheduler.
      */
     fun cleanUp() {
-        val currentTime = System.currentTimeMillis()
-        gates.values.forEach { categoryMap ->
-            categoryMap.entries.removeIf { currentTime >= it.value }
-        }
+        gates.values.forEach { it.cleanUp() }
     }
 }
