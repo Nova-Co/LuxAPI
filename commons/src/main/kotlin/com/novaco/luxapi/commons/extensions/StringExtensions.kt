@@ -8,6 +8,7 @@ import java.util.regex.Pattern
  */
 
 private val HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})")
+private val SECTION_FORMAT_PATTERN = Pattern.compile("(?i)§[0-9A-FK-ORX]")
 
 /**
  * Translates legacy ampersand color codes (e.g., &a, &l) into Minecraft's
@@ -41,5 +42,5 @@ fun String.colorize(): String {
  * @return The raw string without any formatting symbols.
  */
 fun String.stripColors(): String {
-    return this.replace(Regex("(?i)§[0-9A-FK-ORX]"), "")
+    return SECTION_FORMAT_PATTERN.matcher(this).replaceAll("")
 }

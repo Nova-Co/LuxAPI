@@ -1,12 +1,16 @@
 package com.novaco.luxapi.commons.command.tab
 
+import java.util.concurrent.ConcurrentHashMap
+
 /**
  * A centralized registry to store and retrieve TabHandlers for specific data types.
  * Allows modules to dynamically inject auto-completion logic into the command system.
+ * Backed by a [ConcurrentHashMap] since registration can happen from multiple
+ * platform init paths while lookups are already happening on the command thread.
  */
 object TabRegistry {
 
-    private val handlers = mutableMapOf<Class<*>, TabHandler>()
+    private val handlers = ConcurrentHashMap<Class<*>, TabHandler>()
 
     /**
      * Registers a new TabHandler for a specific class type.

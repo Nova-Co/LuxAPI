@@ -6,10 +6,12 @@ import com.novaco.luxapi.commons.command.annotation.TabComplete
 import com.novaco.luxapi.commons.command.exception.CommandParseException
 import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import com.novaco.luxapi.commons.command.sender.CommandSender
+import com.novaco.luxapi.commons.command.tab.TabHandler
 import com.novaco.luxapi.commons.command.tab.TabRegistry
 import com.novaco.luxapi.commons.player.LuxPlayer
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * The reflection-based execution engine that discovers, parses, and invokes command methods.
@@ -20,6 +22,13 @@ import java.lang.reflect.Method
 class CommandProcessor(private val commandInstance: Any) {
 
     val subCommands = mutableMapOf<String, Method>()
+
+    /**
+     * One shared instance per @TabComplete handler class, reused across every
+     * tab-completion request instead of reflecting a new instance per keystroke.
+     * Safe because [TabHandler] implementations are required to be stateless.
+     */
+    private val tabHandlerCache = ConcurrentHashMap<Class<out TabHandler>, TabHandler>()
 
     val commandInfo: Command = commandInstance.javaClass.getAnnotation(Command::class.java)
         ?: throw IllegalArgumentException("Class ${commandInstance.javaClass.simpleName} is missing the @Command annotation.")
@@ -187,7 +196,10 @@ class CommandProcessor(private val commandInstance: Any) {
         val paramAnnotations = method.parameterAnnotations[paramIndex]
         paramAnnotations.filterIsInstance<TabComplete>().firstOrNull()?.let { tabAnnotation ->
             try {
-                val handler = tabAnnotation.value.java.getDeclaredConstructor().newInstance()
+                val handlerClass = tabAnnotation.value.java
+                val handler = tabHandlerCache.computeIfAbsent(handlerClass) {
+                    it.getDeclaredConstructor().newInstance()
+                }
                 return handler.getSuggestions(sender, args)
             } catch (e: Exception) {
                 e.printStackTrace()

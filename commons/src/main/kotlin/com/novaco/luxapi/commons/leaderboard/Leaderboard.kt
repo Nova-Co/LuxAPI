@@ -57,11 +57,21 @@ class Leaderboard(val id: String, private val ascending: Boolean = false) {
 
     /**
      * Returns a player's 1-based rank on this leaderboard, or null if they have no entry.
+     *
+     * Computed with a single O(n) pass that counts strictly-better entries, instead of
+     * sorting the whole table — cheap enough to call per-player on every scoreboard tick.
+     * Ties share the same rank (a strictly-better count, not a sorted list position), which
+     * can differ slightly from [getTop]'s output order for entries with equal scores.
      */
     fun getRank(uuid: UUID): Int? {
-        if (!scores.containsKey(uuid)) return null
-        val index = getTop(scores.size).indexOfFirst { it.uuid == uuid }
-        return if (index == -1) null else index + 1
+        val target = scores[uuid] ?: return null
+        var betterCount = 0
+        for (entry in scores.values) {
+            if (entry.uuid == uuid) continue
+            val isBetter = if (ascending) entry.score < target.score else entry.score > target.score
+            if (isBetter) betterCount++
+        }
+        return betterCount + 1
     }
 
     /**

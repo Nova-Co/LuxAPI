@@ -9,11 +9,20 @@ import java.util.concurrent.CompletableFuture
 
 /**
  * Handles the construction and asynchronous execution of Discord Webhook payloads.
- * Ensures that HTTP requests do not block the main server thread.
+ * Ensures that HTTP requests do not block the main server thread. The connection
+ * uses a bounded connect/read timeout so a stalled or unreachable Discord endpoint
+ * cannot hang the shared thread pool the request runs on.
  *
  * @param webhookUrl The destination URL provided by Discord.
  */
 class DiscordWebHook(private val webhookUrl: String) {
+
+    companion object {
+        /** Max time to wait while establishing the connection to Discord, in milliseconds. */
+        private const val CONNECT_TIMEOUT_MS = 5_000
+        /** Max time to wait for Discord's response after the request is sent, in milliseconds. */
+        private const val READ_TIMEOUT_MS = 5_000
+    }
 
     private var content: String? = null
     private var username: String? = null
@@ -75,6 +84,8 @@ class DiscordWebHook(private val webhookUrl: String) {
                 connection.setRequestProperty("Content-Type", "application/json")
                 connection.setRequestProperty("User-Agent", "LuxAPI-Webhook-Client")
                 connection.doOutput = true
+                connection.connectTimeout = CONNECT_TIMEOUT_MS
+                connection.readTimeout = READ_TIMEOUT_MS
 
                 val payload = buildJsonPayload()
 

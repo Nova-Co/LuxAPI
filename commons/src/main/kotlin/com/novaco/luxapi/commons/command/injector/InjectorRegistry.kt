@@ -5,13 +5,16 @@ import com.novaco.luxapi.commons.command.injector.impl.PlayerInjector
 import com.novaco.luxapi.commons.command.injector.impl.StringInjector
 import com.novaco.luxapi.commons.command.sender.CommandSender
 import com.novaco.luxapi.commons.player.PlayerManager
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A centralized registry maintaining all active ArgumentInjectors.
  * Facilitates the dynamic injection of complex types during command execution.
+ * Backed by a [ConcurrentHashMap] since registration can happen from multiple
+ * platform init paths while lookups are already happening on the command thread.
  */
 object InjectorRegistry {
-    private val injectors = mutableMapOf<Class<*>, ArgumentInjector<*>>()
+    private val injectors = ConcurrentHashMap<Class<*>, ArgumentInjector<*>>()
 
     init {
         register(IntegerInjector())
