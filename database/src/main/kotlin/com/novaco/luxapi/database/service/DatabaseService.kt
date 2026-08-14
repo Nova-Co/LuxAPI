@@ -34,4 +34,9 @@ interface DatabaseService {
      * Call `.map { rs -> ... }` before `.execute()`/`.executeAsync()`.
      */
     fun query(sql: String): QueryBuilder<Nothing> = QueryBuilder(this, sql)
+
+    /**
+     * Starts a fluent INSERT/UPDATE/DELETE statement against this service's connection pool.
+     */
+    fun update(sql: String): UpdateBuilder = UpdateBuilder(this, sql)
 }

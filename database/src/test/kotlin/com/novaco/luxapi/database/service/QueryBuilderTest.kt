@@ -15,14 +15,14 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
-private class FakeLuxTask(override val id: Int = 1, override val isAsync: Boolean = true) : LuxTask {
+private class QueryFakeLuxTask(override val id: Int = 1, override val isAsync: Boolean = true) : LuxTask {
     override var isCancelled: Boolean = false
     override fun cancel() { isCancelled = true }
 }
 
-private class SyncScheduler : LuxScheduler {
-    override fun run(runnable: Runnable): LuxTask { runnable.run(); return FakeLuxTask() }
-    override fun runAsync(runnable: Runnable): LuxTask { runnable.run(); return FakeLuxTask() }
+private class QuerySyncScheduler : LuxScheduler {
+    override fun run(runnable: Runnable): LuxTask { runnable.run(); return QueryFakeLuxTask() }
+    override fun runAsync(runnable: Runnable): LuxTask { runnable.run(); return QueryFakeLuxTask() }
     override fun runLater(delay: Long, runnable: Runnable): LuxTask = throw NotImplementedError()
     override fun runLaterAsync(delay: Long, runnable: Runnable): LuxTask = throw NotImplementedError()
     override fun runRepeating(delay: Long, period: Long, runnable: Runnable): LuxTask = throw NotImplementedError()
@@ -36,7 +36,7 @@ class QueryBuilderTest {
 
     @BeforeEach
     fun setUp(@TempDir tempDir: File) {
-        LuxAPI.schedulerProvider = { SyncScheduler() }
+        LuxAPI.schedulerProvider = { QuerySyncScheduler() }
 
         val config = DatabaseConfig().apply {
             type = "SQLITE"
