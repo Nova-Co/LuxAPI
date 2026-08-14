@@ -85,4 +85,24 @@ class PlayerInjectorTest {
             injector.instantiate(dummySender, args, 0)
         }
     }
+
+    @Test
+    fun `test suggestions filter online players by partial name prefix`() {
+        playerManager.addPlayer(DummyCommandPlayer(UUID.randomUUID(), "NovacoAdmin"))
+        playerManager.addPlayer(DummyCommandPlayer(UUID.randomUUID(), "NovacoDev"))
+        playerManager.addPlayer(DummyCommandPlayer(UUID.randomUUID(), "SomeoneElse"))
+
+        val suggestions = injector.getSuggestions(dummySender, arrayOf("nov"), 0)
+
+        assertEquals(setOf("NovacoAdmin", "NovacoDev"), suggestions.toSet())
+    }
+
+    @Test
+    fun `test suggestions with no partial token returns all online players`() {
+        playerManager.addPlayer(DummyCommandPlayer(UUID.randomUUID(), "NovacoAdmin"))
+
+        val suggestions = injector.getSuggestions(dummySender, arrayOf(""), 0)
+
+        assertEquals(listOf("NovacoAdmin"), suggestions)
+    }
 }
