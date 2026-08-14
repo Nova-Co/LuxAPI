@@ -1,9 +1,11 @@
 package com.novaco.luxapi.commons.command.injector
 
 import com.novaco.luxapi.commons.command.injector.impl.IntegerInjector
+import com.novaco.luxapi.commons.command.injector.impl.OfflinePlayerInjector
 import com.novaco.luxapi.commons.command.injector.impl.PlayerInjector
 import com.novaco.luxapi.commons.command.injector.impl.StringInjector
 import com.novaco.luxapi.commons.command.sender.CommandSender
+import com.novaco.luxapi.commons.player.PlayerLookupService
 import com.novaco.luxapi.commons.player.PlayerManager
 import java.util.concurrent.ConcurrentHashMap
 
@@ -59,8 +61,21 @@ object InjectorRegistry {
      * Registers the platform-dependent PlayerInjector.
      *
      * @param playerManager The active platform implementation of PlayerManager.
+     * @param lookupService Optional; when provided, successful online resolutions are recorded
+     * so a later [OfflinePlayerInjector] lookup for the same player can still succeed offline.
      */
-    fun registerPlayerInjector(playerManager: PlayerManager) {
-        register(PlayerInjector(playerManager))
+    fun registerPlayerInjector(playerManager: PlayerManager, lookupService: PlayerLookupService? = null) {
+        register(PlayerInjector(playerManager, lookupService))
+    }
+
+    /**
+     * Registers the [OfflinePlayerInjector], resolving [com.novaco.luxapi.commons.player.OfflinePlayer]
+     * arguments whether or not the target is currently online.
+     *
+     * @param playerManager The active platform implementation of PlayerManager.
+     * @param lookupService The name/UUID cache used to resolve targets that are not online.
+     */
+    fun registerOfflinePlayerInjector(playerManager: PlayerManager, lookupService: PlayerLookupService) {
+        register(OfflinePlayerInjector(playerManager, lookupService))
     }
 }
