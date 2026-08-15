@@ -4,6 +4,7 @@ import com.novaco.luxapi.bukkit.event.BukkitEventBridge
 import com.novaco.luxapi.bukkit.gui.BukkitGuiBuilder
 import com.novaco.luxapi.bukkit.gui.BukkitGuiListener
 import com.novaco.luxapi.bukkit.gui.BukkitPaginatedGuiBuilder
+import com.novaco.luxapi.bukkit.placeholder.BukkitPlaceholderExpansion
 import com.novaco.luxapi.bukkit.player.BukkitPlayerManager
 import com.novaco.luxapi.bukkit.scheduler.BukkitLuxScheduler
 import com.novaco.luxapi.commons.LuxAPI
@@ -44,6 +45,7 @@ object LuxBukkitBridge {
 
         BukkitEventBridge(plugin, playerManager).register()
         BukkitGuiListener(plugin).register()
+        BukkitPlaceholderExpansion.register(playerManager)
 
         if (initPackage != null) {
             val ranCount = ClasspathInitScanner.scanAndRun(initPackage, plugin.javaClass.classLoader)

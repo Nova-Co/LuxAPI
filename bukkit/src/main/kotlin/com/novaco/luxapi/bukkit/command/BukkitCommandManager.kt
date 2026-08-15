@@ -1,6 +1,8 @@
 package com.novaco.luxapi.bukkit.command
 
+import com.novaco.luxapi.bukkit.command.injector.BukkitMaterialInjector
 import com.novaco.luxapi.bukkit.command.injector.BukkitPlayerInjector
+import com.novaco.luxapi.bukkit.command.injector.BukkitWorldInjector
 import com.novaco.luxapi.bukkit.command.tab.BukkitPlayerTabHandler
 import com.novaco.luxapi.commons.command.CommandManager
 import com.novaco.luxapi.commons.command.CommandProcessor
@@ -28,6 +30,8 @@ class BukkitCommandManager(private val plugin: Plugin) : CommandManager {
         commandMap = getBukkitCommandMap()
         // Register platform-specific integrations into the core
         InjectorRegistry.register(BukkitPlayerInjector())
+        InjectorRegistry.register(BukkitWorldInjector())
+        InjectorRegistry.register(BukkitMaterialInjector())
         TabRegistry.register(Player::class.java, BukkitPlayerTabHandler())
     }
 
