@@ -73,8 +73,17 @@ object PokemonPersistenceBridge {
 
                 // Perform heavy decompression decoding loop off-thread
                 stringPayload.toPokemon()
+            } catch (e: ReflectiveOperationException) {
+                val cause = (e as? java.lang.reflect.InvocationTargetException)?.targetException ?: e
+                println("[LuxAPI] Database/Reflection error for Pokemon $pokemon: ${cause.message}")
+                cause.printStackTrace()
+                null
+            } catch (e: IllegalArgumentException) {
+                println("[LuxAPI] Corrupted Base64 payload for Pokemon $pokemon: ${e.message}")
+                null
             } catch (e: Exception) {
                 println("[LuxAPI] Could not safely extract and thread load requested Pokemon index: ${e.message}")
+                e.printStackTrace()
                 null
             }
         }, asyncPool)
