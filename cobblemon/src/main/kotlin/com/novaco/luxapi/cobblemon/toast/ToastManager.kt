@@ -35,7 +35,7 @@ object ToastManager {
         expireAfterSeconds: Float? = null
     ): Toast {
         val toast = Toast(title, description, icon)
-        toast.addListeners(*players.toTypedArray())
+        DirectToastListeners.addListeners(toast, players.toTypedArray())
         expireAfterSeconds?.let { toast.expireAfter(it) }
         return toast
     }

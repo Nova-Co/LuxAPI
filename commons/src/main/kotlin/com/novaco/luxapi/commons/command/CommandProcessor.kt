@@ -10,6 +10,7 @@ import com.novaco.luxapi.commons.command.sender.CommandSender
 import com.novaco.luxapi.commons.command.tab.TabHandler
 import com.novaco.luxapi.commons.command.tab.TabRegistry
 import com.novaco.luxapi.commons.player.LuxPlayer
+import com.novaco.luxapi.commons.reflection.DirectInvoker
 import org.slf4j.LoggerFactory
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -74,7 +75,7 @@ class CommandProcessor(private val commandInstance: Any) {
 
                 val remainingArgs = args.drop(1).toTypedArray()
                 val methodArgs = buildArgumentsForMethod(subMethod, sender, remainingArgs)
-                subMethod.invoke(commandInstance, *methodArgs)
+                DirectInvoker.invoke(subMethod, commandInstance, methodArgs)
                 return
             }
 
@@ -82,7 +83,7 @@ class CommandProcessor(private val commandInstance: Any) {
                 ?: mainExecuteMethods.first()
 
             val mainArgs = buildArgumentsForMethod(targetMainMethod, sender, args)
-            targetMainMethod.invoke(commandInstance, *mainArgs)
+            DirectInvoker.invoke(targetMainMethod, commandInstance, mainArgs)
 
         } catch (e: InvocationTargetException) {
             val cause = e.cause

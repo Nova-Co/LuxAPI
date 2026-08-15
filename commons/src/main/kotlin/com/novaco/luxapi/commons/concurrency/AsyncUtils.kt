@@ -58,7 +58,7 @@ object AsyncUtils {
      * Combines multiple futures into one that completes once every one of [futures] has.
      */
     fun allOf(futures: Collection<CompletableFuture<*>>): CompletableFuture<Void> {
-        return CompletableFuture.allOf(*futures.toTypedArray())
+        return DirectAllOf.allOf(futures.toTypedArray())
     }
 
     /**
