@@ -15,6 +15,14 @@ class StringExtensionsTest {
     }
 
     @Test
+    fun `test stray ampersand is left untouched`() {
+        val rawText = "Fish & Chips"
+        val coloredText = rawText.colorize()
+
+        assertEquals("Fish & Chips", coloredText, "An '&' not followed by a valid format code must not be converted")
+    }
+
+    @Test
     fun `test strip colors`() {
         val coloredText = "§cWarning! §ePay attention."
         // Assuming stripColors() removes the formatting

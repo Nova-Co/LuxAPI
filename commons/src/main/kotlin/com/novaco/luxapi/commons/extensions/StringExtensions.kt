@@ -9,10 +9,17 @@ import java.util.regex.Pattern
 
 private val HEX_PATTERN = Pattern.compile("&#([A-Fa-f0-9]{6})")
 private val SECTION_FORMAT_PATTERN = Pattern.compile("(?i)§[0-9A-FK-ORX]")
+private val AMPERSAND_CODE_PATTERN = Pattern.compile("(?i)&([0-9A-FK-ORX])")
 
 /**
  * Translates legacy ampersand color codes (e.g., &a, &l) into Minecraft's
  * internal section symbol format (§a, §l). Also supports hex codes (&#RRGGBB).
+ *
+ * Only an `&` immediately followed by a recognized format character is converted —
+ * validated and transformed in the same pass (CERT IDS11-J) — so a stray `&` (e.g. "Fish
+ * & Chips") is left untouched instead of silently becoming an unrecognized `§` sequence,
+ * and no caller can be tricked into validating the pre-image while displaying the transformed
+ * (potentially code-bearing) result.
  *
  * @return The color-translated string.
  */
@@ -32,7 +39,7 @@ fun String.colorize(): String {
     matcher.appendTail(buffer)
     text = buffer.toString()
 
-    return text.replace("&", "§")
+    return AMPERSAND_CODE_PATTERN.matcher(text).replaceAll("§$1")
 }
 
 /**
