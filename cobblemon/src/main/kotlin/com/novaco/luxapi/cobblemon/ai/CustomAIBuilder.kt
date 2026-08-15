@@ -46,10 +46,10 @@ class CustomAIBuilder {
      */
     fun build(entity: LivingEntity, context: BehaviourConfigurationContext): BehaviorControl<in LivingEntity>? {
         if (requiredMemories.isNotEmpty()) {
-            context.addMemories(*requiredMemories.toTypedArray())
+            context.addMemories(requiredMemories)
         }
         if (requiredSensors.isNotEmpty()) {
-            context.addSensors(*requiredSensors.toTypedArray())
+            context.addSensors(requiredSensors)
         }
         return taskFactory?.invoke(entity, context)
     }
