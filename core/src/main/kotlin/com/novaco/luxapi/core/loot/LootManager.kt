@@ -5,31 +5,38 @@ import net.minecraft.world.item.ItemStack
 import org.slf4j.LoggerFactory
 
 /**
- * Centralized manager for handling reward distributions.
- * Provides safe item delivery and customizable loot tables via string IDs.
+ * Centralized registry of weighted [LootTable]s, plus safe item delivery.
  */
 object LootManager {
 
     private val logger = LoggerFactory.getLogger(LootManager::class.java)
-    private val lootTables = mutableMapOf<String, (List<ServerPlayer>) -> Unit>()
+    private val tables = mutableMapOf<String, LootTable>()
 
     /**
-     * Registers a custom loot distribution logic under a specific ID.
+     * Registers a loot table under a specific ID, overwriting any existing table with that ID.
      */
-    fun registerLoot(lootId: String, distributionLogic: (List<ServerPlayer>) -> Unit) {
-        lootTables[lootId] = distributionLogic
+    fun registerTable(lootId: String, table: LootTable) {
+        tables[lootId] = table
     }
 
     /**
-     * Executes the distribution logic for a specific loot ID.
+     * Returns the loot table registered under [lootId], or null if none is registered.
+     */
+    fun getTable(lootId: String): LootTable? = tables[lootId]
+
+    /**
+     * Rolls the table registered under [lootId] once per player and safely delivers the result.
+     * No-ops with a warning if [lootId] isn't registered.
      */
     fun distribute(lootId: String, players: List<ServerPlayer>) {
-        val logic = lootTables[lootId]
-        if (logic == null) {
+        val table = tables[lootId]
+        if (table == null) {
             logger.warn("LootManager.distribute() called with unregistered lootId '{}' — no-op.", lootId)
             return
         }
-        logic.invoke(players)
+        players.forEach { player ->
+            table.roll()?.let { safeGiveItem(player, it) }
+        }
     }
 
     /**

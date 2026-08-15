@@ -3,6 +3,11 @@ package com.novaco.luxapi.core.effect
 import net.minecraft.core.particles.ParticleOptions
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.phys.Vec3
+import kotlin.math.PI
+import kotlin.math.acos
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * A fluent builder for configuring and spawning particle effects.
@@ -78,5 +83,65 @@ class ParticleBuilder(private val particle: ParticleOptions) {
      */
     fun spawn(level: ServerLevel, position: Vec3) {
         spawn(level, position.x, position.y, position.z)
+    }
+
+    /**
+     * Spawns the configured particles once at each of the given points.
+     * Pairs with the shape helpers in the companion object (line, circle, sphere, helix).
+     */
+    fun spawnAlong(level: ServerLevel, points: List<Vec3>) {
+        points.forEach { spawn(level, it) }
+    }
+
+    companion object {
+
+        /**
+         * Generates evenly spaced points along a straight line between two positions.
+         */
+        fun line(start: Vec3, end: Vec3, points: Int): List<Vec3> {
+            if (points < 2) return listOf(start)
+            return (0 until points).map { i ->
+                val t = i.toDouble() / (points - 1)
+                start.lerp(end, t)
+            }
+        }
+
+        /**
+         * Generates points around a horizontal circle centered on [center].
+         */
+        fun circle(center: Vec3, radius: Double, points: Int): List<Vec3> {
+            if (points < 1) return emptyList()
+            return (0 until points).map { i ->
+                val angle = 2.0 * PI * i / points
+                center.add(cos(angle) * radius, 0.0, sin(angle) * radius)
+            }
+        }
+
+        /**
+         * Generates roughly evenly-distributed points across the surface of a sphere
+         * using a Fibonacci sphere distribution.
+         */
+        fun sphere(center: Vec3, radius: Double, points: Int): List<Vec3> {
+            if (points < 1) return emptyList()
+            val goldenAngle = PI * (3.0 - sqrt(5.0))
+            return (0 until points).map { i ->
+                val y = 1.0 - (i.toDouble() / (points - 1).coerceAtLeast(1)) * 2.0
+                val radiusAtY = sqrt((1.0 - y * y).coerceAtLeast(0.0))
+                val theta = goldenAngle * i
+                center.add(cos(theta) * radiusAtY * radius, y * radius, sin(theta) * radiusAtY * radius)
+            }
+        }
+
+        /**
+         * Generates points along a vertical spiral (helix) rising from [center].
+         */
+        fun helix(center: Vec3, radius: Double, height: Double, turns: Double, points: Int): List<Vec3> {
+            if (points < 1) return emptyList()
+            return (0 until points).map { i ->
+                val t = i.toDouble() / points
+                val angle = 2.0 * PI * turns * t
+                center.add(cos(angle) * radius, height * t, sin(angle) * radius)
+            }
+        }
     }
 }
