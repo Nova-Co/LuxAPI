@@ -1,8 +1,6 @@
 package com.novaco.luxapi.cobblemon
 
 import com.novaco.luxapi.cobblemon.boss.BossDefeatListener
-import com.novaco.luxapi.cobblemon.economy.LuxPokemonEconomy
-import com.novaco.luxapi.cobblemon.economy.PokemonPriceCalculator
 import com.novaco.luxapi.cobblemon.listener.CobblemonEventHandler
 import com.novaco.luxapi.cobblemon.listener.UncatchableManager
 import com.novaco.luxapi.cobblemon.manager.NPCInteractionManager
@@ -42,7 +40,7 @@ object LuxCobblemon {
         BossDefeatListener.register()
         UncatchableManager.register()
 
-        // Dynamic check for optional ecosystems (e.g., Database or Economy)
+        // Dynamic check for optional ecosystems (e.g., Database)
         checkOptionalModules()
 
         isInitialized = true
@@ -59,14 +57,6 @@ object LuxCobblemon {
             println("[LuxAPI] Optional database module detected and verified successfully.")
         } catch (e: ClassNotFoundException) {
             println("[LuxAPI] Optional database module not found. Skipping dynamic database features safely.")
-        }
-
-        try {
-            Class.forName("com.novaco.luxapi.economy.LuxEC")
-            LuxPokemonEconomy.registerAppraiser(PokemonPriceCalculator)
-            println("[LuxAPI] Optional economy module detected and verified successfully.")
-        } catch (e: ClassNotFoundException) {
-            println("[LuxAPI] Optional economy module not found. Skipping dynamic economic features safely.")
         }
     }
 }

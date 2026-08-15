@@ -5,9 +5,10 @@ import com.novaco.luxapi.cobblemon.pokemon.getIVPercentage
 import java.util.UUID
 
 /**
- * Default implementation of the pricing rules used by Nova Co. network.
- * Act as a built-in appraiser inside the LuxPokemonEconomy ecosystem.
- * Provided by Nova Co. Core AI Project Companion.
+ * An example [PokemonAppraiser] implementation — not registered by default. A consumer opts in
+ * explicitly via `LuxPokemonEconomy.registerAppraiser(PokemonPriceCalculator)` if this formula
+ * (or a copy adapted to their own server) fits their needs; [LuxPokemonEconomy] itself ships with
+ * no active appraiser out of the box.
  */
 object PokemonPriceCalculator : PokemonAppraiser {
 
@@ -63,23 +64,5 @@ object PokemonPriceCalculator : PokemonAppraiser {
         }
 
         return finalPrice
-    }
-
-    /**
-     * Dispatches the evaluated asset worth cleanly using the centralized economy pipelines.
-     */
-    fun processTransactionToLuxEC(playerUuid: UUID, pokemon: Pokemon, basePrice: Double = 1000.0) {
-        // Pipes valuation directly through the customizable economy framework instead of hardcoded loop
-        val totalWorth = LuxPokemonEconomy.evaluatePokemonWorth(playerUuid, pokemon, basePrice)
-        try {
-            val luxEcClass = Class.forName("com.novaco.luxapi.economy.LuxEC")
-            val depositMethod = luxEcClass.getMethod("depositPlayerBalance", UUID::class.java, Double::class.java)
-            depositMethod.invoke(null, playerUuid, totalWorth)
-            println("[LuxAPI] Dispatched transaction worth $totalWorth directly over to LuxEC pipeline.")
-        } catch (cnfe: ClassNotFoundException) {
-            println("[LuxAPI | Economy Alert] LuxEC module is absent. Monetary value calculation skipped from banking.")
-        } catch (t: Throwable) {
-            println("[LuxAPI] Failed to complete dynamic economy dispatch loop: ${t.message}")
-        }
     }
 }
