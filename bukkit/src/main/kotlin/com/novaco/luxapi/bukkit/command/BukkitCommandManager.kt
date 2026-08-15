@@ -40,7 +40,7 @@ class BukkitCommandManager(private val plugin: Plugin) : CommandManager {
      * This enables runtime registration of commands without server restarts.
      *
      * @return The active [SimpleCommandMap] used by the Bukkit server.
-     * @throws RuntimeException If the reflection operation fails to find or access the command map.
+     * @throws CommandMapExtractionException If the reflection operation fails to find or access the command map.
      */
     private fun getBukkitCommandMap(): SimpleCommandMap {
         try {
@@ -48,8 +48,10 @@ class BukkitCommandManager(private val plugin: Plugin) : CommandManager {
             val commandMapField: Field = server.javaClass.getDeclaredField("commandMap")
             commandMapField.isAccessible = true
             return commandMapField.get(server) as SimpleCommandMap
-        } catch (e: Exception) {
-            throw RuntimeException("Failed to extract Bukkit CommandMap via reflection", e)
+        } catch (e: ReflectiveOperationException) {
+            throw CommandMapExtractionException("Failed to extract Bukkit CommandMap via reflection", e)
+        } catch (e: ClassCastException) {
+            throw CommandMapExtractionException("Failed to extract Bukkit CommandMap via reflection", e)
         }
     }
 

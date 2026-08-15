@@ -73,7 +73,10 @@ class BossPhaseTaskWrapper(
             val createMethod = taskClass.methods.first { it.name == "create" }
 
             createMethod.invoke(null, speedExpr, distanceExpr)
-        } catch (t: Throwable) {
+        } catch (t: ReflectiveOperationException) {
+            println("[LuxAPI | AI Error] Failed to safely compile MoveToAttackTargetTask: ${t.message}")
+            null
+        } catch (t: NoSuchElementException) {
             println("[LuxAPI | AI Error] Failed to safely compile MoveToAttackTargetTask: ${t.message}")
             null
         }
@@ -95,7 +98,10 @@ class BossPhaseTaskWrapper(
             val createMethod = taskClass.methods.first { it.name == "create" }
 
             createMethod.invoke(null, rangeExpr, cooldownExpr)
-        } catch (t: Throwable) {
+        } catch (t: ReflectiveOperationException) {
+            println("[LuxAPI | AI Error] Failed to safely compile MeleeAttackTask: ${t.message}")
+            null
+        } catch (t: NoSuchElementException) {
             println("[LuxAPI | AI Error] Failed to safely compile MeleeAttackTask: ${t.message}")
             null
         }

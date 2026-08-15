@@ -33,7 +33,7 @@ object NeoForgeInitScanner {
                     val clazz = Class.forName(classData.clazz.className)
                     @Suppress("UNCHECKED_CAST")
                     clazz.getDeclaredConstructor().newInstance() as InitializationTask
-                } catch (e: Exception) {
+                } catch (e: ReflectiveOperationException) {
                     logger.error("Failed to load LuxAPI init task class ${classData.clazz.className}", e)
                     null
                 }

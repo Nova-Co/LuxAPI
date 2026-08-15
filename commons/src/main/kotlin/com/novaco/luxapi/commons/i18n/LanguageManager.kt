@@ -1,11 +1,13 @@
 package com.novaco.luxapi.commons.i18n
 
 import com.google.gson.Gson
+import com.google.gson.JsonParseException
 import com.google.gson.reflect.TypeToken
 import com.novaco.luxapi.commons.chat.placeholder.PlaceholderManager
 import com.novaco.luxapi.commons.player.LuxPlayer
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.IOException
 
 /**
  * Centralized registry for Internationalization (i18n).
@@ -39,7 +41,9 @@ object LanguageManager {
                 val type = object : TypeToken<Map<String, String>>() {}.type
                 val map: Map<String, String> = gson.fromJson(file.readText(Charsets.UTF_8), type)
                 translations[langCode] = map
-            } catch (e: Exception) {
+            } catch (e: JsonParseException) {
+                logger.error("Failed to load language file: {}", file.name, e)
+            } catch (e: IOException) {
                 logger.error("Failed to load language file: {}", file.name, e)
             }
         }

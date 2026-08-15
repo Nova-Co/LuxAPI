@@ -13,11 +13,7 @@ import net.minecraft.world.item.Items
  * @param amount The quantity to give.
  */
 fun ServerPlayer.giveItem(itemId: String, amount: Int = 1) {
-    val location = try {
-        ResourceLocation.parse(itemId)
-    } catch (e: Exception) {
-        return
-    }
+    val location = ResourceLocation.tryParse(itemId) ?: return
 
     val itemType = BuiltInRegistries.ITEM.get(location)
 

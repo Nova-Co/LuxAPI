@@ -4,6 +4,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.novaco.luxapi.commons.concurrency.AsyncUtils
 import org.slf4j.LoggerFactory
+import java.io.IOException
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
@@ -105,7 +106,7 @@ class DiscordWebHook(private val webhookUrl: String) {
                 }
 
                 connection.disconnect()
-            } catch (e: Exception) {
+            } catch (e: IOException) {
                 logger.error("Exception occurred while sending Discord Webhook", e)
             }
         }

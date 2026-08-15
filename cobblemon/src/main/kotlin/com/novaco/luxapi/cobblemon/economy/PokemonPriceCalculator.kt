@@ -59,8 +59,10 @@ object PokemonPriceCalculator : PokemonAppraiser {
                 finalPrice *= 1.5
                 println("[LuxAPI | Economy] Applied Scarcity Discovery Weight for ${pokemon.species.name}")
             }
-        } catch (e: Exception) {
+        } catch (e: ReflectiveOperationException) {
             // Soft fallback to prevent system freeze if Pokedex module is detached
+        } catch (e: ClassCastException) {
+            // Soft fallback if the reflected module's shape doesn't match what's expected
         }
 
         return finalPrice

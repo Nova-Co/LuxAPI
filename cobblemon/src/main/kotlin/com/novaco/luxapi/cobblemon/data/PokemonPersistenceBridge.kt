@@ -49,7 +49,7 @@ object PokemonPersistenceBridge {
             } catch (cnfe: ClassNotFoundException) {
                 println("[LuxAPI | Persistence Alert] Core database module missing. Skipping async database flush.")
                 false
-            } catch (t: Throwable) {
+            } catch (t: Exception) {
                 println("[LuxAPI | Critical Error] Dynamic thread pool capture failed storage update pipeline: ${t.message}")
                 false
             }

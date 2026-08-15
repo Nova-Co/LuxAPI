@@ -57,7 +57,7 @@ object AttributeManager {
                 playerMap[clazz] = instance
                 instance.loadAsync()
 
-            } catch (e: Exception) {
+            } catch (e: ReflectiveOperationException) {
                 println("[LuxAPI] Failed to initialize attribute ${clazz.simpleName} for player $uuid.")
                 e.printStackTrace()
             }

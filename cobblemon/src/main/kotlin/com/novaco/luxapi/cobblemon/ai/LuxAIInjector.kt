@@ -31,7 +31,7 @@ object LuxAIInjector {
                 entity.level().dayTime(),
                 entity.level().gameTime
             )
-        } catch (t: Throwable) {
+        } catch (t: Exception) {
             println("[LuxAPI | AI Brain Layer] Aborted schedule ticketing update context safely: ${t.message}")
         }
     }

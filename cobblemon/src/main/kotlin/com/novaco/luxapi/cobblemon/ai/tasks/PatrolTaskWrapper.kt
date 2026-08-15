@@ -77,7 +77,7 @@ class PatrolTaskWrapper(
                             // Instantiate data contract with default disengage conditions
                             val defaultDisengageAction: (net.minecraft.world.entity.Entity) -> Unit = {}
                             constructor.newInstance(targetExpressionObj, -1, defaultDisengageAction)
-                        } catch (t: Throwable) {
+                        } catch (t: ReflectiveOperationException) {
                             println("[LuxAPI | AI Reflection Alert] Failed to construct CobblemonAttackTargetData safely: ${t.message}")
                             null
                         }
