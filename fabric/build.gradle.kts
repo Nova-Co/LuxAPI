@@ -85,3 +85,16 @@ tasks.test {
         events("passed", "skipped", "failed")
     }
 }
+
+val officialJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("official")
+    from(sourceSets.main.get().output) {
+        exclude("fabric.mod.json")
+    }
+}
+
+afterEvaluate {
+    publishing.publications.named<MavenPublication>("maven") {
+        artifact(officialJar)
+    }
+}

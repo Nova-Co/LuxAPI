@@ -1,17 +1,13 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
     id("net.neoforged.moddev") version "1.0.17"
-    id("com.gradleup.shadow")
 }
 
 base {
     archivesName.set("LuxAPI-NeoForge-1.21.1")
 }
-
-val shadeFiles by configurations.creating
 
 neoForge {
     version = "21.1.30"
@@ -49,10 +45,6 @@ dependencies {
     implementation(project(":cobblemon"))
     implementation("thedarkcolour:kotlinforforge-neoforge:5.0.1")
 
-    shadeFiles(project(":commons")) {
-        isTransitive = false
-    }
-
     // --- Unit Testing Framework ---
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
@@ -71,21 +63,18 @@ tasks.withType<JavaCompile> {
     options.release.set(21)
 }
 
-// FIXED: Upgraded from the deprecated kotlinOptions to the new compilerOptions DSL
 tasks.withType<KotlinCompile> {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 }
 
-tasks.withType<ShadowJar> {
-    isZip64 = true
-    configurations = listOf(shadeFiles)
-    archiveClassifier.set("")
-}
-
 java {
     withSourcesJar()
+}
+
+tasks.named("shadowJar") {
+    enabled = false
 }
 
 tasks.test {
