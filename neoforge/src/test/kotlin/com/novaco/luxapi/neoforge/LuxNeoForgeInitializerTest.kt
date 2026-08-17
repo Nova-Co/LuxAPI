@@ -36,13 +36,10 @@ class LuxNeoForgeInitializerTest {
     @Test
     @Disabled("Requires full Cobblemon mod and NeoForge environment to be loaded in the classpath.")
     fun `test neoforge initializer registers core providers and hooks gracefully`() {
-        // 1. Mock the Mod Event Bus provided by NeoForge
-        val mockModBus = mock<IEventBus>()
+        // 1. Execute the main initialization hook
+        val initializer = LuxNeoForgeInitializer()
 
-        // 2. Execute the main initialization hook
-        val initializer = LuxNeoForgeInitializer(mockModBus)
-
-        // 3. Verify Cross-Platform API Providers were successfully injected with NeoForge implementations
+        // 2. Verify Cross-Platform API Providers were successfully injected with NeoForge implementations
         val guiBuilder = LuxAPI.guiProvider?.invoke()
         assertTrue(guiBuilder is NeoForgeGuiBuilder, "GUI Provider must be injected with NeoForgeGuiBuilder.")
 

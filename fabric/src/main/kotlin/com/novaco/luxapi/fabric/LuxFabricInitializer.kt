@@ -21,6 +21,7 @@ import com.novaco.luxapi.fabric.player.FabricPlayerManager
 import com.novaco.luxapi.commons.player.InMemoryPlayerLookupService
 import com.novaco.luxapi.commons.player.PlayerLookupService
 import com.novaco.luxapi.fabric.scheduler.FabricLuxScheduler
+import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
@@ -33,7 +34,7 @@ import org.slf4j.LoggerFactory
 /**
  * The main entry point and initializer for the Fabric platform.
  */
-class LuxFabricInitializer {
+class LuxFabricInitializer : ModInitializer {
 
     companion object {
         const val MOD_ID = "luxapi"
@@ -53,7 +54,7 @@ class LuxFabricInitializer {
         val playerLookupService: PlayerLookupService = InMemoryPlayerLookupService()
     }
 
-    init {
+    override fun onInitialize() {
         logger.info("Initializing LuxAPI for Fabric 1.21.1...")
 
         LuxAPI.init()

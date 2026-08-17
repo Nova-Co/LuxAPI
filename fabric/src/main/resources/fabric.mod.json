@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "luxapi",
+  "version": "${version}",
+  "name": "LuxAPI",
+  "description": "A core API for Nova Co. mods, providing robust command and config systems.",
+  "authors": [
+    "Nova Co."
+  ],
+  "contact": {
+    "homepage": "https://github.com/Nova-Co/LuxAPI"
+  },
+  "license": "MIT",
+  "icon": "assets/luxapi/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      {
+        "adapter": "kotlin",
+        "value": "com.novaco.luxapi.fabric.LuxFabricInitializer"
+      }
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.2",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-language-kotlin": ">=1.12.1+kotlin.2.0.20"
+  }
+}
