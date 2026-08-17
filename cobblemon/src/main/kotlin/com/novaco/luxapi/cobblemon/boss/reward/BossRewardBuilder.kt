@@ -12,7 +12,8 @@ class BossRewardPool(
     val minDamageThreshold: Double,
     val exactRankRewards: Map<Int, (ServerPlayer) -> Unit>,
     val rangeRankRewards: Map<IntRange, (ServerPlayer) -> Unit>,
-    val participationReward: ((ServerPlayer) -> Unit)?
+    val participationReward: ((ServerPlayer) -> Unit)?,
+    val autoDistribute: Boolean = true
 ) {
     /**
      * Distributes the rewards to eligible players based on their damage ranking.
@@ -53,6 +54,12 @@ class LuxBossRewardBuilder(private val bossId: String) {
 
     /** The minimum damage a player must deal to be eligible for rewards. */
     var minimumDamageThreshold: Double = 0.0
+
+    /**
+     * When false, the defeat hook will NOT auto-resolve/grant rewards for this pool.
+     * Consumers must call [BossRewardManager.distributeTo] or [BossRewardManager.distributeRaidRewards] manually.
+     */
+    var autoDistribute: Boolean = true
 
     private val exactRankRewards = mutableMapOf<Int, (ServerPlayer) -> Unit>()
     private val rangeRankRewards = mutableMapOf<IntRange, (ServerPlayer) -> Unit>()
@@ -96,7 +103,8 @@ class LuxBossRewardBuilder(private val bossId: String) {
             minDamageThreshold = minimumDamageThreshold,
             exactRankRewards = exactRankRewards.toMap(),
             rangeRankRewards = rangeRankRewards.toMap(),
-            participationReward = participationRewardAction
+            participationReward = participationRewardAction,
+            autoDistribute = autoDistribute
         )
     }
 }
