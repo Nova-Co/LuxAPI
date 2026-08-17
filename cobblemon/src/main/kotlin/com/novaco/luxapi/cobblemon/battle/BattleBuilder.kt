@@ -61,8 +61,14 @@ class LuxBattleBuilder(private val initiator: LuxPlayer) {
             Cobblemon.battleRegistry.startBattle(format, p1Side, p2Side).ifSuccessful { battle ->
                 activeBattle = battle
             }
-        } catch (e: Exception) {
-            println("[LuxAPI] Critical error intercepted during Wild Battle Initialization: ${e.message}")
+        } catch (e: IllegalStateException) {
+            println("[LuxAPI] Wild battle aborted - Entity or Player state invalid (already in battle/despawned): ${e.message}")
+        } catch (e: IllegalArgumentException) {
+            println("[LuxAPI] Wild battle aborted - Invalid battle format or actor configuration: ${e.message}")
+        } catch (e: NullPointerException) {
+            println("[LuxAPI] Wild battle aborted - Target entity/pokemon data missing or null: ${e.message}")
+        } catch (e: ConcurrentModificationException) {
+            println("[LuxAPI] Wild battle aborted - Concurrency conflict in BattleRegistry: ${e.message}")
         }
 
         return activeBattle
@@ -86,8 +92,14 @@ class LuxBattleBuilder(private val initiator: LuxPlayer) {
             Cobblemon.battleRegistry.startBattle(format, p1Side, p2Side).ifSuccessful { battle ->
                 activeBattle = battle
             }
-        } catch (e: Exception) {
-            println("[LuxAPI] Critical error intercepted during PvP Battle Initialization: ${e.message}")
+        } catch (e: IllegalStateException) {
+            println("[LuxAPI] PvP battle aborted - One of the players is in an invalid state or already battling: ${e.message}")
+        } catch (e: IllegalArgumentException) {
+            println("[LuxAPI] PvP battle aborted - Invalid battle configuration: ${e.message}")
+        } catch (e: NullPointerException) {
+            println("[LuxAPI] PvP battle aborted - Player session or party data was null: ${e.message}")
+        } catch (e: ConcurrentModificationException) {
+            println("[LuxAPI] PvP battle aborted - Registry conflict during battle registration: ${e.message}")
         }
 
         return activeBattle
@@ -122,9 +134,18 @@ class LuxBattleBuilder(private val initiator: LuxPlayer) {
                 val errorMsg = error.errors.joinToString(", ") { it.javaClass.simpleName }
                 serverPlayer.sendSystemMessage(Component.literal("§cFailed to start battle: $errorMsg"))
             }
-        } catch (e: Exception) {
-            println("[LuxAPI] Critical error intercepted during NPC Battle Initialization: ${e.message}")
-            serverPlayer.sendSystemMessage(Component.literal("§cAn internal engine error blocked this combat encounter."))
+        } catch (e: IllegalStateException) {
+            println("[LuxAPI] NPC battle aborted - NPC or Player in invalid state: ${e.message}")
+            serverPlayer.sendSystemMessage(Component.literal("§cThis NPC is currently unavailable for battle."))
+        } catch (e: IllegalArgumentException) {
+            println("[LuxAPI] NPC battle aborted - Format or configuration mismatch: ${e.message}")
+            serverPlayer.sendSystemMessage(Component.literal("§cBattle configuration error."))
+        } catch (e: NullPointerException) {
+            println("[LuxAPI] NPC battle aborted - NPC party/data was null: ${e.message}")
+            serverPlayer.sendSystemMessage(Component.literal("§cAn internal data error prevented this NPC battle."))
+        } catch (e: ConcurrentModificationException) {
+            println("[LuxAPI] NPC battle aborted - BattleRegistry concurrent modification: ${e.message}")
+            serverPlayer.sendSystemMessage(Component.literal("§cServer busy, please try again."))
         }
 
         return activeBattle

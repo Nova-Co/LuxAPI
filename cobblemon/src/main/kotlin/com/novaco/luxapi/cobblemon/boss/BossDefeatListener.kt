@@ -77,7 +77,7 @@ object BossDefeatListener {
         defeatHooks.forEach { hook ->
             try {
                 hook(bossEntity, players, battle)
-            } catch (e: Exception) {
+            } catch (e: RuntimeException) {
                 e.printStackTrace()
             }
         }

@@ -40,7 +40,7 @@ object ComponentRegistry {
         }
         try {
             handler(event)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             logger.error("Unhandled exception while handling button '{}'", event.componentId, e)
             event.reply("An internal error occurred while handling this interaction.").setEphemeral(true).queue()
         }
@@ -58,7 +58,7 @@ object ComponentRegistry {
         }
         try {
             handler(event)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             logger.error("Unhandled exception while handling modal '{}'", event.modalId, e)
             event.reply("An internal error occurred while handling this interaction.").setEphemeral(true).queue()
         }

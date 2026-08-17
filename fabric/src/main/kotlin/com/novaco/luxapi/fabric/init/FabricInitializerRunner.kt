@@ -35,7 +35,7 @@ object FabricInitializerRunner {
             try {
                 container.entrypoint.run()
                 succeeded++
-            } catch (e: Exception) {
+            } catch (e: RuntimeException) {
                 val modId = container.provider.metadata.id
                 LuxFabricInitLogger.logger.error("LuxAPI init task declared by mod '$modId' failed", e)
             }

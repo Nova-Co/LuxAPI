@@ -22,7 +22,7 @@ object InitializationRunner {
             try {
                 task.run()
                 succeeded++
-            } catch (e: Exception) {
+            } catch (e: RuntimeException) {
                 logger.error("InitializationTask '{}' threw during startup", task::class.simpleName, e)
             }
         }

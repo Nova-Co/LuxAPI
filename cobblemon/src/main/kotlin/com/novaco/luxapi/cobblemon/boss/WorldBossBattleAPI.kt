@@ -108,7 +108,16 @@ object WorldBossBattleAPI {
                 CobblemonNetwork.sendPacketToPlayers(Collections.singletonList(player), initPacket)
 
                 onFeedback.invoke(player, BossJoinStatus.SUCCESS)
-            } catch (e: Exception) {
+            } catch (e: IllegalStateException) {
+                e.printStackTrace()
+                onFeedback.invoke(player, BossJoinStatus.ERROR)
+            } catch (e: IllegalArgumentException) {
+                e.printStackTrace()
+                onFeedback.invoke(player, BossJoinStatus.ERROR)
+            } catch (e: NullPointerException) {
+                e.printStackTrace()
+                onFeedback.invoke(player, BossJoinStatus.ERROR)
+            } catch (e: ConcurrentModificationException) {
                 e.printStackTrace()
                 onFeedback.invoke(player, BossJoinStatus.ERROR)
             }

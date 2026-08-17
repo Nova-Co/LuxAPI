@@ -58,7 +58,10 @@ class DiscordCommandProcessor(private val commandInstance: Any) {
                 logger.error("Unhandled exception while executing Discord command '{}'", commandInfo.name, cause)
                 event.reply("An internal error occurred while executing this command.").setEphemeral(true).queue()
             }
-        } catch (e: Exception) {
+        } catch (e: IllegalAccessException) {
+            logger.error("Unexpected exception while executing Discord command '{}'", commandInfo.name, e)
+            event.reply("An internal error occurred while executing this command.").setEphemeral(true).queue()
+        } catch (e: IllegalArgumentException) {
             logger.error("Unexpected exception while executing Discord command '{}'", commandInfo.name, e)
             event.reply("An internal error occurred while executing this command.").setEphemeral(true).queue()
         }

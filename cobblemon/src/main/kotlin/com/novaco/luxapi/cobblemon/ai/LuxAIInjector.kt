@@ -31,8 +31,8 @@ object LuxAIInjector {
                 entity.level().dayTime(),
                 entity.level().gameTime
             )
-        } catch (t: Exception) {
-            println("[LuxAPI | AI Brain Layer] Aborted schedule ticketing update context safely: ${t.message}")
+        } catch (e: NullPointerException) {
+            println("[LuxAPI] Failed to update brain for entity #\${entity.id}: world is null or unloaded.")
         }
     }
 }

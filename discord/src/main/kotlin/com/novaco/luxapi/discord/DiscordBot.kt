@@ -6,6 +6,8 @@ import com.novaco.luxapi.discord.event.DiscordEventBridge
 import com.novaco.luxapi.discord.listener.InteractionListener
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
+import net.dv8tion.jda.api.exceptions.ErrorResponseException
+import net.dv8tion.jda.api.exceptions.InvalidTokenException
 import org.slf4j.LoggerFactory
 
 /**
@@ -41,8 +43,21 @@ class DiscordBot(private val config: DiscordConfig, private val commandManager: 
             jda = connected
             commandManager.updateCommands(connected, config.guildId)
             Result.success(connected)
-        } catch (e: Exception) {
-            logger.error("Failed to start the Discord bot", e)
+        } catch (e: InvalidTokenException) {
+            logger.error("Discord bot login failed: Invalid or missing bot token", e)
+            Result.failure(e)
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt() // คืนสถานะ interrupted flag ให้ thread
+            logger.error("Discord bot startup was interrupted while waiting for READY state", e)
+            Result.failure(e)
+        } catch (e: ErrorResponseException) {
+            logger.error("Discord REST error occurred during command registration (Error code: ${e.errorCode})", e)
+            Result.failure(e)
+        } catch (e: IllegalArgumentException) {
+            logger.error("Invalid Discord configuration parameter (Token, Guild ID, or Intents)", e)
+            Result.failure(e)
+        } catch (e: IllegalStateException) {
+            logger.error("Discord bot entered an illegal state during startup", e)
             Result.failure(e)
         }
     }

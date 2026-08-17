@@ -1,6 +1,7 @@
 package com.novaco.luxapi.commons.event
 
 import org.slf4j.LoggerFactory
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -49,7 +50,11 @@ object EventBus {
         listeners[eventClass]?.forEach { (instance, method) ->
             try {
                 method.invoke(instance, event)
-            } catch (e: Exception) {
+            } catch (e: InvocationTargetException) {
+                logger.error("Listener '{}.{}' threw while handling {}", instance::class.simpleName, method.name, eventClass.simpleName, e)
+            } catch (e: IllegalAccessException) {
+                logger.error("Listener '{}.{}' threw while handling {}", instance::class.simpleName, method.name, eventClass.simpleName, e)
+            } catch (e: IllegalArgumentException) {
                 logger.error("Listener '{}.{}' threw while handling {}", instance::class.simpleName, method.name, eventClass.simpleName, e)
             }
         }

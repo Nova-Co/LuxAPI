@@ -96,7 +96,7 @@ class HikariDatabaseProvider(
                     query(connection)
                 }
                 future.complete(null)
-            } catch (e: Exception) {
+            } catch (e: java.sql.SQLException) {
                 logger.error("An error occurred during an asynchronous database operation", e)
                 future.completeExceptionally(e)
             }

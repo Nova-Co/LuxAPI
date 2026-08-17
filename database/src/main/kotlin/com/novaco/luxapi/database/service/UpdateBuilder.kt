@@ -2,9 +2,12 @@ package com.novaco.luxapi.database.service
 
 import com.novaco.luxapi.commons.LuxAPI
 import org.slf4j.LoggerFactory
+import java.io.IOException
 import java.sql.SQLException
 import java.sql.Statement
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeoutException
 
 /**
  * Fluent, immutable builder for INSERT/UPDATE/DELETE statements against a [DatabaseService].
@@ -58,7 +61,17 @@ class UpdateBuilder internal constructor(
         LuxAPI.getScheduler().runAsync {
             try {
                 future.complete(execute())
-            } catch (e: Exception) {
+            } catch (e: SQLException) {
+                future.completeExceptionally(e)
+            } catch (e: IOException) {
+                future.completeExceptionally(e)
+            } catch (e: TimeoutException) {
+                future.completeExceptionally(e)
+            } catch (e: CancellationException) {
+                future.completeExceptionally(e)
+            } catch (e: IllegalStateException) {
+                future.completeExceptionally(e)
+            } catch (e: IllegalArgumentException) {
                 future.completeExceptionally(e)
             }
         }
@@ -72,7 +85,17 @@ class UpdateBuilder internal constructor(
         LuxAPI.getScheduler().runAsync {
             try {
                 future.complete(executeInsert())
-            } catch (e: Exception) {
+            } catch (e: SQLException) {
+                future.completeExceptionally(e)
+            } catch (e: IOException) {
+                future.completeExceptionally(e)
+            } catch (e: TimeoutException) {
+                future.completeExceptionally(e)
+            } catch (e: CancellationException) {
+                future.completeExceptionally(e)
+            } catch (e: IllegalStateException) {
+                future.completeExceptionally(e)
+            } catch (e: IllegalArgumentException) {
                 future.completeExceptionally(e)
             }
         }

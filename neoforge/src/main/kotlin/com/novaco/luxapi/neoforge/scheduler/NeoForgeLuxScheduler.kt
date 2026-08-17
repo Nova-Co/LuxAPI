@@ -62,7 +62,7 @@ class NeoForgeLuxScheduler : LuxScheduler {
             } else {
                 try {
                     data.runnable.run()
-                } catch (e: Exception) {
+                } catch (e: RuntimeException) {
                     e.printStackTrace()
                 }
             }

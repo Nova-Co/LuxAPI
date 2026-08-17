@@ -23,7 +23,7 @@ class InitializationRunnerTest {
     fun `test one task throwing does not stop the others from running`() {
         var ranAfterFailure = false
         val tasks = listOf(
-            InitializationTask { throw RuntimeException("boom") },
+            InitializationTask { throw IllegalStateException("boom") },
             InitializationTask { ranAfterFailure = true }
         )
 

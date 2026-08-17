@@ -209,7 +209,9 @@ class NPCBuilder(private val spawner: LuxPlayer) {
                 CompletableFuture.runAsync {
                     try {
                         npcEntity.loadTextureFromGameProfileName(username)
-                    } catch (e: Exception) {
+                    } catch (e: java.io.IOException) {
+                        println("[LuxAPI] Failed to load skin profile for $username safely.")
+                    } catch (e: IllegalStateException) {
                         println("[LuxAPI] Failed to load skin profile for $username safely.")
                     }
                 }

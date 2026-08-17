@@ -95,7 +95,13 @@ class CommandProcessor(private val commandInstance: Any) {
             }
         } catch (e: CommandParseException) {
             sender.sendMessage(e.errorMessage)
-        } catch (e: Exception) {
+        } catch (e: IllegalAccessException) {
+            logger.error("Unexpected exception while executing command '{}'", commandInfo.name, e)
+            sender.sendMessage("§cAn unexpected error occurred.")
+        } catch (e: IllegalStateException) {
+            logger.error("Unexpected exception while executing command '{}'", commandInfo.name, e)
+            sender.sendMessage("§cAn unexpected error occurred.")
+        } catch (e: IllegalArgumentException) {
             logger.error("Unexpected exception while executing command '{}'", commandInfo.name, e)
             sender.sendMessage("§cAn unexpected error occurred.")
         }

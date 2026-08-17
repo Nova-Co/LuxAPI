@@ -37,29 +37,37 @@ object BattleManager {
         try {
             // Execution context bounded by safety shell
             turnAction.invoke()
-        } catch (t: Throwable) {
-            val battleId = battle.battleId
+        } catch (t: RuntimeException) {
+            handleTurnFailure(battle, t)
+        }
+    }
 
-            println("[LuxAPI | Critical Alert] Turn engine execution error intercepted!")
-            println("[LuxAPI | Context] Battle ID: $battleId - Failure: ${t.stackTraceToString()}")
+    private fun handleTurnFailure(battle: PokemonBattle, t: Throwable) {
+        val battleId = battle.battleId
 
-            // Recover and terminate the compromised battle state safely to prevent full server crashes
-            try {
-                val alertMessage = Component.literal("§c[LuxAPI] Combat processing collapsed due to an underlying engine exception. Combat aborted safely.")
+        println("[LuxAPI | Critical Alert] Turn engine execution error intercepted!")
+        println("[LuxAPI | Context] Battle ID: $battleId - Failure: ${t.stackTraceToString()}")
 
-                battle.actors.forEach { actor ->
-                    try {
-                        actor.sendMessage(alertMessage)
-                    } catch (msgEx: Exception) {
-                        println("[LuxAPI] Failed to dispatch error message to actor ${actor.uuid}: ${msgEx.message}")
-                    }
+        // Recover and terminate the compromised battle state safely to prevent full server crashes
+        try {
+            val alertMessage = Component.literal("§c[LuxAPI] Combat processing collapsed due to an underlying engine exception. Combat aborted safely.")
+
+            battle.actors.forEach { actor ->
+                try {
+                    actor.sendMessage(alertMessage)
+                } catch (msgEx: NullPointerException) {
+                    println("[LuxAPI] Failed to dispatch error message to actor ${actor.uuid}: ${msgEx.message}")
+                } catch (msgEx: IllegalStateException) {
+                    println("[LuxAPI] Failed to dispatch error message to actor ${actor.uuid}: ${msgEx.message}")
                 }
-
-                Cobblemon.battleRegistry.closeBattle(battle)
-                println("[LuxAPI] Compromised combat session closed out successfully.")
-            } catch (inner: Exception) {
-                println("[LuxAPI] Secondary recovery failure: ${inner.message}")
             }
+
+            Cobblemon.battleRegistry.closeBattle(battle)
+            println("[LuxAPI] Compromised combat session closed out successfully.")
+        } catch (inner: IllegalStateException) {
+            println("[LuxAPI] Secondary recovery failure - battle already terminated or in invalid state: ${inner.message}")
+        } catch (inner: NullPointerException) {
+            println("[LuxAPI] Secondary recovery failure - missing actor or battle reference: ${inner.message}")
         }
     }
 }

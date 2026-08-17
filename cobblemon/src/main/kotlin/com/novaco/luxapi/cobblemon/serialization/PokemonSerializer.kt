@@ -50,7 +50,19 @@ object PokemonSerializer {
             pokemon.loadFromNBT(registryAccess, tag)
 
             pokemon
-        } catch (e: Exception) {
+        } catch (e: IllegalArgumentException) {
+            System.err.println("[LuxAPI | Core Engine Error] Failed to reconstruct Pokemon from payload array.")
+            e.printStackTrace()
+            null
+        } catch (e: java.io.IOException) {
+            System.err.println("[LuxAPI | Core Engine Error] Failed to reconstruct Pokemon from payload array.")
+            e.printStackTrace()
+            null
+        } catch (e: IllegalStateException) {
+            System.err.println("[LuxAPI | Core Engine Error] Failed to reconstruct Pokemon from payload array.")
+            e.printStackTrace()
+            null
+        } catch (e: NullPointerException) {
             System.err.println("[LuxAPI | Core Engine Error] Failed to reconstruct Pokemon from payload array.")
             e.printStackTrace()
             null

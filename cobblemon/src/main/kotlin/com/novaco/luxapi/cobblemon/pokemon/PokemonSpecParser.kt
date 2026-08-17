@@ -21,8 +21,17 @@ object PokemonSpecParser {
         return try {
             val properties = PokemonProperties.parse(spec)
             properties.create()
-        } catch (e: Exception) {
-            println("[LuxAPI] Intercepted failure while parsing Pokemon Spec string safely: ${e.message}")
+        } catch (e: IllegalArgumentException) {
+            println("[LuxAPI] Invalid Pokemon spec syntax or argument in '$spec': ${e.message}")
+            null
+        } catch (e: IllegalStateException) {
+            println("[LuxAPI] Failed to instantiate Pokemon from spec '$spec' (Missing species or registry error): ${e.message}")
+            null
+        } catch (e: NullPointerException) {
+            println("[LuxAPI] Null reference encountered while resolving species/properties for spec '$spec': ${e.message}")
+            null
+        } catch (e: UnsupportedOperationException) {
+            println("[LuxAPI] Unsupported property configuration for spec '$spec': ${e.message}")
             null
         }
     }
@@ -34,8 +43,12 @@ object PokemonSpecParser {
         try {
             val properties = PokemonProperties.parse(spec)
             return properties.create()
-        } catch (e: Exception) {
-            throw IllegalArgumentException("Failed to parse Pokemon spec: '$spec'. Reason: ${e.message}", e)
+        } catch (e: IllegalArgumentException) {
+            throw IllegalArgumentException("Invalid Pokemon spec syntax: '$spec'. Reason: ${e.message}", e)
+        } catch (e: IllegalStateException) {
+            throw IllegalArgumentException("Pokemon creation rejected for spec: '$spec'. Reason: ${e.message}", e)
+        } catch (e: UnsupportedOperationException) {
+            throw IllegalArgumentException("Unsupported property applied in spec: '$spec'. Reason: ${e.message}", e)
         }
     }
 
@@ -48,8 +61,14 @@ object PokemonSpecParser {
             val properties = PokemonProperties.parse(spec)
             properties.apply(pokemon)
             true
-        } catch (e: Exception) {
-            println("[LuxAPI] Failsafe triggered during runtime Pokemon modification.")
+        } catch (e: IllegalArgumentException) {
+            println("[LuxAPI] Spec parse error during modification for Pokemon ${pokemon.uuid}: ${e.message}")
+            false
+        } catch (e: IllegalStateException) {
+            println("[LuxAPI] Invalid state while applying spec to Pokemon ${pokemon.uuid}: ${e.message}")
+            false
+        } catch (e: UnsupportedOperationException) {
+            println("[LuxAPI] Property mismatch while applying spec to Pokemon ${pokemon.uuid}: ${e.message}")
             false
         }
     }
@@ -65,8 +84,12 @@ object PokemonSpecParser {
     fun appendAspectLabel(pokemon: Pokemon, aspectKey: String) {
         try {
             pokemon.forcedAspects = pokemon.forcedAspects + aspectKey
-        } catch (e: Exception) {
-            println("[LuxAPI] Failed to dynamically push aspect label '$aspectKey' to genetic matrix.")
+        } catch (e: IllegalArgumentException) {
+            println("[LuxAPI] Invalid aspect label key '$aspectKey' for Pokemon ${pokemon.uuid}: ${e.message}")
+        } catch (e: UnsupportedOperationException) {
+            println("[LuxAPI] Mutation blocked on forcedAspects set for Pokemon ${pokemon.uuid}: ${e.message}")
+        } catch (e: IllegalStateException) {
+            println("[LuxAPI] Cannot append aspect to Pokemon ${pokemon.uuid} in current state: ${e.message}")
         }
     }
 
@@ -77,7 +100,9 @@ object PokemonSpecParser {
         return try {
             PokemonProperties.parse(spec)
             true
-        } catch (e: Exception) {
+        } catch (e: IllegalArgumentException) {
+            false
+        } catch (e: IllegalStateException) {
             false
         }
     }

@@ -50,7 +50,19 @@ object PokemonPersistenceBridge {
             } catch (cnfe: ClassNotFoundException) {
                 println("[LuxAPI | Persistence Alert] Core database module missing. Skipping async database flush.")
                 false
-            } catch (t: Exception) {
+            } catch (t: NoSuchMethodException) {
+                println("[LuxAPI | Critical Error] Dynamic thread pool capture failed storage update pipeline: ${t.message}")
+                false
+            } catch (t: InvocationTargetException) {
+                println("[LuxAPI | Critical Error] Dynamic thread pool capture failed storage update pipeline: ${t.message}")
+                false
+            } catch (t: IllegalAccessException) {
+                println("[LuxAPI | Critical Error] Dynamic thread pool capture failed storage update pipeline: ${t.message}")
+                false
+            } catch (t: IllegalArgumentException) {
+                println("[LuxAPI | Critical Error] Dynamic thread pool capture failed storage update pipeline: ${t.message}")
+                false
+            } catch (t: IllegalStateException) {
                 println("[LuxAPI | Critical Error] Dynamic thread pool capture failed storage update pipeline: ${t.message}")
                 false
             }
