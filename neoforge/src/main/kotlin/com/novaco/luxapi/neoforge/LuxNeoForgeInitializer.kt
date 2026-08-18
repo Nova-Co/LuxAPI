@@ -26,7 +26,6 @@ import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.LivingEntity
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.fml.common.Mod
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.event.RegisterCommandsEvent
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent
@@ -38,7 +37,6 @@ import org.slf4j.LoggerFactory
 /**
  * The main entry point and initializer for the NeoForge platform.
  */
-@Mod(LuxNeoForgeInitializer.MOD_ID)
 class LuxNeoForgeInitializer(modEventBus: IEventBus) {
 
     companion object {
