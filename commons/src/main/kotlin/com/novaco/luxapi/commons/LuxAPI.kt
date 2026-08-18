@@ -2,6 +2,7 @@ package com.novaco.luxapi.commons
 
 import com.novaco.luxapi.commons.chat.placeholder.DefaultPlayerProvider
 import com.novaco.luxapi.commons.chat.placeholder.PlaceholderManager
+import com.novaco.luxapi.commons.config.gui.MenuNavigator
 import com.novaco.luxapi.commons.economy.EconomyService
 import com.novaco.luxapi.commons.event.EventBus
 import com.novaco.luxapi.commons.gui.GuiBuilder
@@ -104,6 +105,7 @@ object LuxAPI {
      */
     fun init() {
         EventBus.register(PlayerMetadataManager)
+        EventBus.register(MenuNavigator)
         initDefaultPlaceholders()
     }
 }
