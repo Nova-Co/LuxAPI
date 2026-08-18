@@ -8,9 +8,10 @@ import org.spongepowered.configurate.serialize.TypeSerializer
  * out a [TypeSerializer] that resolves the right implementation from a config section's
  * discriminator field. One registry instance per base type/interface.
  *
- * Replaces the pattern EnvyWare/API hand-rolls separately for each discriminated section
- * (database backends, click actions, display rules) with a single reusable mechanism, backed
- * by [Registry] — the same key/value primitive already used elsewhere in this codebase.
+ * A single reusable mechanism for any discriminated-union config section (database backends,
+ * click actions, display rules, ...) instead of hand-rolling the same id/class lookup separately
+ * for each one — backed by [Registry], the same key/value primitive already used elsewhere in
+ * this codebase.
  *
  * Register instances built with this must still be handed to [ConfigTypeSerializerRegistry]
  * (via [serializer]) before loading any config that references the base type — same requirement
