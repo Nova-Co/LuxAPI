@@ -28,7 +28,6 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.fabric.api.event.player.UseEntityCallback
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionResult
-import net.minecraft.world.entity.LivingEntity
 import org.slf4j.LoggerFactory
 
 /**
@@ -82,8 +81,7 @@ class LuxFabricInitializer : ModInitializer {
         }
 
         ServerLivingEntityEvents.ALLOW_DAMAGE.register { entity, source, amount ->
-            val sourceEntity = source.entity as? LivingEntity
-            BossDamageListener.processDamage(entity, sourceEntity, amount)
+            BossDamageListener.processDamage(entity, source.directEntity, amount)
             true
         }
 

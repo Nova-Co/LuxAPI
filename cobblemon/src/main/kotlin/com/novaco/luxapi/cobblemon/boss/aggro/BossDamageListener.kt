@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import com.novaco.luxapi.cobblemon.boss.minion.BossMinionManager
 import com.novaco.luxapi.core.scoreboard.ScoreboardManager
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.projectile.Projectile
 
@@ -20,10 +21,10 @@ object BossDamageListener {
      * It filters for damage dealt to boss entities and identifies the responsible attacker.
      *
      * @param entity The entity receiving damage.
-     * @param sourceEntity The entity that is the source of the damage.
+     * @param sourceEntity The direct entity that is the source of the damage (e.g. a projectile, not its shooter).
      * @param amount The amount of damage dealt.
      */
-    fun processDamage(entity: LivingEntity, sourceEntity: LivingEntity?, amount: Float) {
+    fun processDamage(entity: LivingEntity, sourceEntity: Entity?, amount: Float) {
         if (entity !is PokemonEntity) return
         if (!entity.tags.contains("lux_is_boss") && !entity.tags.contains("lux_is_world_boss")) return
 
@@ -79,10 +80,10 @@ object BossDamageListener {
      * Resolves the actual player attacker from a damage source.
      * This handles cases where the damage comes from a projectile or a player's Pokemon.
      *
-     * @param sourceEntity The source of the damage (e.g., player, projectile, Pokemon).
+     * @param sourceEntity The direct source of the damage (e.g., player, projectile, Pokemon).
      * @return The ServerPlayer who is the ultimate source of the damage, or null if not determinable.
      */
-    private fun resolveAttacker(sourceEntity: LivingEntity?): ServerPlayer? {
+    private fun resolveAttacker(sourceEntity: Entity?): ServerPlayer? {
         if (sourceEntity is ServerPlayer) return sourceEntity
 
         if (sourceEntity is Projectile) {

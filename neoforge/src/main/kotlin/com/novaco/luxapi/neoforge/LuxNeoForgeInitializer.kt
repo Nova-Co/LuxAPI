@@ -23,7 +23,6 @@ import com.novaco.luxapi.commons.player.PlayerLookupService
 import com.novaco.luxapi.neoforge.scheduler.NeoForgeLuxScheduler
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionResult
-import net.minecraft.world.entity.LivingEntity
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.common.NeoForge
@@ -118,7 +117,7 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
     @SubscribeEvent
     fun onEntityDamaged(event: LivingDamageEvent.Post) {
         val entity = event.entity
-        val sourceEntity = event.source.entity as? LivingEntity
+        val sourceEntity = event.source.directEntity
         val amount = event.newDamage
 
         BossDamageListener.processDamage(entity, sourceEntity, amount)
