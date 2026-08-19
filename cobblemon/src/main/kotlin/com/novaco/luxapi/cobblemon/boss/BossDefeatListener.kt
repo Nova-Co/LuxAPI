@@ -1,6 +1,7 @@
 package com.novaco.luxapi.cobblemon.boss
 
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle
+import com.cobblemon.mod.common.api.battles.model.actor.BattleActor
 import com.cobblemon.mod.common.api.events.CobblemonEvents
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
@@ -11,6 +12,7 @@ import com.novaco.luxapi.cobblemon.boss.minion.BossMinionManager
 import com.novaco.luxapi.core.bossbar.BossBarManager
 import com.novaco.luxapi.core.scoreboard.ScoreboardManager
 import net.minecraft.server.level.ServerPlayer
+import java.util.UUID
 
 /**
  * Handles the final stage of a boss's lifecycle: its defeat.
@@ -20,6 +22,15 @@ import net.minecraft.server.level.ServerPlayer
 object BossDefeatListener {
 
     private val defeatHooks = mutableListOf<(PokemonEntity, List<ServerPlayer>, PokemonBattle) -> Unit>()
+
+    /**
+     * Boss actor/entity captured at [CobblemonEvents.BATTLE_STARTED_POST] time, keyed by battle ID.
+     * `BattlePokemon.entity` (a live-lookup through the `Pokemon` data object) goes stale by the time
+     * `BATTLE_VICTORY` posts, since `PokemonBattle.end()` runs synchronously beforehand and detaches
+     * the entity from its `Pokemon` data during the heal/recall pass. Snapshotting here, while the
+     * entity is still attached, avoids re-deriving it from a reference that's no longer reliable.
+     */
+    private val trackedBossBattles = mutableMapOf<UUID, Pair<BattleActor, PokemonEntity>>()
 
     /**
      * Registers a custom callback to be executed when a boss is defeated.
@@ -36,25 +47,31 @@ object BossDefeatListener {
      * It filters these events to identify when a battle involving a LuxAPI boss has concluded with the boss's loss.
      */
     fun register() {
-        CobblemonEvents.BATTLE_VICTORY.subscribe { event ->
+        CobblemonEvents.BATTLE_STARTED_POST.subscribe { event ->
             val battle = event.battle
-            val winners = event.winners
 
-            // Find if a boss was part of the battle
+            // Entities are still attached to their Pokemon data here, so this lookup is reliable.
             val bossActor = battle.actors.find { actor ->
                 actor.pokemonList.any { pkmn ->
                     pkmn.entity?.tags?.contains("lux_is_boss") == true || pkmn.entity?.tags?.contains("lux_is_world_boss") == true
                 }
             } ?: return@subscribe
 
+            val bossEntity = bossActor.pokemonList.firstNotNullOfOrNull { pkmn ->
+                pkmn.entity?.takeIf { it.tags.contains("lux_is_boss") || it.tags.contains("lux_is_world_boss") }
+            } ?: return@subscribe
+
+            trackedBossBattles[battle.battleId] = bossActor to bossEntity
+        }
+
+        CobblemonEvents.BATTLE_VICTORY.subscribe { event ->
+            val battle = event.battle
+            val winners = event.winners
+
+            val (bossActor, bossEntity) = trackedBossBattles.remove(battle.battleId) ?: return@subscribe
+
             // Check if the boss was on the losing side
             if (!winners.contains(bossActor)) {
-                val bossBattlePokemon = bossActor.pokemonList.firstOrNull { pkmn ->
-                    pkmn.entity?.tags?.contains("lux_is_boss") == true || pkmn.entity?.tags?.contains("lux_is_world_boss") == true
-                }
-
-                val bossEntity = bossBattlePokemon?.entity ?: return@subscribe
-
                 val participatingPlayers = battle.actors
                     .filterIsInstance<PlayerBattleActor>()
                     .mapNotNull { it.entity }
