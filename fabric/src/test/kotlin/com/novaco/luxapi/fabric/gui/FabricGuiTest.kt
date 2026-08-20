@@ -8,6 +8,8 @@ import net.minecraft.server.Bootstrap
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.inventory.AbstractContainerMenu
 import net.minecraft.world.MenuProvider
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.Items
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -62,6 +64,22 @@ class FabricGuiTest {
         assertEquals(2, lines.size, "Lore should have 2 lines.")
         assertEquals("Legendary", lines[0].string)
         assertEquals("Weapon", lines[1].string)
+    }
+
+    @Test
+    fun `test gui item with native stack is placed directly instead of built from material`() {
+        val nativeStack = ItemStack(Items.COBBLED_DEEPSLATE)
+        val guiItem = GuiItem(
+            stack = nativeStack,
+            displayName = "Preserved",
+            lore = listOf("Native stack")
+        )
+
+        val gui = FabricGui("Test", 1, mapOf(4 to guiItem))
+        val placedStack = gui.container.getItem(4)
+
+        assertEquals(Items.COBBLED_DEEPSLATE, placedStack.item, "The native stack's item type should be preserved, not rebuilt from material.")
+        assertEquals("Preserved", placedStack.get(DataComponents.CUSTOM_NAME)?.string)
     }
 
     @Test

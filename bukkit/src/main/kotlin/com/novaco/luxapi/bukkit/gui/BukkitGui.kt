@@ -50,8 +50,10 @@ open class BukkitGui(
      * Converts a generic [GuiItem] into a native Bukkit [ItemStack].
      */
     protected fun buildItemStack(guiItem: GuiItem): ItemStack {
-        val material = Material.matchMaterial(guiItem.material) ?: Material.STONE
-        val itemStack = ItemStack(material)
+        val itemStack = (guiItem.stack as? ItemStack)?.clone() ?: run {
+            val material = Material.matchMaterial(guiItem.material ?: "") ?: Material.STONE
+            ItemStack(material)
+        }
 
         val meta = itemStack.itemMeta
         if (meta != null) {

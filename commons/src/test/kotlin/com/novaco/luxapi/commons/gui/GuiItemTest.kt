@@ -55,4 +55,22 @@ class GuiItemTest {
             item.executeClick(DummyClickEvent(ClickType.LEFT))
         }, "Executing a click on an item with no assigned action should be perfectly safe.")
     }
+
+    @Test
+    fun `test gui item built from material has null stack`() {
+        val item = GuiItem(material = "minecraft:diamond_sword")
+
+        assertEquals("minecraft:diamond_sword", item.material)
+        assertNull(item.stack, "A material-based GuiItem should carry no native stack.")
+    }
+
+    @Test
+    fun `test gui item built from native stack has null material`() {
+        val nativeStack = Any()
+        val item = GuiItem(stack = nativeStack, displayName = "Custom")
+
+        assertNull(item.material, "A stack-based GuiItem should carry no material string.")
+        assertEquals(nativeStack, item.stack)
+        assertEquals("Custom", item.displayName)
+    }
 }

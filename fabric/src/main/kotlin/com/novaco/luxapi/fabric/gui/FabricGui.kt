@@ -81,11 +81,11 @@ open class FabricGui(
      * Utilizes modern Data Components for metadata injection.
      */
     protected fun buildItemStack(guiItem: GuiItem): ItemStack {
-        val resourceLocation = ResourceLocation.tryParse(guiItem.material)
-            ?: ResourceLocation.withDefaultNamespace("stone")
-
-        val item = BuiltInRegistries.ITEM.get(resourceLocation)
-        val itemStack = ItemStack(item)
+        val itemStack = (guiItem.stack as? ItemStack)?.copy() ?: run {
+            val resourceLocation = ResourceLocation.tryParse(guiItem.material ?: "")
+                ?: ResourceLocation.withDefaultNamespace("stone")
+            ItemStack(BuiltInRegistries.ITEM.get(resourceLocation))
+        }
 
         if (guiItem.displayName.isNotEmpty()) {
             itemStack.set(DataComponents.CUSTOM_NAME, Component.literal(guiItem.displayName))
