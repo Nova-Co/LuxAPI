@@ -31,6 +31,15 @@ open class BukkitGui(
 
     override fun open(player: LuxPlayer) {
         val bukkitPlayer = player.parent as? Player ?: return
+        val currentHolder = bukkitPlayer.openInventory.topInventory.holder as? LuxGuiHolder
+
+        if (currentHolder != null && currentHolder.inventory.size == inventory.size) {
+            val targetGui = currentHolder.gui
+            itemsMap.forEach { (slot, item) -> targetGui.setItem(slot, item) }
+            targetGui.refresh(player)
+            return
+        }
+
         bukkitPlayer.openInventory(inventory)
     }
 

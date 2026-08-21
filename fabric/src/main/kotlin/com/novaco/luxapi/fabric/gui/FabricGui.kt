@@ -45,6 +45,15 @@ open class FabricGui(
 
     override fun open(player: LuxPlayer) {
         val serverPlayer = player.parent as? ServerPlayer ?: return
+        val currentMenu = serverPlayer.containerMenu
+
+        if (currentMenu is LuxMenu && currentMenu.gui.rows == rows) {
+            val targetGui = currentMenu.gui
+            itemsMap.forEach { (slot, item) -> targetGui.setItem(slot, item) }
+            targetGui.refresh(player)
+            return
+        }
+
         viewers.add(serverPlayer)
         val provider = SimpleMenuProvider(
             { id, inventory, _ -> LuxMenu(id, inventory, this) },

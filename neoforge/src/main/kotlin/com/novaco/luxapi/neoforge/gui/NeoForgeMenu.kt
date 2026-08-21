@@ -14,7 +14,7 @@ import net.minecraft.world.inventory.MenuType
 class NeoForgeMenu(
     containerId: Int,
     playerInventory: net.minecraft.world.entity.player.Inventory,
-    private val gui: NeoForgeGui
+    val gui: NeoForgeGui
 ) : ChestMenu(
     getMenuType(gui.rows),
     containerId,

@@ -14,7 +14,7 @@ import net.minecraft.world.inventory.MenuType
 class LuxMenu(
     containerId: Int,
     playerInventory: net.minecraft.world.entity.player.Inventory,
-    private val gui: FabricGui
+    val gui: FabricGui
 ) : ChestMenu(
     getMenuType(gui.rows),
     containerId,
