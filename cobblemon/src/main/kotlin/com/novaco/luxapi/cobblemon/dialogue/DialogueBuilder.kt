@@ -214,7 +214,9 @@ class DialogueBuilder {
      * @param speakerId The ID of the registered speaker for this page.
      * @param text The prompt text presented above the input field.
      * @param nextPageId The ID of the page to navigate to next.
-     * @param onInput Action executed upon submission, providing the typed string.
+     * @param sanitizer Transform applied to the raw captured string before [onInput] runs. Defaults
+     *   to stripping everything outside `[a-zA-Z0-9_-\s]`; pass `{ it }` for the raw string.
+     * @param onInput Action executed upon submission, providing the (sanitized) typed string.
      * @return This [DialogueBuilder] instance for chaining.
      */
     @JvmOverloads
@@ -224,10 +226,11 @@ class DialogueBuilder {
         text: String,
         placeholder: String = "Type here...",
         nextPageId: String? = null,
+        sanitizer: (String) -> String = ChoicePageBuilder.DEFAULT_SANITIZER,
         onInput: (ServerPlayer, ActiveDialogue, String) -> Unit
     ): DialogueBuilder {
         return addChoicePage(id, speakerId, text) {
-            appendInputField(placeholder, nextPageId, onInput)
+            appendInputField(placeholder, nextPageId, sanitizer, onInput)
         }
     }
 

@@ -31,6 +31,7 @@ class ChoicePageBuilder(
     private var inputPlaceholder: String = ""
     private var inputCallback: ((ServerPlayer, ActiveDialogue, String) -> Unit)? = null
     private var textInputNextPageId: String? = null
+    private var inputSanitizer: (String) -> String = DEFAULT_SANITIZER
 
     var verticalLayout: Boolean = false
     var textColor: String? = null
@@ -76,20 +77,26 @@ class ChoicePageBuilder(
 
     /**
      * Registers and embeds a direct TextInput box component safely inside this page.
-     * Complete with a built-in input text sanitizer layer.
+     * Applies [sanitizer] to the captured string before [onSubmit] sees it — defaults to stripping
+     * everything outside `[a-zA-Z0-9_-\s]`. Pass `{ it }` for the raw string, or a custom sanitizer
+     * to allow other characters (e.g. `:`, `.`, `,`) while still filtering out what you don't want.
      *
      * @param placeholder Text string showing inside the field beforehand.
      * @param targetPageId Navigation destination following submission.
-     * @param onSubmit Callback process capturing the input value cleanly.
+     * @param sanitizer Transform applied to the raw captured string before [onSubmit] runs.
+     * @param onSubmit Callback process capturing the (sanitized) input value.
      */
+    @JvmOverloads
     fun appendInputField(
         placeholder: String,
         targetPageId: String? = null,
+        sanitizer: (String) -> String = DEFAULT_SANITIZER,
         onSubmit: (ServerPlayer, ActiveDialogue, String) -> Unit
     ): ChoicePageBuilder {
         this.isInputMode = true
         this.inputPlaceholder = placeholder
         this.textInputNextPageId = targetPageId
+        this.inputSanitizer = sanitizer
         this.inputCallback = onSubmit
         return this
     }
@@ -122,8 +129,7 @@ class ChoicePageBuilder(
             DialogueTextInput().apply {
                 // Attach placeholder text natively
                 action = FunctionDialogueAction { dialogue, capturedString ->
-                    // SECURE INJECTION CHECK: Strip away potential exploit characters
-                    val sanitized = (capturedString ?: "").replace(Regex("[^a-zA-Z0-9_\\-\\s]"), "").trim()
+                    val sanitized = inputSanitizer(capturedString ?: "")
 
                     inputCallback?.invoke(dialogue.playerEntity, dialogue, sanitized)
 
@@ -145,5 +151,10 @@ class ChoicePageBuilder(
             background = background,
             escapeAction = escapeAction
         )
+    }
+
+    companion object {
+        /** Strips everything outside `[a-zA-Z0-9_-\s]` and trims. Default for [appendInputField]. */
+        val DEFAULT_SANITIZER: (String) -> String = { it.replace(Regex("[^a-zA-Z0-9_\\-\\s]"), "").trim() }
     }
 }
