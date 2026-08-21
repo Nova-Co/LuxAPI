@@ -44,4 +44,14 @@ interface Gui {
      * their repeating scheduler task once nobody's watching anymore.
      */
     fun hasViewers(): Boolean
+
+    /**
+     * Increments whenever this instance's content is overwritten by a *different* logical
+     * screen reusing the same underlying container (see the inventory-reuse optimization in
+     * each platform's `open`). [hasViewers] alone can't detect this, since the player is still
+     * viewing a menu — just not the one this instance originally represented. Long-running tasks
+     * bound to a specific instance (e.g. [GuiBuilder]'s animated slots) capture this value at
+     * start and compare it on every tick, self-cancelling if it no longer matches.
+     */
+    val generation: Int
 }

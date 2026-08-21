@@ -26,6 +26,8 @@ open class FabricGui(
 
     val container = SimpleContainer(rows * 9)
     private val itemsMap = mutableMapOf<Int, GuiItem>()
+    override var generation: Int = 0
+        protected set
 
     /**
      * Players who currently have this GUI open. Vanilla gives no reverse lookup from a
@@ -49,6 +51,9 @@ open class FabricGui(
 
         if (currentMenu is LuxMenu && currentMenu.gui.rows == rows) {
             val targetGui = currentMenu.gui
+            if (targetGui !== this) {
+                targetGui.generation++
+            }
             itemsMap.forEach { (slot, item) -> targetGui.setItem(slot, item) }
             targetGui.refresh(player)
             return

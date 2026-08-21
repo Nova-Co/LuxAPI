@@ -285,6 +285,7 @@ private class RecordingPaginatedGuiBuilder : PaginatedGuiBuilder() {
         override fun refresh(player: LuxPlayer) {}
         override fun refreshAll() {}
         override fun hasViewers(): Boolean = true
+        override val generation: Int = 0
         override fun setPage(player: LuxPlayer, page: Int) {}
         override fun getCurrentPage(player: LuxPlayer): Int = 0
         override fun getTotalPages(): Int = 1
@@ -300,6 +301,7 @@ private class FakeGui : Gui {
     override fun refresh(player: LuxPlayer) {}
     override fun refreshAll() {}
     override fun hasViewers(): Boolean = true
+    override val generation: Int = 0
 }
 
 class ConfigSubmoduleShowcaseTest {

@@ -25,6 +25,8 @@ open class NeoForgeGui(
 
     val container = SimpleContainer(rows * 9)
     protected val itemsMap = mutableMapOf<Int, GuiItem>()
+    override var generation: Int = 0
+        protected set
 
     /**
      * Players who currently have this GUI open. Vanilla gives no reverse lookup from a
@@ -47,6 +49,9 @@ open class NeoForgeGui(
 
         if (currentMenu is NeoForgeMenu && currentMenu.gui.rows == rows) {
             val targetGui = currentMenu.gui
+            if (targetGui !== this) {
+                targetGui.generation++
+            }
             itemsMap.forEach { (slot, item) -> targetGui.setItem(slot, item) }
             targetGui.refresh(player)
             return

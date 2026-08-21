@@ -117,16 +117,19 @@ abstract class GuiBuilder {
      * now-built [gui]. Each platform's `build()` must call this after constructing its [Gui]
      * instance — it's not automatic, since a builder has nothing to schedule against until then.
      * Each animated slot's task self-cancels via [Gui.hasViewers] once nobody's watching, so a
-     * closed GUI's animation doesn't run forever.
+     * closed GUI's animation doesn't run forever. It also self-cancels if [Gui.generation] has
+     * moved on since this task started, meaning [gui] now represents a different logical screen
+     * (via another `Gui`'s inventory-reuse open) than the one this animation was built for.
      */
     protected fun startAnimations(gui: Gui) {
         if (animatedItems.isEmpty()) return
         val scheduler = LuxAPI.getScheduler()
+        val startGeneration = gui.generation
 
         animatedItems.forEach { (slot, spec) ->
             var task: LuxTask? = null
             val tick = Runnable {
-                if (!gui.hasViewers()) {
+                if (!gui.hasViewers() || gui.generation != startGeneration) {
                     task?.cancel()
                     return@Runnable
                 }

@@ -24,6 +24,8 @@ open class BukkitGui(
     val holder = LuxGuiHolder(this)
     val inventory: Inventory = Bukkit.createInventory(holder, rows * 9, title).also { holder.bind(it) }
     private val itemsMap = mutableMapOf<Int, GuiItem>()
+    override var generation: Int = 0
+        protected set
 
     init {
         initialItems.forEach { (slot, item) -> setItem(slot, item) }
@@ -35,6 +37,9 @@ open class BukkitGui(
 
         if (currentHolder != null && currentHolder.inventory.size == inventory.size) {
             val targetGui = currentHolder.gui
+            if (targetGui !== this) {
+                targetGui.generation++
+            }
             itemsMap.forEach { (slot, item) -> targetGui.setItem(slot, item) }
             targetGui.refresh(player)
             return

@@ -33,6 +33,7 @@ private class FakeGui : Gui {
     override fun refresh(player: LuxPlayer) {}
     override fun refreshAll() {}
     override fun hasViewers(): Boolean = true
+    override val generation: Int = 0
 }
 
 class ConfigMenuItemTest {

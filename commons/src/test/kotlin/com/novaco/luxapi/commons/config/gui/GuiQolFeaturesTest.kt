@@ -52,6 +52,7 @@ private class QolFakeGui : Gui {
     override fun refresh(player: LuxPlayer) {}
     override fun refreshAll() {}
     override fun hasViewers(): Boolean = true
+    override val generation: Int = 0
 }
 
 private class RecordingGuiBuilder(private val log: MutableList<String>) : GuiBuilder() {
@@ -80,6 +81,7 @@ private class RecordingPaginatedGuiBuilder(private val log: MutableList<String>)
             override fun refresh(player: LuxPlayer) {}
             override fun refreshAll() {}
             override fun hasViewers(): Boolean = true
+            override val generation: Int = 0
             override fun setPage(player: LuxPlayer, page: Int) {}
             override fun getCurrentPage(player: LuxPlayer): Int = 0
             override fun getTotalPages(): Int = 1

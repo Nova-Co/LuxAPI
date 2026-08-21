@@ -27,6 +27,7 @@ class FakeAnimatedGui(initial: Map<Int, GuiItem>) : Gui {
     override fun refresh(player: LuxPlayer) {}
     override fun refreshAll() { refreshAllCallCount++ }
     override fun hasViewers(): Boolean = viewersPresent
+    override var generation: Int = 0
 }
 
 /**
@@ -165,5 +166,20 @@ class GuiBuilderAnimationTest {
 
         assertTrue(captured.task.isCancelled, "The task should cancel itself once nobody is watching.")
         assertEquals(0, builder.builtGui.refreshAllCallCount, "An empty-viewer tick shouldn't bother refreshing anyone.")
+    }
+
+    @Test
+    fun `test a tick self-cancels once the gui's generation moves on, without refreshing`() {
+        val builder = TestGuiBuilder()
+        builder.rows(1)
+        builder.setAnimatedItem(slot = 0, period = 20L) { GuiItem("minecraft:clock") }
+        builder.build()
+        builder.builtGui.generation++
+
+        val captured = scheduler.capturedRepeats.single()
+        captured.runnable.run()
+
+        assertTrue(captured.task.isCancelled, "The task should cancel itself once its gui now represents a different screen.")
+        assertEquals(0, builder.builtGui.refreshAllCallCount, "A stale-generation tick shouldn't bother refreshing anyone.")
     }
 }
