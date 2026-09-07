@@ -1,6 +1,9 @@
 package com.novaco.luxapi.cobblemon.battle
 
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle
+import com.cobblemon.mod.common.api.events.CobblemonEvents
+import com.cobblemon.mod.common.api.events.battles.BattleFleeAttemptEvent
+import com.cobblemon.mod.common.api.reactive.ObservableSubscription
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon
 import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.scheduler.LuxTask
@@ -52,6 +55,17 @@ object BattleInterceptor {
     /** Forcefully ends the battle via Cobblemon's own teardown (fainted/evolution bookkeeping included). */
     fun stopBattle(battle: PokemonBattle) {
         battle.stop()
+    }
+
+    /**
+     * Registers a listener that runs whenever a player flees a battle. Not cancelable —
+     * [BattleFleeAttemptEvent] carries no cancel state, so this is a notification hook
+     * only, same shape as [com.novaco.luxapi.cobblemon.apricorn.ApricornManager.onApricornHarvested].
+     *
+     * @param listener Runs once per flee.
+     */
+    fun onBattleFlee(listener: (BattleFleeAttemptEvent) -> Unit): ObservableSubscription<BattleFleeAttemptEvent> {
+        return CobblemonEvents.BATTLE_FLEE_ATTEMPT.subscribe { event -> listener(event) }
     }
 
     /** Stops this battle's poll task (if any) and clears its registered triggers. Call on battle end. */

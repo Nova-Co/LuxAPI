@@ -1,10 +1,12 @@
 package com.novaco.luxapi.cobblemon.npc.party
 
 import com.cobblemon.mod.common.api.npc.NPCPartyProvider
+import com.cobblemon.mod.common.api.npc.partyproviders.ComposedPoolPartyProvider
 import com.cobblemon.mod.common.api.npc.partyproviders.PoolPartyProvider
 import com.cobblemon.mod.common.api.npc.partyproviders.SimplePartyProvider
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import net.minecraft.resources.ResourceLocation
 
 /**
  * A fluent API builder for configuring native Cobblemon NPCPartyProviders.
@@ -18,6 +20,12 @@ class PartyBuilder {
     private var poolMinCount = "1"
     private var poolMaxCount = "6"
     private var useFixedRandom = false
+
+    private var compositionPool: ResourceLocation? = null
+    private var compositionId: ResourceLocation? = null
+    private var compositionMinCount = "1"
+    private var compositionMaxCount = "6"
+    private var compositionUseFixedRandom = false
 
     /**
      * Inner transfer block defining structural layouts for a dynamic pool member.
@@ -105,11 +113,58 @@ class PartyBuilder {
     }
 
     /**
+     * Configures a datapack-driven [ComposedPoolPartyProvider] — a [PartyPool] and
+     * [PartyComposition][com.cobblemon.mod.common.api.npc.PartyComposition] resolved by
+     * id at build time via [com.novaco.luxapi.cobblemon.npc.party.PartyCompositionManager].
+     * Takes precedence over [add]/[addPoolEntry] if both are configured on the same
+     * builder instance.
+     *
+     * @param pool Identifier of a registered [PartyPool].
+     * @param composition Identifier of a registered [PartyComposition][com.cobblemon.mod.common.api.npc.PartyComposition].
+     * @param min The text formula defining lower Pokémon-count bounds.
+     * @param max The text formula defining upper Pokémon-count bounds.
+     * @param fixedRandom Whether to lock generation onto the NPC's own stable seed.
+     * @return The updated builder context instance.
+     */
+    @JvmOverloads
+    fun useComposition(
+        pool: ResourceLocation,
+        composition: ResourceLocation,
+        min: String = "1",
+        max: String = "6",
+        fixedRandom: Boolean = false
+    ): PartyBuilder {
+        this.compositionPool = pool
+        this.compositionId = composition
+        this.compositionMinCount = min
+        this.compositionMaxCount = max
+        this.compositionUseFixedRandom = fixedRandom
+        return this
+    }
+
+    /**
      * Transforms the current builder instance layout structures into verified native platform party nodes.
      *
      * @return The verified instance implementation node, or null if configurations are empty.
      */
     internal fun build(): NPCPartyProvider? {
+        val compositionPool = this.compositionPool
+        val compositionId = this.compositionId
+        if (compositionPool != null && compositionId != null) {
+            val provider = ComposedPoolPartyProvider()
+            val json = JsonObject()
+
+            json.addProperty("isStatic", true)
+            json.addProperty("useFixedRandom", this.compositionUseFixedRandom)
+            json.addProperty("pool", compositionPool.toString())
+            json.addProperty("composition", compositionId.toString())
+            json.addProperty("minPokemon", this.compositionMinCount)
+            json.addProperty("maxPokemon", this.compositionMaxCount)
+
+            provider.loadFromJSON(json)
+            return provider
+        }
+
         if (poolEntries.isNotEmpty()) {
             val provider = PoolPartyProvider()
             val json = JsonObject()

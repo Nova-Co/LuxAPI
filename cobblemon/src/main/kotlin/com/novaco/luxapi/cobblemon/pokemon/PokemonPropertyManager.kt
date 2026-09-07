@@ -58,4 +58,15 @@ object PokemonPropertyManager {
     fun setHeldItem(pokemon: Pokemon, item: ItemStack, decrement: Boolean = false): ItemStack {
         return pokemon.swapHeldItem(item, decrement, aiCanDrop = true)
     }
+
+    /**
+     * Sets [pokemon]'s Alpha flag via Cobblemon's own [Pokemon.isAlpha] setter, which
+     * drives its mark, entity scale, moveset selection, and client sync packet.
+     */
+    fun setAlpha(pokemon: Pokemon, alpha: Boolean) {
+        pokemon.isAlpha = alpha
+    }
+
+    /** Whether [pokemon] is currently flagged as an Alpha Pokémon. */
+    fun isAlpha(pokemon: Pokemon): Boolean = pokemon.isAlpha
 }
