@@ -35,14 +35,14 @@ class ToastManagerTest {
 
         assertEquals(title, toast.title)
         assertEquals(description, toast.description)
-        assertEquals(icon, toast.icon)
+        assertEquals(listOf(icon), toast.icons)
     }
 
     @Test
     fun `sendToast defaults icon to empty and leaves progress unset`() {
         val toast = ToastManager.sendToast(emptyList(), Component.literal("T"), Component.literal("D"))
 
-        assertEquals(ItemStack.EMPTY, toast.icon)
+        assertEquals(listOf(ItemStack.EMPTY), toast.icons)
         assertEquals(-1F, toast.progress)
     }
 }

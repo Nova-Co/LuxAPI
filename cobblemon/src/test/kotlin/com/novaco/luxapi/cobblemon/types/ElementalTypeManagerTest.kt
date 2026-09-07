@@ -41,7 +41,9 @@ class ElementalTypeManagerTest {
             "LuxTestType",
             Component.literal("Lux Test Type"),
             0x123456,
-            99
+            99,
+            0x111111,
+            0x222222
         )
 
         assertEquals(type, ElementalTypeManager.get("LuxTestType"))

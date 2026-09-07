@@ -19,9 +19,9 @@ class PokedexManagerTest {
     private val kantoDexId = ResourceLocation.parse("cobblemon:kanto")
 
     @Test
-    fun `hasCaughtCore is true only when knowledge is CAUGHT`() {
+    fun `hasCaughtCore is true only when knowledge is OWNED`() {
         val dexManager = mock<AbstractPokedexManager>()
-        whenever(dexManager.getKnowledgeForSpecies(pikachuId)).thenReturn(PokedexEntryProgress.CAUGHT)
+        whenever(dexManager.getKnowledgeForSpecies(pikachuId)).thenReturn(PokedexEntryProgress.OWNED)
 
         assertTrue(hasCaughtCore(dexManager, pikachuId))
     }
@@ -29,7 +29,7 @@ class PokedexManagerTest {
     @Test
     fun `hasCaughtCore is false when only encountered`() {
         val dexManager = mock<AbstractPokedexManager>()
-        whenever(dexManager.getKnowledgeForSpecies(pikachuId)).thenReturn(PokedexEntryProgress.ENCOUNTERED)
+        whenever(dexManager.getKnowledgeForSpecies(pikachuId)).thenReturn(PokedexEntryProgress.SEEN)
 
         assertFalse(hasCaughtCore(dexManager, pikachuId))
     }
@@ -37,9 +37,9 @@ class PokedexManagerTest {
     @Test
     fun `hasSeenCore is true for encountered, false for none`() {
         val encounteredManager = mock<AbstractPokedexManager>()
-        whenever(encounteredManager.getKnowledgeForSpecies(pikachuId)).thenReturn(PokedexEntryProgress.ENCOUNTERED)
+        whenever(encounteredManager.getKnowledgeForSpecies(pikachuId)).thenReturn(PokedexEntryProgress.SEEN)
         val unseenManager = mock<AbstractPokedexManager>()
-        whenever(unseenManager.getKnowledgeForSpecies(pikachuId)).thenReturn(PokedexEntryProgress.NONE)
+        whenever(unseenManager.getKnowledgeForSpecies(pikachuId)).thenReturn(PokedexEntryProgress.UNREGISTERED)
 
         assertTrue(hasSeenCore(encounteredManager, pikachuId))
         assertFalse(hasSeenCore(unseenManager, pikachuId))

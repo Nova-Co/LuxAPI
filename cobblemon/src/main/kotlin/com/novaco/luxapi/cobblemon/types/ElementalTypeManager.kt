@@ -31,11 +31,19 @@ object ElementalTypeManager {
     /**
      * Registers a new [ElementalType] via [ElementalTypes.register]. [hue] is the
      * type-chart color Cobblemon's own UI renders for this type; [textureXMultiplier]
-     * is the column offset into its type-icon spritesheet — a custom type registered
+     * is the column offset into its type-icon spritesheet; [primaryColor]/[secondaryColor]
+     * are the gradient colors Cobblemon renders for this type — a custom type registered
      * this way has no icon of its own unless a matching resource pack ships one.
      */
-    fun register(name: String, displayName: MutableComponent, hue: Int, textureXMultiplier: Int): ElementalType =
-        ElementalTypes.register(name, displayName, hue, textureXMultiplier)
+    fun register(
+        name: String,
+        displayName: MutableComponent,
+        hue: Int,
+        textureXMultiplier: Int,
+        primaryColor: Int,
+        secondaryColor: Int
+    ): ElementalType =
+        ElementalTypes.register(name, displayName, hue, textureXMultiplier, primaryColor, secondaryColor)
 
     fun getTeraType(id: String): TeraType? = TeraTypes.get(id)
 

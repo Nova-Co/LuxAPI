@@ -40,11 +40,11 @@ object PokedexManager {
     }
 
     /**
-     * The player's real knowledge level for [species]. Returns [PokedexEntryProgress.NONE] for
+     * The player's real knowledge level for [species]. Returns [PokedexEntryProgress.UNREGISTERED] for
      * an unresolvable species name.
      */
     fun getKnowledgeForSpecies(player: LuxPlayer, species: String): PokedexEntryProgress {
-        val speciesId = resolveSpeciesId(species) ?: return PokedexEntryProgress.NONE
+        val speciesId = resolveSpeciesId(species) ?: return PokedexEntryProgress.UNREGISTERED
         return (player.parent as ServerPlayer).pokedex().getKnowledgeForSpecies(speciesId)
     }
 
@@ -92,14 +92,14 @@ object PokedexManager {
  * server. See [PokedexManager.hasCaught] for the public, [LuxPlayer]-facing entry point.
  */
 internal fun hasCaughtCore(dexManager: AbstractPokedexManager, speciesId: ResourceLocation): Boolean {
-    return dexManager.getKnowledgeForSpecies(speciesId) == PokedexEntryProgress.CAUGHT
+    return dexManager.getKnowledgeForSpecies(speciesId) == PokedexEntryProgress.OWNED
 }
 
 /**
  * See [hasCaughtCore]; backs [PokedexManager.hasSeen].
  */
 internal fun hasSeenCore(dexManager: AbstractPokedexManager, speciesId: ResourceLocation): Boolean {
-    return dexManager.getKnowledgeForSpecies(speciesId) != PokedexEntryProgress.NONE
+    return dexManager.getKnowledgeForSpecies(speciesId) != PokedexEntryProgress.UNREGISTERED
 }
 
 /**
