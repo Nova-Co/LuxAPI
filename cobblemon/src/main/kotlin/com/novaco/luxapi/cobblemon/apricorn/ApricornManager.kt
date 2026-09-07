@@ -3,6 +3,7 @@ package com.novaco.luxapi.cobblemon.apricorn
 import com.cobblemon.mod.common.api.apricorn.Apricorn
 import com.cobblemon.mod.common.api.events.CobblemonEvents
 import com.cobblemon.mod.common.api.events.farming.ApricornHarvestEvent
+import com.cobblemon.mod.common.api.reactive.ObservableSubscription
 import com.cobblemon.mod.common.block.ApricornBlock
 import com.cobblemon.mod.common.item.ApricornItem
 import net.minecraft.world.item.BlockItem
@@ -36,7 +37,7 @@ object ApricornManager {
      * tree. Purely a notification hook — [ApricornHarvestEvent] has no cancel state,
      * so a listener can observe but not prevent the harvest.
      */
-    fun onApricornHarvested(listener: (ApricornHarvestEvent) -> Unit) {
-        CobblemonEvents.APRICORN_HARVESTED.subscribe { event -> listener(event) }
+    fun onApricornHarvested(listener: (ApricornHarvestEvent) -> Unit): ObservableSubscription<ApricornHarvestEvent> {
+        return CobblemonEvents.APRICORN_HARVESTED.subscribe { event -> listener(event) }
     }
 }

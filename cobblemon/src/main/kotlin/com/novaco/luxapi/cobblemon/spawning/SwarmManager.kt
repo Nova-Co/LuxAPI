@@ -9,6 +9,7 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.levelgen.Heightmap
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
 /**
@@ -18,7 +19,7 @@ import kotlin.random.Random
  */
 object SwarmManager {
 
-    private val activeSwarms = mutableMapOf<UUID, SwarmEvent>()
+    private val activeSwarms = ConcurrentHashMap<UUID, SwarmEvent>()
     private var currentTask: LuxTask? = null
 
     /**

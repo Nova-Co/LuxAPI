@@ -5,11 +5,14 @@ import com.cobblemon.mod.common.api.battles.model.PokemonBattle
 import com.novaco.luxapi.commons.player.LuxPlayer
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
+import org.slf4j.LoggerFactory
 
 /**
  * A global utility for managing active battles, spectators, and turn processing pipelines with a solid safety shell.
  */
 object BattleManager {
+
+    private val logger = LoggerFactory.getLogger(BattleManager::class.java)
 
     fun getActiveBattle(player: LuxPlayer): PokemonBattle? {
         val serverPlayer = player.parent as ServerPlayer
@@ -45,8 +48,7 @@ object BattleManager {
     private fun handleTurnFailure(battle: PokemonBattle, t: Throwable) {
         val battleId = battle.battleId
 
-        println("[LuxAPI | Critical Alert] Turn engine execution error intercepted!")
-        println("[LuxAPI | Context] Battle ID: $battleId - Failure: ${t.stackTraceToString()}")
+        logger.error("Turn engine execution error intercepted! Battle ID: {}", battleId, t)
 
         // Recover and terminate the compromised battle state safely to prevent full server crashes
         try {
@@ -56,18 +58,18 @@ object BattleManager {
                 try {
                     actor.sendMessage(alertMessage)
                 } catch (msgEx: NullPointerException) {
-                    println("[LuxAPI] Failed to dispatch error message to actor ${actor.uuid}: ${msgEx.message}")
+                    logger.warn("Failed to dispatch error message to actor {}: {}", actor.uuid, msgEx.message)
                 } catch (msgEx: IllegalStateException) {
-                    println("[LuxAPI] Failed to dispatch error message to actor ${actor.uuid}: ${msgEx.message}")
+                    logger.warn("Failed to dispatch error message to actor {}: {}", actor.uuid, msgEx.message)
                 }
             }
 
             Cobblemon.battleRegistry.closeBattle(battle)
-            println("[LuxAPI] Compromised combat session closed out successfully.")
+            logger.info("Compromised combat session closed out successfully.")
         } catch (inner: IllegalStateException) {
-            println("[LuxAPI] Secondary recovery failure - battle already terminated or in invalid state: ${inner.message}")
+            logger.warn("Secondary recovery failure - battle already terminated or in invalid state: {}", inner.message)
         } catch (inner: NullPointerException) {
-            println("[LuxAPI] Secondary recovery failure - missing actor or battle reference: ${inner.message}")
+            logger.warn("Secondary recovery failure - missing actor or battle reference: {}", inner.message)
         }
     }
 }

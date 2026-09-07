@@ -3,12 +3,15 @@ package com.novaco.luxapi.cobblemon.pokemon
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import com.cobblemon.mod.common.pokemon.Pokemon
 import net.minecraft.resources.ResourceLocation
+import org.slf4j.LoggerFactory
 
 /**
  * A utility registry for parsing and generating Pokemon entities from strings.
  * Upgraded to safely interface with modern Cobblemon genetic matrices and aspect layers.
  */
 object PokemonSpecParser {
+
+    private val logger = LoggerFactory.getLogger(PokemonSpecParser::class.java)
 
     /**
      * Safely parses a string specification into a new Pokemon object, including aspect labels.
@@ -22,16 +25,16 @@ object PokemonSpecParser {
             val properties = PokemonProperties.parse(spec)
             properties.create()
         } catch (e: IllegalArgumentException) {
-            println("[LuxAPI] Invalid Pokemon spec syntax or argument in '$spec': ${e.message}")
+            logger.warn("Invalid Pokemon spec syntax or argument in '{}': {}", spec, e.message)
             null
         } catch (e: IllegalStateException) {
-            println("[LuxAPI] Failed to instantiate Pokemon from spec '$spec' (Missing species or registry error): ${e.message}")
+            logger.warn("Failed to instantiate Pokemon from spec '{}' (Missing species or registry error): {}", spec, e.message)
             null
         } catch (e: NullPointerException) {
-            println("[LuxAPI] Null reference encountered while resolving species/properties for spec '$spec': ${e.message}")
+            logger.warn("Null reference encountered while resolving species/properties for spec '{}': {}", spec, e.message)
             null
         } catch (e: UnsupportedOperationException) {
-            println("[LuxAPI] Unsupported property configuration for spec '$spec': ${e.message}")
+            logger.warn("Unsupported property configuration for spec '{}': {}", spec, e.message)
             null
         }
     }
@@ -62,13 +65,13 @@ object PokemonSpecParser {
             properties.apply(pokemon)
             true
         } catch (e: IllegalArgumentException) {
-            println("[LuxAPI] Spec parse error during modification for Pokemon ${pokemon.uuid}: ${e.message}")
+            logger.warn("Spec parse error during modification for Pokemon {}: {}", pokemon.uuid, e.message)
             false
         } catch (e: IllegalStateException) {
-            println("[LuxAPI] Invalid state while applying spec to Pokemon ${pokemon.uuid}: ${e.message}")
+            logger.warn("Invalid state while applying spec to Pokemon {}: {}", pokemon.uuid, e.message)
             false
         } catch (e: UnsupportedOperationException) {
-            println("[LuxAPI] Property mismatch while applying spec to Pokemon ${pokemon.uuid}: ${e.message}")
+            logger.warn("Property mismatch while applying spec to Pokemon {}: {}", pokemon.uuid, e.message)
             false
         }
     }
@@ -85,11 +88,11 @@ object PokemonSpecParser {
         try {
             pokemon.forcedAspects = pokemon.forcedAspects + aspectKey
         } catch (e: IllegalArgumentException) {
-            println("[LuxAPI] Invalid aspect label key '$aspectKey' for Pokemon ${pokemon.uuid}: ${e.message}")
+            logger.warn("Invalid aspect label key '{}' for Pokemon {}: {}", aspectKey, pokemon.uuid, e.message)
         } catch (e: UnsupportedOperationException) {
-            println("[LuxAPI] Mutation blocked on forcedAspects set for Pokemon ${pokemon.uuid}: ${e.message}")
+            logger.warn("Mutation blocked on forcedAspects set for Pokemon {}: {}", pokemon.uuid, e.message)
         } catch (e: IllegalStateException) {
-            println("[LuxAPI] Cannot append aspect to Pokemon ${pokemon.uuid} in current state: ${e.message}")
+            logger.warn("Cannot append aspect to Pokemon {} in current state: {}", pokemon.uuid, e.message)
         }
     }
 

@@ -7,12 +7,15 @@ import java.lang.reflect.InvocationTargetException
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ForkJoinPool
+import org.slf4j.LoggerFactory
 
 /**
  * A safe bridge to read and write persistent metadata directly into a Pokemon.
  * Upgraded with a high-performance Asynchronous Pipeline to prevent main thread ticks lagging.
  */
 object PokemonPersistenceBridge {
+
+    private val logger = LoggerFactory.getLogger(PokemonPersistenceBridge::class.java)
 
     // Dedicated Thread-safe Containment Layer for Background Workload Processing
     private val asyncPool = ForkJoinPool.commonPool()
@@ -88,11 +91,10 @@ object PokemonPersistenceBridge {
                 stringPayload.toPokemon()
             } catch (e: ReflectiveOperationException) {
                 val cause = (e as? InvocationTargetException)?.targetException ?: e
-                println("[LuxAPI] Database/Reflection error for Pokemon $pokemon: ${cause.message}")
-                cause.printStackTrace()
+                logger.error("Database/Reflection error for Pokemon {}", pokemon, cause)
                 null
             } catch (e: IllegalArgumentException) {
-                println("[LuxAPI] Corrupted Base64 payload for Pokemon $pokemon: ${e.message}")
+                logger.warn("Corrupted Base64 payload for Pokemon {}: {}", pokemon, e.message)
                 null
             }
         }, asyncPool)

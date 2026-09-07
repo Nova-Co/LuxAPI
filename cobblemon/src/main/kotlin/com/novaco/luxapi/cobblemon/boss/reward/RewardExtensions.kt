@@ -13,7 +13,11 @@ import net.minecraft.world.item.Items
  * @param amount The quantity to give.
  */
 fun ServerPlayer.giveItem(itemId: String, amount: Int = 1) {
-    val location = ResourceLocation.tryParse(itemId) ?: return
+    val location = ResourceLocation.tryParse(itemId)
+    if (location == null) {
+        println("[LuxAPI] Warning: '$itemId' is not a validly-formatted item id, cannot give to ${this.name.string}")
+        return
+    }
 
     val itemType = BuiltInRegistries.ITEM.get(location)
 

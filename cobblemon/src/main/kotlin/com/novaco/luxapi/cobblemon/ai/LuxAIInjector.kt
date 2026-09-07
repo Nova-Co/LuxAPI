@@ -2,12 +2,15 @@ package com.novaco.luxapi.cobblemon.ai
 
 import com.cobblemon.mod.common.api.ai.BehaviourConfigurationContext
 import net.minecraft.world.entity.LivingEntity
+import org.slf4j.LoggerFactory
 
 /**
  * Core runtime injection utility designed to dynamically mount LuxAPI behaviors
  * into live Pokemon entity brain instances bypassing static asset configurations.
  */
 object LuxAIInjector {
+
+    private val logger = LoggerFactory.getLogger(LuxAIInjector::class.java)
 
     /**
      * Force injects a group of predefined custom behaviors directly into an entity's internal brain.
@@ -32,7 +35,7 @@ object LuxAIInjector {
                 entity.level().gameTime
             )
         } catch (e: NullPointerException) {
-            println("[LuxAPI] Failed to update brain for entity #\${entity.id}: world is null or unloaded.")
+            logger.warn("Failed to update brain for entity #{}: world is null or unloaded.", entity.id)
         }
     }
 }

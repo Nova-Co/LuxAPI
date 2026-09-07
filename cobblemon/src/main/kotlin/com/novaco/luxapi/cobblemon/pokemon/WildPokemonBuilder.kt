@@ -216,8 +216,8 @@ class WildPokemonBuilder(private val speciesName: String) {
 
         shiny?.let { pokemon.shiny = it }
 
-        customIvs.forEach { (stat, value) -> pokemon.ivs.set(stat, value) }
-        customEvs.forEach { (stat, value) -> pokemon.evs.set(stat, value) }
+        customIvs.forEach { (stat, value) -> pokemon.setIV(stat, value) }
+        customEvs.forEach { (stat, value) -> pokemon.setEV(stat, value) }
 
         // Create the Physical Entity
         val pokemonEntity = CobblemonEntities.POKEMON.create(serverLevel) ?: return null

@@ -34,6 +34,21 @@ object HookManager {
     /** Registers a hook to be triggered when an egg hatches. */
     fun registerEggHatchHook(hook: Hook<HatchEggEvent>) = eggHatchHooks.add(hook)
 
+    /** Unregisters a previously registered catch hook. Returns false if it wasn't registered. */
+    fun unregisterCatchHook(hook: Hook<Pokemon>): Boolean = catchHooks.remove(hook)
+
+    /** Unregisters a previously registered defeat hook. Returns false if it wasn't registered. */
+    fun unregisterDefeatHook(hook: Hook<BattleVictoryEvent>): Boolean = defeatHooks.remove(hook)
+
+    /** Unregisters a previously registered level-up hook. Returns false if it wasn't registered. */
+    fun unregisterLevelUpHook(hook: Hook<LevelUpEvent>): Boolean = levelUpHooks.remove(hook)
+
+    /** Unregisters a previously registered evolution hook. Returns false if it wasn't registered. */
+    fun unregisterEvolutionHook(hook: Hook<EvolutionEvent>): Boolean = evolutionHooks.remove(hook)
+
+    /** Unregisters a previously registered egg-hatch hook. Returns false if it wasn't registered. */
+    fun unregisterEggHatchHook(hook: Hook<HatchEggEvent>): Boolean = eggHatchHooks.remove(hook)
+
     internal fun broadcastCatch(player: LuxPlayer, pokemon: Pokemon) {
         catchHooks.forEach { it.onTrigger(player, pokemon) }
     }

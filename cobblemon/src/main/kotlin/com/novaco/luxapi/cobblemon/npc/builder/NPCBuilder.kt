@@ -23,12 +23,15 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.phys.Vec3
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
+import org.slf4j.LoggerFactory
 
 /**
  * A fluent builder for creating and configuring Cobblemon NPCs with a wide range of features.
  * Streamlined to handle modern Cobblemon interaction components natively.
  */
 class NPCBuilder(private val spawner: LuxPlayer) {
+
+    private val logger = LoggerFactory.getLogger(NPCBuilder::class.java)
 
     private var npcName: Component = Component.literal("Villager")
     private var skinUsername: String? = null
@@ -210,9 +213,9 @@ class NPCBuilder(private val spawner: LuxPlayer) {
                     try {
                         npcEntity.loadTextureFromGameProfileName(username)
                     } catch (e: java.io.IOException) {
-                        println("[LuxAPI] Failed to load skin profile for $username safely.")
+                        logger.warn("Failed to load skin profile for {} safely.", username)
                     } catch (e: IllegalStateException) {
-                        println("[LuxAPI] Failed to load skin profile for $username safely.")
+                        logger.warn("Failed to load skin profile for {} safely.", username)
                     }
                 }
             }

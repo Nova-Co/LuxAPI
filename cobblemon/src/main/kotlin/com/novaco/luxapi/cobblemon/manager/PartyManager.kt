@@ -1,7 +1,7 @@
 package com.novaco.luxapi.cobblemon.manager
 
-import com.novaco.luxapi.cobblemon.pokemon.getPC
 import com.novaco.luxapi.cobblemon.pokemon.getParty
+import com.novaco.luxapi.cobblemon.storage.PCStorageManager
 import com.novaco.luxapi.commons.player.LuxPlayer
 
 /**
@@ -20,26 +20,15 @@ fun LuxPlayer.healParty() {
 
 /**
  * Safely transfers a Pokémon from the player's active party to their PC box.
- * The function verifies if the target slot contains a Pokémon and ensures
- * the PC has enough space to accept it.
+ * Delegates to [PCStorageManager.depositToPC], which also enforces the server's
+ * `preventCompletePartyDeposit` config guard.
  *
  * @param partySlot The index of the party slot (0 to 5) to transfer.
  * @return True if the transfer was successful, false if the slot was empty or transfer failed.
  */
 fun LuxPlayer.transferToPC(partySlot: Int): Boolean {
     if (partySlot !in 0..5) return false
-
-    val party = this.getParty()
-    val targetPokemon = party.get(partySlot) ?: return false
-    val pc = this.getPC()
-    val successfullyAdded = pc.add(targetPokemon)
-
-    if (successfullyAdded) {
-        party.remove(targetPokemon)
-        return true
-    }
-
-    return false
+    return PCStorageManager.depositToPC(this, partySlot)
 }
 
 /**
