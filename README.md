@@ -72,30 +72,61 @@ Not everything on the roadmap is finished — see [`TODO.md`](TODO.md) for the f
 
 ## Adding LuxAPI to your project
 
-LuxAPI is a **compile-time library, not a separately-installed mod**. Players don't download a `LuxAPI.jar` and drop it in `/mods` next to your mod — you pull LuxAPI in at build time and shade/embed the modules you use directly into your own mod's final jar, the same way you'd embed any other library. (Note that `fabric/build.gradle.kts` and `neoforge/build.gradle.kts` in this repo only shade `commons` into LuxAPI's own built platform jars — `core` and `cobblemon` are compile-time-only there too, which is exactly why this repo can't currently produce one complete standalone artifact for you to install separately even if you wanted to.)
+LuxAPI is a **compile-time library, not a separately-installed mod**. Players don't download a `LuxAPI.jar` and drop it in `/mods` next to your mod — you pull LuxAPI in at build time and bundle the modules you use directly into your own mod's final jar, the same way you'd bundle any other library.
 
-**⚠️ No remote Maven repo yet** (tracked in [`TODO.md`](TODO.md), Phase 15) — this repo's Gradle build only publishes to a local `build/repo` directory. Until that lands, to build against LuxAPI from a separate mod project you'll need to either:
-- build this repo yourself (`./gradlew build`) and point your project at the resulting jars in `*/build/libs/`, or
-- include this repo as a Gradle composite build / git submodule and depend on it via `project(":x")`, as shown below.
+### Step 1 — publish LuxAPI locally
 
-```kotlin
-dependencies {
-    implementation(project(":commons"))
-    implementation(project(":core"))
+**⚠️ No remote Maven repo yet** (tracked in [`TODO.md`](TODO.md), Phase 15). Until that lands, build and publish LuxAPI to your machine's local Maven cache first:
 
-    // Cobblemon integration — pulls in Cobblemon 1.7.3+1.21.1 as compileOnly
-    implementation(project(":cobblemon"))
+```bash
+./gradlew publishToMavenLocal
+```
 
-    // Optional
-    implementation(project(":database"))
+Then make sure your own mod's `settings.gradle`/`build.gradle` has `mavenLocal()` in its repositories:
 
-    // Pick one platform module
-    implementation(project(":fabric"))
-    // implementation(project(":neoforge"))
+```groovy
+repositories {
+    mavenLocal()
 }
 ```
 
-Then shade all of those into your own mod's jar (e.g. via the `com.gradleup.shadow` plugin, same as this repo uses internally) so the classes ship inside your single distributed jar. If you publish LuxAPI artifacts yourself in the meantime, use group `com.novaco.luxapi`, version `1.2.5`.
+Every module publishes under group `com.novaco.luxapi`, matching the version in this repo's root `build.gradle.kts` (currently `1.10.0`).
+
+### Step 2 — depend on the modules you need
+
+Two of the published artifacts (`core` and `cobblemon`) carry an **`official` classifier** — pre-remap classes built against Mojang's official mappings — so they can be consumed as plain libraries with no Loom remap step required. `commons` has no Minecraft classes, so it needs no classifier. Pick only the modules your mod actually needs:
+
+```groovy
+// A platform-agnostic module (e.g. your "common" sourceset in a multi-loader setup)
+dependencies {
+    implementation "com.novaco.luxapi:commons:1.10.0"
+    implementation "com.novaco.luxapi:core:1.10.0:official"
+    implementation "com.novaco.luxapi:cobblemon:1.10.0:official"
+}
+```
+
+### Step 3 — wire up the platform module, and bundle everything
+
+Each loader-specific module (`fabric` or `neoforge`) needs its bootstrap class present at runtime, plus the modules from Step 2. Pull the bootstrap module with its transitive `core`/`cobblemon`/`commons` dependencies excluded (you're already depending on those directly, so this avoids pulling them twice), then bundle all of it into your shipped jar with a shading plugin (e.g. `com.gradleup.shadow`):
+
+```groovy
+dependencies {
+    // Platform bootstrap — exclude what you already declared above
+    modImplementation("com.novaco.luxapi:fabric:1.10.0") {
+        exclude group: "com.novaco.luxapi", module: "core"
+        exclude group: "com.novaco.luxapi", module: "cobblemon"
+        exclude group: "com.novaco.luxapi", module: "commons"
+    }
+
+    // Bundle every LuxAPI module your mod uses into the final jar
+    shadowBundle "com.novaco.luxapi:fabric:1.10.0"
+    shadowBundle "com.novaco.luxapi:cobblemon:1.10.0:official"
+    shadowBundle "com.novaco.luxapi:core:1.10.0:official"
+    shadowBundle "com.novaco.luxapi:commons:1.10.0"
+}
+```
+
+(`shadowBundle` here is whatever configuration your shading plugin feeds into its shadow-jar task — see the Shadow plugin's own docs for the exact setup.) The NeoForge module follows the identical shape, swapping `fabric` for `neoforge`.
 
 This repo's own `fabric.mod.json`/`neoforge.mods.toml` and the `:fabric:runClient`/`:neoforge:runClient` tasks exist so LuxAPI can be booted standalone *for developing and testing LuxAPI itself* — they aren't a template for how your mod should depend on it.
 
