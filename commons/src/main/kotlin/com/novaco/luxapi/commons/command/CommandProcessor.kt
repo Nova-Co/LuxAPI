@@ -9,6 +9,7 @@ import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import com.novaco.luxapi.commons.command.sender.CommandSender
 import com.novaco.luxapi.commons.command.tab.TabHandler
 import com.novaco.luxapi.commons.command.tab.TabRegistry
+import com.novaco.luxapi.commons.permission.LuxPermissions
 import com.novaco.luxapi.commons.player.LuxPlayer
 import com.novaco.luxapi.commons.reflection.DirectInvoker
 import org.slf4j.LoggerFactory
@@ -43,12 +44,14 @@ class CommandProcessor(private val commandInstance: Any) {
     private val mainExecuteMethods: List<Method> = findMainExecuteMethods()
 
     init {
+        LuxPermissions.declare(commandInfo.permission)
         commandInstance.javaClass.declaredMethods.forEach { method ->
             method.getAnnotation(SubCommand::class.java)?.let { subAnnotation ->
                 subCommands[subAnnotation.name.lowercase()] = method
                 subAnnotation.aliases.forEach { alias ->
                     subCommands[alias.lowercase()] = method
                 }
+                LuxPermissions.declare(subAnnotation.permission)
             }
         }
     }
