@@ -48,3 +48,10 @@ bin/
 /docs/*
 /cobblemon/TODO.md
 /CLAUDE.md
+
+### Secrets ###
+*.asc
+private-key.asc
+
+### Local tooling ###
+.claude/
