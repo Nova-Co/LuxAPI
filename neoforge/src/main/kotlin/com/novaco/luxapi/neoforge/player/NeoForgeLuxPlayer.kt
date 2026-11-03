@@ -1,6 +1,7 @@
 package com.novaco.luxapi.neoforge.player
 
 import com.novaco.luxapi.commons.math.Vector3D
+import com.novaco.luxapi.commons.permission.LuxPermissions
 import com.novaco.luxapi.commons.player.LuxPlayer
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
@@ -42,7 +43,7 @@ class NeoForgeLuxPlayer(private var serverPlayer: ServerPlayer) : LuxPlayer {
     }
 
     override fun hasPermission(permission: String): Boolean {
-        return serverPlayer.createCommandSourceStack().hasPermission(4)
+        return LuxPermissions.has(this, permission) { serverPlayer.createCommandSourceStack().hasPermission(4) }
     }
 
     override fun sendTitle(title: String, subtitle: String) {

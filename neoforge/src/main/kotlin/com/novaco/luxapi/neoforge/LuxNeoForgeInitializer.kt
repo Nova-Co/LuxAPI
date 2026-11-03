@@ -11,8 +11,11 @@ import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import com.novaco.luxapi.commons.command.sender.CommandSender
 import com.novaco.luxapi.commons.command.tab.TabHandler
 import com.novaco.luxapi.commons.command.tab.TabRegistry
+import com.novaco.luxapi.commons.permission.PermissionChecker
+import com.novaco.luxapi.commons.service.ServiceManager
 import com.novaco.luxapi.core.server.LuxServerManager
 import com.novaco.luxapi.neoforge.command.NeoForgeCommandManager
+import com.novaco.luxapi.neoforge.permission.NeoForgePermissionChecker
 import com.novaco.luxapi.neoforge.event.NeoForgeEventBridge
 import com.novaco.luxapi.neoforge.init.NeoForgeInitScanner
 import com.novaco.luxapi.neoforge.gui.NeoForgeGuiBuilder
@@ -61,6 +64,10 @@ class LuxNeoForgeInitializer(modEventBus: IEventBus) {
 
         LuxAPI.init()
         LuxCobblemon.init()
+
+        val permissionChecker = NeoForgePermissionChecker()
+        ServiceManager.register(PermissionChecker::class.java, permissionChecker)
+        NeoForge.EVENT_BUS.addListener(permissionChecker::onGatherNodes)
 
         PlaceholderManager.register(DefaultPlayerProvider())
 

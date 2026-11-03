@@ -1,5 +1,8 @@
 package com.novaco.luxapi.neoforge.player
 
+import com.novaco.luxapi.commons.command.sender.CommandSender
+import com.novaco.luxapi.commons.permission.PermissionChecker
+import com.novaco.luxapi.commons.service.ServiceManager
 import net.minecraft.SharedConstants
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.network.chat.Component
@@ -86,6 +89,26 @@ class NeoForgeLuxPlayerTest {
         val luxPlayer = NeoForgeLuxPlayer(mockPlayer)
 
         assertFalse(luxPlayer.hasPermission("luxapi.admin.reload"))
+    }
+
+    @Test
+    fun `test hasPermission defers to the registered permission checker`() {
+        val mockPlayer = mock<ServerPlayer>()
+        val mockSource = mock<CommandSourceStack>()
+        whenever(mockPlayer.createCommandSourceStack()).thenReturn(mockSource)
+        whenever(mockSource.hasPermission(4)).thenReturn(true)
+        ServiceManager.register(PermissionChecker::class.java, object : PermissionChecker {
+            override fun has(sender: CommandSender, node: String) = node == "luxapi.granted"
+        })
+
+        try {
+            val luxPlayer = NeoForgeLuxPlayer(mockPlayer)
+
+            assertTrue(luxPlayer.hasPermission("luxapi.granted"))
+            assertFalse(luxPlayer.hasPermission("luxapi.denied"))
+        } finally {
+            ServiceManager.unregister(PermissionChecker::class.java)
+        }
     }
 
     @Test
