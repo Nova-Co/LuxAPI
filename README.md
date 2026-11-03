@@ -179,6 +179,37 @@ LuxAPI.getScheduler().runRepeating(0L, 20L) {
 }
 ```
 
+#### Permissions
+
+Command permissions are checked through one platform-independent entry point, `LuxPermissions`, which works for players, console and command blocks alike. Each platform registers a `PermissionChecker` at startup, so you never branch on platform:
+
+```kotlin
+if (LuxPermissions.has(sender, "mymod.heal.others")) {
+    // ...
+}
+```
+
+Resolution order: the installed permission provider (e.g. LuckPerms) is asked first and may grant or deny any node, including to operators. If no provider has an opinion, a vanilla op-level floor applies: level 4 for players, level 2 for console and command blocks. A blank node or a failing checker is always denied.
+
+| Platform | Backend | Notes |
+|---|---|---|
+| Fabric | `fabric-permissions-api` (bundled in the Fabric jar) | Provider rules apply to players, console and command blocks. |
+| NeoForge | NeoForge `PermissionAPI` | Nodes must exist before the server starts; see below. Console and command blocks use the op-level 2 floor because NeoForge has no non-player lookup. |
+| Bukkit | The server's native `hasPermission` | Honours any installed permission plugin. |
+
+On NeoForge, permission nodes can only be added while the server initializes its permission handler. LuxAPI collects every `permission` you put on `@Command` and `@SubCommand` as the command is registered, so register commands during mod startup. A node used at runtime that was never declared (or was declared too late) falls back to the op-level floor and logs one warning.
+
+To plug in your own backend, implement `PermissionChecker` and register it before your commands are created:
+
+```kotlin
+class MyChecker : PermissionChecker {
+    override fun has(sender: CommandSender, node: String): Boolean = /* your lookup */ false
+    override fun declare(node: String) { /* optional: pre-register the node */ }
+}
+
+ServiceManager.register(PermissionChecker::class.java, MyChecker())
+```
+
 ### `core`
 
 Build a Minecraft `ItemStack` (1.21+ Data Components) and register a Brigadier-backed command without touching the vanilla dispatcher directly:
