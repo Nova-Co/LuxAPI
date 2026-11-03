@@ -21,7 +21,7 @@ dependencies {
     /**
      * Cobblemon API
      */
-    modCompileOnly("com.cobblemon:mod:1.8.0+1.21.1") {
+    modCompileOnly("com.cobblemon:mod:1.8.4+1.21.1") {
         isTransitive = false
     }
 
