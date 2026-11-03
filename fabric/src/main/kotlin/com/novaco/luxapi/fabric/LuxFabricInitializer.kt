@@ -11,8 +11,11 @@ import com.novaco.luxapi.commons.command.injector.InjectorRegistry
 import com.novaco.luxapi.commons.command.sender.CommandSender
 import com.novaco.luxapi.commons.command.tab.TabHandler
 import com.novaco.luxapi.commons.command.tab.TabRegistry
+import com.novaco.luxapi.commons.permission.PermissionChecker
+import com.novaco.luxapi.commons.service.ServiceManager
 import com.novaco.luxapi.core.server.LuxServerManager
 import com.novaco.luxapi.fabric.command.FabricCommandManager
+import com.novaco.luxapi.fabric.permission.FabricPermissionChecker
 import com.novaco.luxapi.fabric.event.FabricEventBridge
 import com.novaco.luxapi.fabric.init.FabricInitializerRunner
 import com.novaco.luxapi.fabric.gui.FabricGuiBuilder
@@ -58,6 +61,8 @@ class LuxFabricInitializer : ModInitializer {
 
         LuxAPI.init()
         LuxCobblemon.init()
+
+        ServiceManager.register(PermissionChecker::class.java, FabricPermissionChecker())
 
         PlaceholderManager.register(DefaultPlayerProvider())
 

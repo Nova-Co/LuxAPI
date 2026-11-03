@@ -19,6 +19,7 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:0.102.0+1.21.1")
     modImplementation("net.fabricmc:fabric-language-kotlin:1.12.1+kotlin.2.0.20")
     modImplementation("me.lucko:fabric-permissions-api:0.3.3")
+    include("me.lucko:fabric-permissions-api:0.3.3")
 
     implementation(project(":commons"))
     implementation(project(path = ":core", configuration = "namedElements"))
