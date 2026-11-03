@@ -1,5 +1,8 @@
 package com.novaco.luxapi.core.command
 
+import com.novaco.luxapi.commons.command.sender.CommandSender
+import com.novaco.luxapi.commons.permission.PermissionChecker
+import com.novaco.luxapi.commons.service.ServiceManager
 import net.minecraft.SharedConstants
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.network.chat.Component
@@ -86,5 +89,22 @@ class MinecraftCommandSenderTest {
 
         `when`(mockSource.hasPermission(2)).thenReturn(false)
         assertFalse(sender.hasPermission("luxapi.admin"))
+    }
+
+    @Test
+    fun `test permission check defers to the registered permission checker`() {
+        val mockSource = mock(CommandSourceStack::class.java)
+        `when`(mockSource.hasPermission(2)).thenReturn(true)
+        val sender = MinecraftCommandSender(mockSource)
+        ServiceManager.register(PermissionChecker::class.java, object : PermissionChecker {
+            override fun has(sender: CommandSender, node: String) = node == "luxapi.granted"
+        })
+
+        try {
+            assertTrue(sender.hasPermission("luxapi.granted"))
+            assertFalse(sender.hasPermission("luxapi.other"))
+        } finally {
+            ServiceManager.unregister(PermissionChecker::class.java)
+        }
     }
 }
