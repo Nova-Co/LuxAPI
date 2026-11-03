@@ -4,11 +4,14 @@ import com.novaco.luxapi.bukkit.event.BukkitEventBridge
 import com.novaco.luxapi.bukkit.gui.BukkitGuiBuilder
 import com.novaco.luxapi.bukkit.gui.BukkitGuiListener
 import com.novaco.luxapi.bukkit.gui.BukkitPaginatedGuiBuilder
+import com.novaco.luxapi.bukkit.permission.BukkitPermissionChecker
 import com.novaco.luxapi.bukkit.placeholder.BukkitPlaceholderExpansion
 import com.novaco.luxapi.bukkit.player.BukkitPlayerManager
 import com.novaco.luxapi.bukkit.scheduler.BukkitLuxScheduler
 import com.novaco.luxapi.commons.LuxAPI
 import com.novaco.luxapi.commons.init.ClasspathInitScanner
+import com.novaco.luxapi.commons.permission.PermissionChecker
+import com.novaco.luxapi.commons.service.ServiceManager
 import org.bukkit.plugin.Plugin
 
 /**
@@ -34,6 +37,8 @@ object LuxBukkitBridge {
      */
     fun initialize(plugin: Plugin, initPackage: String? = null): BukkitPlayerManager {
         LuxAPI.init()
+
+        ServiceManager.register(PermissionChecker::class.java, BukkitPermissionChecker())
 
         val playerManager = BukkitPlayerManager()
 
