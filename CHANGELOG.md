@@ -4,6 +4,12 @@ All notable changes to LuxAPI are tracked here, in-repo, so version history is d
 
 Per-release detail (when a release warrants more than a summary line) lives in `changelogs/<version>.md`. Day-to-day development history and in-progress work is tracked in [`TODO.md`](TODO.md) — this file is the release-facing summary, not a duplicate of it.
 
+## [1.10.1] - Unreleased
+
+- Maven coordinates changed: the group is now `io.github.nova-co` (was `com.novaco.luxapi`). Kotlin/Java source packages (`com.novaco.luxapi.*`) are unchanged, so only dependency declarations in consumer builds need updating.
+- Publishing now targets Maven Central through the `com.vanniktech.maven.publish` plugin, with a manual/release-triggered `publish.yml` workflow that builds and tests before publishing.
+- README usage and dependency instructions updated for the new coordinates.
+
 ## [1.10.0] - 2026-09-08
 
 - Cobblemon 1.8.0 coverage (Phase 16): `TMManager`, Alpha Pokémon support, habitat query/interceptor, `BattleInterceptor.onBattleFlee`, and NPC `PartyCompositionManager`/`useComposition`.

@@ -20,7 +20,7 @@ plugins {
 
 allprojects {
     group = "io.github.nova-co"
-    version = "1.10.0"
+    version = "1.10.1"
 
     repositories {
         mavenCentral()

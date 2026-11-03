@@ -74,23 +74,11 @@ Not everything on the roadmap is finished — see [`TODO.md`](TODO.md) for the f
 
 LuxAPI is a **compile-time library, not a separately-installed mod**. Players don't download a `LuxAPI.jar` and drop it in `/mods` next to your mod — you pull LuxAPI in at build time and bundle the modules you use directly into your own mod's final jar, the same way you'd bundle any other library.
 
-### Step 1 — publish LuxAPI locally
+### Step 1 — make sure Maven Central is in your repositories
 
-**⚠️ No remote Maven repo yet** (tracked in [`TODO.md`](TODO.md), Phase 15). Until that lands, build and publish LuxAPI to your machine's local Maven cache first:
+LuxAPI publishes to Maven Central under group `io.github.nova-co`, matching the version in this repo's root `build.gradle.kts` (currently `1.10.1`). Most Gradle projects already have `mavenCentral()` in their repositories by default — nothing extra to add.
 
-```bash
-./gradlew publishToMavenLocal
-```
-
-Then make sure your own mod's `settings.gradle`/`build.gradle` has `mavenLocal()` in its repositories:
-
-```groovy
-repositories {
-    mavenLocal()
-}
-```
-
-Every module publishes under group `com.novaco.luxapi`, matching the version in this repo's root `build.gradle.kts` (currently `1.10.0`).
+If you want to build against an unreleased local change instead (e.g. you're testing a fix against this repo before it's published), run `./gradlew publishToMavenLocal` here and add `mavenLocal()` to your project's repositories — it takes priority over Central automatically.
 
 ### Step 2 — depend on the modules you need
 
@@ -99,9 +87,9 @@ Two of the published artifacts (`core` and `cobblemon`) carry an **`official` cl
 ```groovy
 // A platform-agnostic module (e.g. your "common" sourceset in a multi-loader setup)
 dependencies {
-    implementation "com.novaco.luxapi:commons:1.10.0"
-    implementation "com.novaco.luxapi:core:1.10.0:official"
-    implementation "com.novaco.luxapi:cobblemon:1.10.0:official"
+    implementation "io.github.nova-co:commons:1.10.1"
+    implementation "io.github.nova-co:core:1.10.1:official"
+    implementation "io.github.nova-co:cobblemon:1.10.1:official"
 }
 ```
 
@@ -112,17 +100,17 @@ Each loader-specific module (`fabric` or `neoforge`) needs its bootstrap class p
 ```groovy
 dependencies {
     // Platform bootstrap — exclude what you already declared above
-    modImplementation("com.novaco.luxapi:fabric:1.10.0") {
-        exclude group: "com.novaco.luxapi", module: "core"
-        exclude group: "com.novaco.luxapi", module: "cobblemon"
-        exclude group: "com.novaco.luxapi", module: "commons"
+    modImplementation("io.github.nova-co:fabric:1.10.1") {
+        exclude group: "io.github.nova-co", module: "core"
+        exclude group: "io.github.nova-co", module: "cobblemon"
+        exclude group: "io.github.nova-co", module: "commons"
     }
 
     // Bundle every LuxAPI module your mod uses into the final jar
-    shadowBundle "com.novaco.luxapi:fabric:1.10.0"
-    shadowBundle "com.novaco.luxapi:cobblemon:1.10.0:official"
-    shadowBundle "com.novaco.luxapi:core:1.10.0:official"
-    shadowBundle "com.novaco.luxapi:commons:1.10.0"
+    shadowBundle "io.github.nova-co:fabric:1.10.1"
+    shadowBundle "io.github.nova-co:cobblemon:1.10.1:official"
+    shadowBundle "io.github.nova-co:core:1.10.1:official"
+    shadowBundle "io.github.nova-co:commons:1.10.1"
 }
 ```
 
