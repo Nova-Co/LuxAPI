@@ -1,3 +1,4 @@
+import org.gradle.api.component.AdhocComponentWithVariants
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -14,11 +15,11 @@ buildscript {
 plugins {
     kotlin("jvm") version "2.1.10" apply false
     id("com.gradleup.shadow") version "8.3.6" apply false
-    id("maven-publish")
+    id("com.vanniktech.maven.publish") version "0.32.0" apply false
 }
 
 allprojects {
-    group = "com.novaco.luxapi"
+    group = "io.github.nova-co"
     version = "1.10.0"
 
     repositories {
@@ -33,15 +34,19 @@ allprojects {
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "java")
-    apply(plugin = "maven-publish")
+    apply(plugin = "com.vanniktech.maven.publish")
     apply(plugin = "com.gradleup.shadow")
+
+    afterEvaluate {
+        (components["java"] as AdhocComponentWithVariants).withVariantsFromConfiguration(
+            configurations["shadowRuntimeElements"]
+        ) { skip() }
+    }
 
     configure<JavaPluginExtension> {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(21))
         }
-        withSourcesJar()
-        withJavadocJar()
     }
 
     tasks.withType<JavaCompile> {
@@ -55,23 +60,44 @@ subprojects {
         }
     }
 
-    afterEvaluate {
-        publishing {
-            publications {
-                create<MavenPublication>("maven") {
-                    groupId = project.group.toString()
-                    artifactId = project.name
-                    version = project.version.toString()
+    configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
+        configure(
+            com.vanniktech.maven.publish.KotlinJvm(
+                javadocJar = com.vanniktech.maven.publish.JavadocJar.Javadoc(),
+                sourcesJar = true,
+            )
+        )
 
-                    from(components["java"])
+        publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
+
+        if (project.hasProperty("mavenCentralUsername")) {
+            signAllPublications()
+        }
+
+        coordinates(project.group.toString(), project.name, project.version.toString())
+
+        pom {
+            name.set(project.name)
+            description.set("LuxAPI ${project.name} module")
+            url.set("https://github.com/Nova-Co/LuxAPI")
+
+            licenses {
+                license {
+                    name.set("MIT")
+                    url.set("https://github.com/Nova-Co/LuxAPI/blob/main/LICENSE")
                 }
             }
 
-            repositories {
-                maven {
-                    name = "LocalMaven"
-                    url = uri(rootProject.layout.buildDirectory.dir("repo"))
+            developers {
+                developer {
+                    id.set("nova-co")
+                    name.set("Nova Co.")
                 }
+            }
+
+            scm {
+                url.set("https://github.com/Nova-Co/LuxAPI")
+                connection.set("scm:git:https://github.com/Nova-Co/LuxAPI.git")
             }
         }
     }

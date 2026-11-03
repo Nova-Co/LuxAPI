@@ -60,24 +60,6 @@ tasks.named<net.fabricmc.loom.task.RemapJarTask>("remapJar") {
     inputFile.set(shadowTask.flatMap { it.archiveFile })
 }
 
-java {
-    withSourcesJar()
-}
-
-apply(plugin = "maven-publish")
-
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            groupId = "com.novaco.luxapi"
-            artifactId = "fabric"
-            version = "1.0.0"
-
-            artifact(tasks.named("remapJar"))
-        }
-    }
-}
-
 tasks.test {
     useJUnitPlatform()
 
